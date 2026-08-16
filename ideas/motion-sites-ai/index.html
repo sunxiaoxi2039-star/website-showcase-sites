@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MotionSites AI — Official Premium AI Website Prompts</title>
+<link rel="icon" href="assets/brand/logo.png">
+<script src="assets/vendor/tailwind.js"></script>
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        background: '#171717',
+        card: '#1f1f1f',
+        border: 'rgba(255,255,255,0.08)',
+        foreground: '#f5f5f5',
+        'muted-foreground': '#a1a1aa',
+        secondary: 'rgba(255,255,255,0.06)',
+        accent: 'rgba(255,255,255,0.12)',
+      },
+    }
+  }
+}
+</script>
+<style>
+  html { background: #171717; }
+  body {
+    font-family: -apple-system, "system-ui", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  ::selection { background: rgba(232,64,13,.35); }
+
+  /* ===== Hero gradient text (mouse-following radial) ===== */
+  .grad-text {
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+    background-size: 200% 200%;
+    background-image: radial-gradient(80.17% 109.2% at var(--gradient-x, 44%) var(--gradient-y, 35%),
+      rgb(208,178,255) 0%, rgb(255,238,216) 42.83%, rgb(232,64,13) 88.38%);
+    animation: gradient-shift 8s ease infinite;
+  }
+  .grad-glow {
+    position: absolute; inset: 0;
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+    background-size: 200% 200%;
+    background-image: radial-gradient(80.17% 109.2% at var(--gradient-x, 44%) var(--gradient-y, 35%),
+      rgb(208,178,255) 0%, rgb(255,238,216) 42.83%, rgb(232,64,13) 88.38%);
+    filter: blur(10px);
+    mix-blend-mode: screen;
+    opacity: .8;
+    pointer-events: none;
+    z-index: 2;
+    animation: gradient-shift 8s ease infinite;
+  }
+  .grad-noise {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='240' height='240' filter='url(%23n)' opacity='0.55'/%3E%3C/svg%3E");
+    background-size: 60%;
+    border-radius: 8px;
+    inset: -6px 0% 0% -6px;
+    mix-blend-mode: overlay;
+    position: absolute;
+    z-index: 3;
+    pointer-events: none;
+  }
+  @keyframes gradient-shift {
+    0%, 100% { background-position: 0% 50%; }
+    50%      { background-position: 100% 50%; }
+  }
+
+  /* ===== Card ===== */
+  .card-hover { transition: transform .35s cubic-bezier(.22,1,.36,1), border-color .3s; }
+  .card-hover:hover { transform: translateY(-3px); }
+  .thumb-media { transition: opacity .3s, transform .6s cubic-bezier(.22,1,.36,1); }
+  .card-hover:hover .thumb-media { transform: scale(1.02); }
+  .thumb-video { opacity: 0; transition: opacity .35s; }
+  .card-hover:hover .thumb-video { opacity: 1; }
+
+  /* segmented filter */
+  .seg-active { background: #f5f5f5; color: #171717; }
+
+  /* toast */
+  #toast { transition: transform .35s cubic-bezier(.22,1,.36,1), opacity .3s; }
+
+  /* ===== OYLA jewelry ken-burns simulation ===== */
+  .oyla-frame { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
+  .oyla-f1 { animation: oylaA 9s ease-in-out infinite; }
+  .oyla-f2 { animation: oylaB 9s ease-in-out infinite; }
+  @keyframes oylaA {
+    0%   { opacity:1; transform:scale(1.0)  translate(0,0); }
+    42%  { opacity:1; transform:scale(1.07) translate(-1.2%,-1.5%); }
+    55%  { opacity:0; transform:scale(1.1)  translate(-1.8%,-2%); }
+    90%  { opacity:0; transform:scale(1.0); }
+    100% { opacity:1; transform:scale(1.0); }
+  }
+  @keyframes oylaB {
+    0%   { opacity:0; transform:scale(1.12); }
+    45%  { opacity:0; transform:scale(1.1); }
+    58%  { opacity:1; transform:scale(1.05); }
+    88%  { opacity:1; transform:scale(1.0); }
+    100% { opacity:0; transform:scale(1.0); }
+  }
+  .oyla-sparkle {
+    position:absolute; left:63%; top:26%; width:34px; height:34px;
+    background:radial-gradient(circle, rgba(255,255,255,.95) 0%, rgba(255,255,255,0) 62%);
+    mix-blend-mode:screen; pointer-events:none;
+    animation: sparkle 3.2s ease-in-out infinite;
+  }
+  @keyframes sparkle {
+    0%, 55%, 100% { opacity:0; transform:scale(.4) rotate(0deg); }
+    68%           { opacity:1; transform:scale(1)  rotate(35deg); }
+    80%           { opacity:.35; transform:scale(.6) rotate(60deg); }
+  }
+
+  /* ===== detail modal ===== */
+  #modal { transition: opacity .25s; }
+  #modal .panel { transition: transform .3s cubic-bezier(.22,1,.36,1), opacity .25s; }
+
+  /* subtle scrollbar */
+  ::-webkit-scrollbar { width: 10px; }
+  ::-webkit-scrollbar-thumb { background: #2c2c2c; border-radius: 8px; }
+  ::-webkit-scrollbar-track { background: #171717; }
+</style>
+</head>
+<body class="bg-background text-foreground min-h-screen">
+
+<!-- ================= NAV ================= -->
+<header class="max-w-[1440px] mx-auto px-5 sm:px-8 pt-5">
+  <nav class="flex items-center justify-between gap-4">
+    <div class="flex items-center gap-7">
+      <a href="#" class="flex items-center shrink-0">
+        <img src="assets/brand/logo.png" alt="MotionSites logo" class="h-5 sm:h-6 w-auto">
+      </a>
+      <div class="hidden sm:flex items-center gap-6 text-sm">
+        <a href="#" class="text-foreground/90 hover:text-foreground transition-colors">Sites</a>
+        <a href="#" class="flex items-center gap-1.5 text-foreground/90 hover:text-foreground transition-colors">Apps
+          <span class="text-[9px] font-semibold px-1.5 py-0.5 rounded-md bg-secondary text-muted-foreground tracking-wide">NEW</span>
+        </a>
+      </div>
+    </div>
+    <div class="flex items-center gap-6 text-sm">
+      <a href="#" class="hidden md:block text-muted-foreground hover:text-foreground transition-colors">Sections</a>
+      <a href="#" class="hidden md:block text-muted-foreground hover:text-foreground transition-colors">Backgrounds</a>
+      <a href="#" class="hidden md:flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors">Academy
+        <span class="text-[9px] font-semibold px-1.5 py-0.5 rounded-md bg-secondary text-muted-foreground tracking-wide">NEW</span>
+      </a>
+      <a href="#" class="hidden md:block text-muted-foreground hover:text-foreground transition-colors">Contact Us</a>
+      <button aria-label="Search" class="text-muted-foreground hover:text-foreground transition-colors">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      </button>
+      <a href="#" class="px-4 py-2 rounded-full bg-foreground text-background text-sm font-medium hover:opacity-90 transition-opacity whitespace-nowrap">Go Unlimited</a>
+    </div>
+  </nav>
+</header>
+
+<!-- ================= HERO ================= -->
+<section class="max-w-[1440px] mx-auto px-5 sm:px-8 pt-16 sm:pt-24 pb-12 sm:pb-16 text-center" id="hero">
+  <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-[rgba(232,64,13,0.55)] text-[10px] sm:text-[11px] font-semibold tracking-[0.14em] text-[#f0b8a0] uppercase">
+    Fresh Drops Everyday
+  </div>
+
+  <h1 class="mt-6 font-bold uppercase tracking-[-0.015em] leading-[1.04] text-[12.5vw] sm:text-[6.4vw] lg:text-[60px]">
+    <div class="sm:hidden">Unlock <em class="italic">your</em></div>
+    <div class="sm:hidden">AI Design</div>
+    <div class="hidden sm:block">Unlock <em class="italic">your</em> AI</div>
+    <div class="hidden sm:block">Design
+      <span class="relative inline-block" id="gradWord">
+        <span class="grad-text">Superpowers</span>
+        <span class="grad-glow" aria-hidden="true">Superpowers</span>
+        <span class="grad-noise" aria-hidden="true"></span>
+      </span>
+    </div>
+    <div class="sm:hidden">
+      <span class="relative inline-block">
+        <span class="grad-text">Superpowers</span>
+        <span class="grad-glow" aria-hidden="true">Superpowers</span>
+        <span class="grad-noise" aria-hidden="true"></span>
+      </span>
+    </div>
+  </h1>
+
+  <p class="mt-5 text-white/70 text-sm sm:text-base max-w-xl mx-auto leading-relaxed">
+    Build beautiful landing pages in minutes with our ready-to-use prompts. Just copy, paste, and launch.
+  </p>
+
+  <a href="#" class="inline-flex items-center gap-2 mt-9 px-7 py-3.5 rounded-full bg-foreground text-background text-[15px] font-medium hover:opacity-90 transition-opacity">
+    Go Unlimited
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg>
+  </a>
+</section>
+
+<!-- ================= FILTER BAR ================= -->
+<section class="max-w-[1440px] mx-auto px-5 sm:px-8 flex items-center justify-between gap-3 pb-5">
+  <div class="relative inline-flex items-center p-1 rounded-full border border-border" id="seg">
+    <button class="seg-btn relative px-5 py-1.5 text-sm font-medium rounded-full transition-colors whitespace-nowrap seg-active">Featured</button>
+    <button class="seg-btn relative px-5 py-1.5 text-sm font-medium rounded-full transition-colors whitespace-nowrap text-muted-foreground hover:text-foreground">Popular</button>
+    <button class="seg-btn relative px-5 py-1.5 text-sm font-medium rounded-full transition-colors whitespace-nowrap text-muted-foreground hover:text-foreground">Recent</button>
+  </div>
+  <div class="flex items-center gap-2">
+    <button class="inline-flex items-center justify-center gap-1.5 px-5 py-2 text-sm font-medium rounded-full border border-border text-muted-foreground hover:text-foreground transition-colors whitespace-nowrap">
+      Type
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+    </button>
+    <button class="inline-flex items-center justify-center gap-1.5 px-5 py-2 text-sm font-medium rounded-full border border-border text-muted-foreground hover:text-foreground transition-colors whitespace-nowrap">
+      Pricing
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+    </button>
+  </div>
+</section>
+
+<!-- ================= GRID ================= -->
+<main class="max-w-[1440px] mx-auto px-5 sm:px-8">
+  <div id="grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pb-6"></div>
+</main>
+
+<!-- ================= FOOTER ================= -->
+<footer class="border-t border-border py-8 mt-8 text-center text-sm text-muted-foreground">
+  <p>Built with Design Rocket 🚀</p>
+</footer>
+
+<!-- ================= DETAIL MODAL ================= -->
+<div id="modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 sm:p-8 opacity-0">
+  <div class="absolute inset-0 bg-black/70 backdrop-blur-sm" data-close></div>
+  <div class="panel relative w-full max-w-[980px] max-h-[85vh] bg-card rounded-3xl overflow-hidden grid grid-cols-1 sm:grid-cols-[290px_1fr] translate-y-4 opacity-0">
+    <div class="p-6 flex flex-col min-h-[220px]">
+      <h3 id="mTitle" class="text-foreground text-xl font-semibold leading-snug"></h3>
+      <p id="mCat" class="text-muted-foreground text-sm mt-1"></p>
+      <p class="flex items-center gap-1.5 text-muted-foreground text-sm mt-5">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19.5 12.6 12 20l-7.5-7.4a5 5 0 1 1 7.5-6.6 5 5 0 1 1 7.5 6.6Z"/></svg>
+        <span id="mLikes"></span>&nbsp;likes
+      </p>
+      <button id="mAction" class="mt-6 w-full inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-foreground text-background text-sm font-medium hover:opacity-90 transition-opacity"></button>
+      <p id="mCreator" class="mt-auto pt-6 text-muted-foreground text-xs"></p>
+    </div>
+    <div class="relative bg-neutral-900 min-h-[280px] sm:min-h-[420px]" id="mMedia"></div>
+    <button data-close class="absolute top-4 right-4 w-9 h-9 rounded-full bg-black/55 hover:bg-black/75 text-white flex items-center justify-center transition-colors">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>
+    </button>
+  </div>
+</div>
+
+<!-- ================= TOAST ================= -->
+<div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 translate-y-24 opacity-0 z-50 px-5 py-3 rounded-xl bg-foreground text-background text-sm font-medium shadow-2xl pointer-events-none"></div>
+
+<script src="data.js"></script>
+<script>
+/* ============ render grid ============ */
+const grid = document.getElementById('grid');
+
+const copyIcon = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2.5"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>`;
+const lockIcon = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2.5"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>`;
+
+function cardHTML(c, IDX) {
+  const ar = c.auto ? '' : 'style="aspect-ratio:4/3"';
+  const video = c.video
+    ? `<video muted loop playsinline preload="none" poster="${c.poster || ''}"
+        class="thumb-video absolute inset-0 w-full h-full object-cover object-top" src="${c.video}"></video>` : '';
+  const poster = c.poster
+    ? (c.auto
+        ? `<img src="${c.poster}" alt="${c.title}" loading="lazy" class="thumb-media block w-full h-auto">`
+        : `<img src="${c.poster}" alt="${c.title}" loading="lazy"
+        class="thumb-media absolute inset-0 w-full h-full object-cover object-top">`)
+    : `<div class="thumb-media absolute inset-0 bg-neutral-800"></div>`;
+  const btn = c.premium
+    ? `<button data-act="premium" class="flex items-center gap-1.5 bg-secondary hover:bg-accent text-muted-foreground hover:text-foreground px-3 py-2 rounded-xl text-sm font-medium transition-colors">${lockIcon}Premium</button>`
+    : `<button data-act="copy" data-title="${c.title}" class="flex items-center gap-1.5 bg-secondary hover:bg-accent text-muted-foreground hover:text-foreground px-3 py-2 rounded-xl text-sm font-medium transition-colors">${copyIcon}Copy</button>`;
+  const thumbInner = c.slug === 'oyla'
+    ? `<img src="assets/cards/oyla-frame1.jpg" alt="OYLA" class="oyla-frame oyla-f1">
+       <img src="assets/cards/oyla-frame2.jpg" alt="" aria-hidden="true" class="oyla-frame oyla-f2">
+       <span class="oyla-sparkle"></span>`
+    : poster + video;
+  return `
+  <article data-idx="${IDX}" class="bg-card rounded-3xl overflow-visible card-hover flex flex-col cursor-pointer p-3">
+    <div class="relative w-full shrink-0 rounded-xl overflow-hidden mb-3 bg-neutral-900" ${ar}>
+      ${thumbInner}
+    </div>
+    <div class="flex items-start justify-between gap-2 px-1 pb-1">
+      <div class="min-w-0">
+        <h3 class="text-foreground font-semibold text-[15px] leading-snug truncate">${c.title}</h3>
+        <p class="text-muted-foreground text-[13px] mt-0.5">${c.cat}</p>
+      </div>
+      ${btn}
+    </div>
+  </article>`;
+}
+
+const promoRocket = `
+  <a href="#" data-act="promo" class="h-full flex flex-col items-start justify-between gap-10 p-6 bg-neutral-900 rounded-2xl border border-border hover:border-white/20 transition-colors group relative overflow-hidden">
+    <div class="absolute inset-0 opacity-60 pointer-events-none"
+         style="background:radial-gradient(120% 90% at 0% 100%, rgba(120,80,255,.28), transparent 55%), radial-gradient(100% 80% at 100% 0%, rgba(232,64,13,.14), transparent 50%);"></div>
+    <img src="assets/brand/design-rocket.png" alt="Design Rocket" class="h-6 w-auto z-10">
+    <div class="flex flex-col gap-3 z-10">
+      <h3 class="text-white text-xl font-semibold leading-snug">Learn to design beautiful Websites using AI tools.</h3>
+      <p class="text-muted-foreground text-sm">Master AI-powered design</p>
+      <span class="w-fit px-5 py-2.5 bg-foreground text-background text-sm font-medium rounded-lg group-hover:opacity-90 transition-opacity">Start Learning for Free</span>
+    </div>
+  </a>`;
+
+const promoBackgrounds = `
+  <a href="#" data-act="promo" class="sm:col-span-2 h-full flex flex-col items-start justify-between gap-10 p-6 bg-neutral-900 rounded-2xl border border-border hover:border-white/20 transition-colors group relative overflow-hidden min-h-[220px]">
+    <div class="absolute inset-0 opacity-50 pointer-events-none"
+         style="background:radial-gradient(110% 100% at 100% 100%, rgba(80,120,255,.22), transparent 55%), radial-gradient(90% 70% at 0% 0%, rgba(208,178,255,.12), transparent 50%);"></div>
+    <div class="flex items-center gap-2 z-10">
+      <img src="assets/brand/logo-light.png" alt="MotionSites logo" class="h-7 w-auto object-contain relative" style="top:-1px;">
+      <span class="text-white/60 font-medium uppercase tracking-widest leading-none" style="font-size:10px;position:relative;top:1px;">Backgrounds</span>
+    </div>
+    <div class="flex flex-col gap-3 z-10">
+      <h3 class="text-white text-xl font-semibold leading-snug max-w-sm">Animated backgrounds designed to convert, impress, and amaze.</h3>
+      <span class="w-fit px-5 py-2.5 bg-foreground text-background text-sm font-medium rounded-lg group-hover:opacity-90 transition-opacity">Explore Videos</span>
+    </div>
+  </a>`;
+
+let html = '';
+CARDS.forEach((c, i) => {
+  if (i === 2) html += promoRocket;        // DesignRocket promo after Personal Showcase
+  if (i === 14) html += promoBackgrounds;  // Backgrounds promo before Synth Mode
+  html += cardHTML(c, i);
+});
+grid.innerHTML = html;
+
+/* ============ hover video play ============ */
+grid.querySelectorAll('article').forEach(card => {
+  const v = card.querySelector('video');
+  if (!v) return;
+  card.addEventListener('mouseenter', () => { v.play().catch(() => {}); });
+  card.addEventListener('mouseleave', () => { v.pause(); });
+});
+
+/* ============ toast + actions ============ */
+const toast = document.getElementById('toast');
+let toastTimer;
+function showToast(msg) {
+  toast.textContent = msg;
+  toast.style.transform = 'translate(-50%, 0)';
+  toast.style.opacity = '1';
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => {
+    toast.style.transform = 'translate(-50%, 6rem)';
+    toast.style.opacity = '0';
+  }, 2200);
+}
+/* ============ prompt cache (real free prompts) ============ */
+const promptCache = {};
+async function getPrompt(c) {
+  if (!c.promptFile) return null;
+  if (!promptCache[c.slug]) {
+    promptCache[c.slug] = fetch(c.promptFile).then(r => r.ok ? r.text() : null).catch(() => null);
+  }
+  return promptCache[c.slug];
+}
+
+/* ============ grid clicks: buttons vs open modal ============ */
+grid.addEventListener('click', e => {
+  const btn = e.target.closest('[data-act]');
+  if (btn) {
+    e.preventDefault();
+    e.stopPropagation();
+    const act = btn.dataset.act;
+    const card = btn.closest('article');
+    const c = card ? CARDS[Number(card.dataset.idx)] : null;
+    if (act === 'copy' && c) {
+      getPrompt(c).then(text => {
+        navigator.clipboard.writeText(text || `Prompt for "${c.title}"`).catch(() => {});
+        showToast(text ? 'Full prompt copied to clipboard ✓' : 'Prompt unavailable');
+      });
+    } else if (act === 'premium') {
+      showToast('This is a Premium prompt — Go Unlimited to unlock 🔒');
+    } else if (act === 'promo') {
+      showToast('External link disabled in this replica');
+    }
+    return;
+  }
+  const card = e.target.closest('article[data-idx]');
+  if (card) openModal(CARDS[Number(card.dataset.idx)]);
+});
+
+/* ============ detail modal ============ */
+const modal = document.getElementById('modal');
+const panel = modal.querySelector('.panel');
+let modalCard = null;
+
+function openModal(c) {
+  modalCard = c;
+  document.getElementById('mTitle').textContent = c.title;
+  document.getElementById('mCat').textContent = c.cat;
+  document.getElementById('mLikes').textContent = c.likes != null ? c.likes : '—';
+  document.getElementById('mCreator').textContent = c.creator ? `Design by ${c.creator}` : '';
+  const actBtn = document.getElementById('mAction');
+  actBtn.innerHTML = c.free
+    ? `${copyIcon} Copy full prompt`
+    : `${lockIcon} Go Unlimited`;
+  const media = document.getElementById('mMedia');
+  media.innerHTML = c.video
+    ? `<video src="${c.video}" ${c.poster ? `poster="${c.poster}"` : ''} autoplay muted loop playsinline class="absolute inset-0 w-full h-full object-cover object-top"></video>`
+    : (c.poster ? `<img src="${c.poster}" alt="${c.title}" class="absolute inset-0 w-full h-full object-cover object-top">` : '');
+  modal.classList.remove('hidden');
+  modal.classList.add('flex');
+  document.body.style.overflow = 'hidden';
+  requestAnimationFrame(() => {
+    modal.style.opacity = '1';
+    panel.style.transform = 'translateY(0)';
+    panel.style.opacity = '1';
+  });
+}
+function closeModal() {
+  modal.style.opacity = '0';
+  panel.style.transform = 'translateY(1rem)';
+  panel.style.opacity = '0';
+  document.body.style.overflow = '';
+  setTimeout(() => {
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+    document.getElementById('mMedia').innerHTML = '';
+  }, 250);
+}
+modal.addEventListener('click', e => { if (e.target.closest('[data-close]')) closeModal(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && !modal.classList.contains('hidden')) closeModal(); });
+document.getElementById('mAction').addEventListener('click', () => {
+  if (!modalCard) return;
+  if (modalCard.free) {
+    getPrompt(modalCard).then(text => {
+      navigator.clipboard.writeText(text || '').catch(() => {});
+      showToast(text ? 'Full prompt copied to clipboard ✓' : 'Prompt unavailable');
+    });
+  } else {
+    showToast('This is a Premium prompt — Go Unlimited to unlock 🔒');
+  }
+});
+
+/* ============ segmented filter ============ */
+document.getElementById('seg').addEventListener('click', e => {
+  const btn = e.target.closest('.seg-btn');
+  if (!btn) return;
+  document.querySelectorAll('.seg-btn').forEach(b => {
+    b.classList.remove('seg-active');
+    b.classList.add('text-muted-foreground');
+  });
+  btn.classList.add('seg-active');
+  btn.classList.remove('text-muted-foreground');
+});
+
+/* ============ mouse-follow gradient ============ */
+const hero = document.getElementById('hero');
+hero.addEventListener('mousemove', e => {
+  document.querySelectorAll('.grad-text, .grad-glow').forEach(el => {
+    const r = el.getBoundingClientRect();
+    const x = ((e.clientX - r.left) / r.width * 100).toFixed(2) + '%';
+    const y = ((e.clientY - r.top) / r.height * 100).toFixed(2) + '%';
+    el.style.setProperty('--gradient-x', x);
+    el.style.setProperty('--gradient-y', y);
+  });
+});
+</script>
+</body>
+</html>

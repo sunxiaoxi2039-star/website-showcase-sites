@@ -1,0 +1,434 @@
+[
+ {
+  "idx": 0,
+  "title": "Mostar Guide",
+  "slug": "mostar-guide",
+  "is_free": true,
+  "img_prev": "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20260730_235046_ab8d2f0d-42b9-4091-8371-cdefe46e898f.png&w=1280&q=85",
+  "vid_prev": "https://pub-86dc5b5484314368ac5436a674b0d919.r2.dev/a/CleanShot%202026-07-31%20at%2007.43.14.mp4",
+  "row_span": 1
+ },
+ {
+  "idx": 1,
+  "title": "Personal Showcase",
+  "slug": "personal-showcase",
+  "is_free": true,
+  "img_prev": "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20260729_022115_7591fd95-f2b6-495b-bb8c-0491fd4be21b.png&w=1280&q=85",
+  "vid_prev": "https://pub-86dc5b5484314368ac5436a674b0d919.r2.dev/a/showcaseareaArea.mp4",
+  "row_span": 1
+ },
+ {
+  "idx": 2,
+  "title": "OYLA",
+  "slug": "oyla",
+  "is_free": false,
+  "img_prev": "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20260715_021211_d1c2db4e-d64f-40c9-bc27-e20ca30b98d1.png&w=1280&q=85",
+  "vid_prev": "https://pub-86dc5b5484314368ac5436a674b0d919.r2.dev/prompts%20(i've%20added%20them%20to%20the%20motionsites)/%20bewpostArea.mp4",
+  "row_span": 1
+ },
+ {
+  "idx": 3,
+  "title": "3D Portfolio",
+  "slug": "3d-jack-portfolio-hero",
+  "is_free": true,
+  "img_prev": null,
+  "vid_prev": null,
+  "row_span": 1
+ },
+ {
+  "idx": 4,
+  "title": "Sentinel",
+  "slug": "sentinel",
+  "is_free": false,
+  "img_prev": "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20260726_022105_0c843020-7d84-48a3-904d-0a5c00ac3f70.png&w=1280&q=85",
+  "vid_prev": "https://pub-86dc5b5484314368ac5436a674b0d919.r2.dev/a/Sentinel.mp4",
+  "row_span": 1
+ },
+ {
+  "idx": 5,
+  "title": "Data Storytelling",
+  "slug": "data-storytelling",
+  "is_free": false,
+  "img_prev": "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20260721_235356_7e9d6d1f-c41a-4e8a-8a23-b67cee3d7895.png&w=1280&q=85",
+  "vid_prev": "https://pub-86dc5b5484314368ac5436a674b0d919.r2.dev/linesrevealingArea.mp4",
+  "row_span": 1
+ },
+ {
+  "idx": 6,
+  "title": "Dreamcore Landing",
+  "slug": "dreamcore-landing",
+  "is_free": false,
+  "img_prev": "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20260715_233544_ca678d16-640c-4f90-bf47-26559c8bec4a.png&w=1280&q=85",
+  "vid_prev": "https://pub-86dc5b5484314368ac5436a674b0d919.r2.dev/hero%20sections/animated%20(22).webp",
+  "row_span": 1
+ },
+ {
+  "idx": 7,
+  "title": "Build Unit",
+  "slug": "build-unit",
+  "is_free": false,
+  "img_prev": "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20260804_052238_05036b1d-45e1-4526-ac9e-95ed86110983.png&w=1280&q=85",
+  "vid_prev": "https://pub-86dc5b5484314368ac5436a674b0d919.r2.dev/Build%20UnitArea.mp4",
+  "row_span": 1
+ },
+ {
+  "idx": 8,
+  "title": "Bold Studio",
+  "slug": "bold-studio",
+  "is_free": true,
+  "img_prev": null,
+  "vid_prev": "https://pub-86dc5b5484314368ac5436a674b0d919.r2.dev/hero%20sections/animated%20(10).webp",
+  "row_span": 1
+ },
+ {
+  "idx": 9,
+  "title": "Breathstone",
+  "slug": "breathstone",
+  "is_free": false,
+  "img_prev": "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20260804_050534_b502eec0-525a-47f6-b2e4-d7a6c36290ef.png&w=1280&q=85",
+  "vid_prev": "https://pub-86dc5b5484314368ac5436a674b0d919.r2.dev/a/cursornaturerevealArea.mp4",
+  "row_span": 1
+ },
+ {
+  "idx": 10,
+  "title": "Prisma Creative Studio",
+  "slug": "prisma-landing",
+  "is_free": true,
+  "img_prev": "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20260715_020417_f0fb8494-c926-46a7-afd9-51f2d3f567a1.png&w=1280&q=85",
+  "vid_prev": null,
+  "row_span": 2
+ },
+ {
+  "idx": 11,
+  "title": "Creator Guild",
+  "slug": "creator-guild",
+  "is_free": false,
+  "img_prev": "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20260803_060058_8f4ac530-9b31-4365-bf6a-879607d68744.png&w=1280&q=85",
+  "vid_prev": "https://pub-86dc5b5484314368ac5436a674b0d919.r2.dev/a/Communitycircle.mp4",
+  "row_span": 1
+ },
+ {
+  "idx": 12,
+  "title": "Interactive Discovery",
+  "slug": "interactive-discovery",
+  "is_free": true,
+  "img_prev": "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20260721_114031_72704ebf-b8c6-4568-99e5-240183a9dcce.png&w=1280&q=85",
+  "vid_prev": "https://pub-86dc5b5484314368ac5436a674b0d919.r2.dev/hero%20sections/animated%20(7).webp",
+  "row_span": 1
+ },
+ {
+  "idx": 13,
+  "title": "Silent Velocity",
+  "slug": "silent-velocity",
+  "is_free": false,
+  "img_prev": "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20260803_051052_338d2563-d56d-43da-98ce-6c2c99345999.png&w=1280&q=85",
+  "vid_prev": "https://pub-86dc5b5484314368ac5436a674b0d919.r2.dev/a/teslacarwhite.mp4",
+  "row_span": 1
+ },
+ {
+  "idx": 14,
+  "title": "Synth Mode",
+  "slug": "synth-mode",
+  "is_free": true,
+  "img_prev": "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd2ol7oe51mr4n9.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2F755a0ca1-974c-431d-a45b-eab83067850d.png&w=1280&q=85",
+  "vid_prev": "https://pub-86dc5b5484314368ac5436a674b0d919.r2.dev/a/synthArea.mp4",
+  "row_span": 1
+ },
+ {
+  "idx": 15,
+  "title": "Art Landing",
+  "slug": "art-landing",
+  "is_free": false,
+  "img_prev": null,
+  "vid_prev": "https://pub-86dc5b5484314368ac5436a674b0d919.r2.dev/a/mezzanine%20(1).mp4",
+  "row_span": 1
+ },
+ {
+  "idx": 16,
+  "title": "Agent Crew",
+  "slug": "agent-crew",
+  "is_free": false,
+  "img_prev": "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20260801_025424_8c70ed14-6d2c-458f-a10e-882055eb440a.png&w=1280&q=85",
+  "vid_prev": "https://pub-86dc5b5484314368ac5436a674b0d919.r2.dev/a/Agent%20CrewArea.mp4",
+  "row_span": 1
+ },
+ {
+  "idx": 17,
+  "title": "Velorah",
+  "slug": "velorah-hero",
+  "is_free": true,
+  "img_prev": null,
+  "vid_prev": null,
+  "row_span": 1
+ },
+ {
+  "idx": 18,
+  "title": "Skybridge 404",
+  "slug": "skybridge-404",
+  "is_free": true,
+  "img_prev": "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20260801_003013_808b8d45-32dd-45db-ac26-4fab86d3a304.png&w=1280&q=85",
+  "vid_prev": "https://pub-86dc5b5484314368ac5436a674b0d919.r2.dev/a/Skybridge%20404Area.mp4",
+  "row_span": 1
+ },
+ {
+  "idx": 19,
+  "title": "Web3 EOS Hero",
+  "slug": "9",
+  "is_free": false,
+  "img_prev": null,
+  "vid_prev": null,
+  "row_span": 1
+ },
+ {
+  "idx": 20,
+  "title": "Aetheris Voyage",
+  "slug": "aetheris-voyage-hero",
+  "is_free": true,
+  "img_prev": "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20260715_020834_841011fb-d336-4dcd-bbe6-493a895e4eb4.png&w=1280&q=85",
+  "vid_prev": null,
+  "row_span": 1
+ },
+ {
+  "idx": 21,
+  "title": "Intelligent Operations",
+  "slug": "intelligent-operations",
+  "is_free": true,
+  "img_prev": "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20260730_075859_52d1611f-168a-44ed-8222-ba56da2755fa.png&w=1920&q=85",
+  "vid_prev": "https://pub-86dc5b5484314368ac5436a674b0d919.r2.dev/a/preview.mp4",
+  "row_span": 1
+ },
+ {
+  "idx": 22,
+  "title": "CoderCrest",
+  "slug": "codercrest-hero",
+  "is_free": false,
+  "img_prev": null,
+  "vid_prev": "https://pub-86dc5b5484314368ac5436a674b0d919.r2.dev/hero%20sections/codercrest-hero-CoycO52t.gif",
+  "row_span": 1
+ },
+ {
+  "idx": 23,
+  "title": "Augmented Sight",
+  "slug": "augmented-sight",
+  "is_free": false,
+  "img_prev": "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20260729_041402_450a6255-9925-46c6-ac7c-bc763ed89d40.png&w=1920&q=85",
+  "vid_prev": "https://pub-86dc5b5484314368ac5436a674b0d919.r2.dev/a/pportolfiooofutureArea.mp4",
+  "row_span": 1
+ },
+ {
+  "idx": 24,
+  "title": "VEX Ventures",
+  "slug": "vex-ventures-hero",
+  "is_free": true,
+  "img_prev": null,
+  "vid_prev": null,
+  "row_span": 1
+ },
+ {
+  "idx": 25,
+  "title": "Cloud Kicks",
+  "slug": "cloud-kicks",
+  "is_free": false,
+  "img_prev": "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20260729_033433_4accb007-ae1f-4f3f-888f-36d1920ba900.png&w=1280&q=85",
+  "vid_prev": "https://pub-86dc5b5484314368ac5436a674b0d919.r2.dev/a/inthecloudsna.mp4",
+  "row_span": 1
+ },
+ {
+  "idx": 26,
+  "title": "SkyElite Private Jets",
+  "slug": "skyelite-hero",
+  "is_free": true,
+  "img_prev": null,
+  "vid_prev": null,
+  "row_span": 1
+ },
+ {
+  "idx": 27,
+  "title": "Urban Jungle",
+  "slug": "urban-jungle-hero",
+  "is_free": false,
+  "img_prev": "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20260715_021124_b20d7db2-0adb-43dc-b502-1b7226d75b69.png&w=1280&q=85",
+  "vid_prev": "https://pub-86dc5b5484314368ac5436a674b0d919.r2.dev/uploaded/urbanjungleArea.mp4",
+  "row_span": 1
+ },
+ {
+  "idx": 28,
+  "title": "Routine Coach",
+  "slug": "routine-coach",
+  "is_free": false,
+  "img_prev": "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20260728_021021_3c752405-e4f3-42bb-8e54-855c48024588.png&w=1280&q=85",
+  "vid_prev": "https://pub-86dc5b5484314368ac5436a674b0d919.r2.dev/a/routinecoach.mp4",
+  "row_span": 1
+ },
+ {
+  "idx": 29,
+  "title": "Reveal Hero",
+  "slug": "reveal-hero",
+  "is_free": false,
+  "img_prev": null,
+  "vid_prev": "https://pub-86dc5b5484314368ac5436a674b0d919.r2.dev/hero%20sections/animated%20(26).webp",
+  "row_span": 1
+ },
+ {
+  "idx": 30,
+  "title": "TrustFlow",
+  "slug": "trustflow",
+  "is_free": true,
+  "img_prev": "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20260728_010206_b46e783a-6863-45fd-a368-cfe279be6998.png&w=1280&q=85",
+  "vid_prev": "https://pub-86dc5b5484314368ac5436a674b0d919.r2.dev/a/trustflowginArea.mp4",
+  "row_span": 1
+ },
+ {
+  "idx": 31,
+  "title": "Modern Agency",
+  "slug": "modern-agency",
+  "is_free": true,
+  "img_prev": null,
+  "vid_prev": "https://pub-86dc5b5484314368ac5436a674b0d919.r2.dev/hero%20sections/animated%20(27).webp",
+  "row_span": 2
+ },
+ {
+  "idx": 32,
+  "title": "Relocation Card",
+  "slug": "relocation-card",
+  "is_free": false,
+  "img_prev": "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20260727_104503_0499d5a7-1aa0-4f7e-9a3f-c8afff6c8ba6.png&w=1280&q=85",
+  "vid_prev": "https://pub-86dc5b5484314368ac5436a674b0d919.r2.dev/a/fiancnecardportelArea.mp4",
+  "row_span": 1
+ },
+ {
+  "idx": 33,
+  "title": "Liquid Glass Agency",
+  "slug": "liquid-glass-agency",
+  "is_free": false,
+  "img_prev": null,
+  "vid_prev": null,
+  "row_span": 2
+ },
+ {
+  "idx": 34,
+  "title": "Form Study",
+  "slug": "form-study",
+  "is_free": false,
+  "img_prev": "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20260727_082938_3b42fcea-b84a-478a-8563-5a6c45d0cf5b.png&w=1280&q=85",
+  "vid_prev": "https://pub-86dc5b5484314368ac5436a674b0d919.r2.dev/a/Form-Study.mp4",
+  "row_span": 1
+ },
+ {
+  "idx": 35,
+  "title": "Luxury Ecommerce Design",
+  "slug": "luxury-editorial-ecommerce-design",
+  "is_free": false,
+  "img_prev": null,
+  "vid_prev": "https://pub-86dc5b5484314368ac5436a674b0d919.r2.dev/hero%20sections/animated%20(77).webp",
+  "row_span": 2
+ },
+ {
+  "idx": 36,
+  "title": "Digital Director",
+  "slug": "digital-director",
+  "is_free": true,
+  "img_prev": "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20260727_081359_47fef343-aa4e-43bd-8943-842eb80ef92b.png&w=1280&q=85",
+  "vid_prev": "https://pub-86dc5b5484314368ac5436a674b0d919.r2.dev/a/digitaldirector.mp4",
+  "row_span": 1
+ },
+ {
+  "idx": 37,
+  "title": "Grow AI Talent Platform",
+  "slug": "grow-ai-hero",
+  "is_free": false,
+  "img_prev": null,
+  "vid_prev": null,
+  "row_span": 1
+ },
+ {
+  "idx": 38,
+  "title": "Custom Spaces",
+  "slug": "custom-spaces",
+  "is_free": false,
+  "img_prev": "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20260727_074308_bfb4e106-62b6-4177-a511-ce8ad80d00d8.png&w=1280&q=85",
+  "vid_prev": "https://pub-86dc5b5484314368ac5436a674b0d919.r2.dev/Custom%20SpacesArea.mp4",
+  "row_span": 1
+ },
+ {
+  "idx": 39,
+  "title": "Aethera Studio",
+  "slug": "aethera-hero",
+  "is_free": true,
+  "img_prev": null,
+  "vid_prev": null,
+  "row_span": 1
+ },
+ {
+  "idx": 40,
+  "title": "Glassmorphism Agency Hero",
+  "slug": "5",
+  "is_free": false,
+  "img_prev": null,
+  "vid_prev": null,
+  "row_span": 1
+ },
+ {
+  "idx": 41,
+  "title": "Arctic Lab",
+  "slug": "arctic-lab",
+  "is_free": false,
+  "img_prev": "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20260725_094510_db7c3828-c1ad-4e53-b682-0a29e96418a6.png&w=1280&q=85",
+  "vid_prev": "https://pub-86dc5b5484314368ac5436a674b0d919.r2.dev/avideos/icebergArea.mp4",
+  "row_span": 1
+ },
+ {
+  "idx": 42,
+  "title": "Asme",
+  "slug": "asme-hero",
+  "is_free": true,
+  "img_prev": "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20260715_020600_5ede1c43-1f5f-4d94-9292-4f1725bec0fc.png&w=1280&q=85",
+  "vid_prev": null,
+  "row_span": 1
+ },
+ {
+  "idx": 43,
+  "title": "Avant Studio",
+  "slug": "avant-studio",
+  "is_free": false,
+  "img_prev": "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20260725_082843_5657b165-785a-4478-9045-4d781218ac6a.png&w=1280&q=85",
+  "vid_prev": "https://pub-86dc5b5484314368ac5436a674b0d919.r2.dev/avideos/theinteractiveArea.mp4",
+  "row_span": 1
+ },
+ {
+  "idx": 44,
+  "title": "Logoisum Video Agency Hero",
+  "slug": "14",
+  "is_free": false,
+  "img_prev": null,
+  "vid_prev": null,
+  "row_span": 1
+ },
+ {
+  "idx": 45,
+  "title": "Editorial Eyewear",
+  "slug": "editorial-eyewear",
+  "is_free": false,
+  "img_prev": "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20260725_062453_dc114dcf-5023-4772-b5ed-37e16147412a.png&w=1280&q=85",
+  "vid_prev": "https://pub-86dc5b5484314368ac5436a674b0d919.r2.dev/a/eurwareeditorial.mp4",
+  "row_span": 1
+ },
+ {
+  "idx": 46,
+  "title": "Innovation",
+  "slug": "innovation-landing",
+  "is_free": true,
+  "img_prev": null,
+  "vid_prev": null,
+  "row_span": 2
+ },
+ {
+  "idx": 47,
+  "title": "Remote Dev Collective",
+  "slug": "remote-dev-collective",
+  "is_free": false,
+  "img_prev": "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20260724_034105_16e3c543-1eaa-4584-9692-6e186d6a51b1.png&w=1920&q=85",
+  "vid_prev": "https://pub-86dc5b5484314368ac5436a674b0d919.r2.dev/a/remotedevteamArea.mp4",
+  "row_span": 1
+ }
+]
