@@ -1,0 +1,453 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>可以走进去的梵高小镇 · Opus 临摹</title>
+<meta name="description" content="对 @petergostev 用 GPT-6 Astra 做的 Walk Through Van Gogh 的临摹重写：星夜、黄房子、夜间露天咖啡座与柏树，合成一座可以走进去的小镇。">
+<link rel="stylesheet" href="../../assets/work.css">
+<style>
+  body { background: #0a1030; }
+  /* 画布纹理与笔触感：一层极淡的斜向条纹叠在 3D 之上 */
+  .canvasgrain {
+    position: fixed; inset: 0; z-index: 5; pointer-events: none; opacity: .5;
+    background:
+      repeating-linear-gradient(58deg, rgba(255,255,255,.055) 0 1px, transparent 1px 3px),
+      repeating-linear-gradient(-32deg, rgba(0,0,0,.05) 0 1px, transparent 1px 4px);
+    mix-blend-mode: overlay;
+  }
+  .vignette {
+    position: fixed; inset: 0; z-index: 6; pointer-events: none;
+    background: radial-gradient(78% 62% at 50% 48%, transparent 40%, rgba(4,7,24,.62) 100%);
+  }
+  .placard {
+    position: fixed; z-index: 16; left: 50%; bottom: 96px; transform: translateX(-50%);
+    text-align: center; pointer-events: none; transition: opacity .6s; max-width: 86vw;
+  }
+  .placard span { font-size: 10.5px; letter-spacing: .32em; text-transform: uppercase; color: rgba(255,225,150,.75); }
+  .placard b { display: block; margin-top: 6px; font-size: 19px; font-weight: 500; letter-spacing: .08em; color: #fff4dc; }
+  .placard i { display: block; margin-top: 4px; font-size: 11.5px; font-style: normal; color: rgba(255,244,220,.5); }
+</style>
+</head>
+<body>
+
+<div class="loading" id="loading">正在调色 · MIXING THE PALETTE</div>
+<div class="canvasgrain"></div>
+<div class="vignette"></div>
+
+<div class="topbar">
+  <a href="../../index.html">← 对照总览</a>
+  <div class="ttl">可以走进去的梵高小镇<span>OPUS 临摹</span></div>
+  <div class="spacer"></div>
+  <a href="https://x.com/petergostev/status/2095776685807346105" target="_blank" rel="noopener">原作 @petergostev ↗</a>
+</div>
+
+<div class="placard" id="placard"><span>Arles, 1888</span><b>星空下的小镇</b><i>走近任意一处，会告诉你它出自哪幅画</i></div>
+
+<div class="panel">
+  <h2>漫游</h2>
+  <label>夜色 <b id="nightv">0.75</b></label>
+  <input type="range" id="night" min="0" max="1" step="0.01" value="0.75">
+  <label>笔触涌动 <b id="swirlv">1.00</b></label>
+  <input type="range" id="swirl" min="0" max="2" step="0.01" value="1">
+  <div class="btnrow">
+    <button class="btn on" id="auto">自动漫游</button>
+    <button class="btn" id="run">加速</button>
+  </div>
+</div>
+
+<div class="hint" id="hint">W A S D 走动 · 拖拽环视 · 走近建筑看标签</div>
+
+<script src="../../assets/vendor/three.min.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  var renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 1.8));
+  renderer.setSize(innerWidth, innerHeight);
+  document.body.appendChild(renderer.domElement);
+
+  var scene = new THREE.Scene();
+  scene.fog = new THREE.Fog(0x121a44, 26, 120);
+  var camera = new THREE.PerspectiveCamera(64, innerWidth / innerHeight, 0.1, 600);
+  camera.position.set(0, 1.7, 26);
+
+  // ---------- 光：月色为主，街灯为辅 ----------
+  var moon = new THREE.DirectionalLight(0x9fb6ff, 0.55);
+  moon.position.set(-18, 26, -10);
+  scene.add(moon);
+  var amb = new THREE.AmbientLight(0x4a5aa0, 0.75);
+  scene.add(amb);
+
+  // ---------- 星夜天空：一个带漩涡噪声的天穹 ----------
+  var SKY_FS = [
+    'varying vec3 vPos;',
+    'uniform float uTime; uniform float uNight; uniform float uSwirl;',
+    'float hash(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }',
+    'float noise(vec2 p){',
+    '  vec2 i = floor(p), f = fract(p);',
+    '  vec2 u = f * f * (3.0 - 2.0 * f);',
+    '  return mix(mix(hash(i), hash(i + vec2(1,0)), u.x), mix(hash(i + vec2(0,1)), hash(i + vec2(1,1)), u.x), u.y);',
+    '}',
+    'float fbm(vec2 p){',
+    '  float v = 0.0, a = 0.5;',
+    '  for (int i = 0; i < 5; i++) { v += a * noise(p); p *= 2.02; a *= 0.5; }',
+    '  return v;',
+    '}',
+    'void main(){',
+    '  vec3 d = normalize(vPos);',
+    '  vec2 uv = vec2(atan(d.z, d.x) * 1.1, d.y * 2.4);',
+    '  float t = uTime * 0.06 * uSwirl;',
+    // 两层相互扭曲的噪声 → 梵高式的旋涡笔触
+    // 两次域扭曲，把噪声卷成一圈圈的笔触
+    '  float n1 = fbm(uv * 1.5 + vec2(t, 0.0));',
+    '  vec2 warp = uv * 2.2 + vec2(cos(n1 * 6.2831), sin(n1 * 6.2831)) * 1.35;',
+    '  float n2 = fbm(warp + vec2(-t * 0.5, t * 0.2));',
+    '  float swirl = smoothstep(-0.35, 0.75, sin(warp.x * 2.2 + warp.y * 1.1 + n2 * 9.0 + t * 1.2));',
+    '  float fine = smoothstep(0.42, 0.95, fbm(warp * 3.4 - t * 0.3));',
+    '  float band = smoothstep(-0.25, 0.85, d.y);',
+    '  vec3 deep = vec3(0.03, 0.07, 0.26);',
+    '  vec3 mid  = vec3(0.09, 0.24, 0.62);',
+    '  vec3 pale = vec3(0.46, 0.66, 0.95);',
+    '  vec3 col = mix(deep, mid, band);',
+    '  col = mix(col, pale, swirl * 0.62 * band);',
+    '  col += vec3(0.30, 0.40, 0.56) * fine * band * 0.5;',
+    // 星星：分格取点，每格最多一颗，外面套一圈厚颜料似的光晕
+    '  vec2 sc = uv * 5.0;',
+    '  vec2 sid = floor(sc); vec2 sf = fract(sc) - 0.5;',
+    '  float sr = hash(sid);',
+    '  float sd = length(sf - (vec2(hash(sid + 3.1), hash(sid + 7.7)) - 0.5) * 0.7);',
+    '  float keep = step(0.62, sr) * band;',
+    '  float tw = 0.75 + 0.25 * sin(uTime * 2.0 + sr * 40.0);',
+    '  col += vec3(1.0, 0.88, 0.50) * smoothstep(0.13, 0.0, sd) * keep * (0.9 + 1.3 * tw);',
+    '  col += vec3(0.95, 0.82, 0.45) * smoothstep(0.42, 0.02, sd) * keep * 0.3 * tw;',
+    // 月亮
+    '  vec3 moonDir = normalize(vec3(-0.55, 0.62, -0.42));',
+    '  float md = distance(d, moonDir);',
+    '  col += vec3(1.0, 0.93, 0.66) * smoothstep(0.075, 0.0, md) * 2.0;',
+    '  col += vec3(0.95, 0.85, 0.52) * smoothstep(0.32, 0.05, md) * 0.34;',
+    // 地平线附近压暗，白天则整体提亮
+    '  col = mix(col * 1.9 + vec3(0.22, 0.2, 0.12), col, uNight);',
+    '  col *= smoothstep(-0.45, 0.1, d.y) * 0.6 + 0.4;',
+    '  gl_FragColor = vec4(col, 1.0);',
+    '}'
+  ].join('\n');
+
+  var skyMat = new THREE.ShaderMaterial({
+    side: THREE.BackSide, depthWrite: false,
+    uniforms: { uTime: { value: 0 }, uNight: { value: 0.75 }, uSwirl: { value: 1 } },
+    vertexShader: 'varying vec3 vPos; void main(){ vPos = position; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+    fragmentShader: SKY_FS
+  });
+  scene.add(new THREE.Mesh(new THREE.SphereGeometry(300, 48, 32), skyMat));
+
+  // ---------- 颜料材质：略带油画感的平面着色 ----------
+  function paint(color, opts) {
+    return new THREE.MeshPhongMaterial(Object.assign({
+      color: color, flatShading: true, shininess: 2, specular: 0x0a0a0a
+    }, opts || {}));
+  }
+
+  var town = new THREE.Group();
+  scene.add(town);
+
+  // 地面
+  var groundGeo = new THREE.PlaneGeometry(320, 320, 60, 60);
+  groundGeo.rotateX(-Math.PI / 2);
+  var gp = groundGeo.attributes.position, gcol = [];
+  var earthA = new THREE.Color(0x2f3a22), earthB = new THREE.Color(0x4a4726), earthC = new THREE.Color(0x1d2a2a);
+  for (var i = 0; i < gp.count; i++) {
+    var x = gp.getX(i), z = gp.getZ(i);
+    gp.setY(i, Math.sin(x * 0.07) * 0.5 + Math.cos(z * 0.05) * 0.6 - 0.2);
+    var m = (Math.sin(x * 0.3) * Math.cos(z * 0.27) + 1) / 2;
+    var c = m < 0.5 ? earthA.clone().lerp(earthB, m * 2) : earthB.clone().lerp(earthC, (m - 0.5) * 2);
+    gcol.push(c.r, c.g, c.b);
+  }
+  groundGeo.setAttribute('color', new THREE.Float32BufferAttribute(gcol, 3));
+  groundGeo.computeVertexNormals();
+  town.add(new THREE.Mesh(groundGeo, paint(0xffffff, { vertexColors: true })));
+
+  // ---------- 笔触草地：InstancedMesh 铺的小色块 ----------
+  function strokeField(count, inner, outer, colors, sizeY, tilt) {
+    var geo = new THREE.PlaneGeometry(0.1, sizeY);
+    geo.translate(0, sizeY / 2, 0);
+    var mat = new THREE.MeshBasicMaterial({ side: THREE.DoubleSide, vertexColors: false });
+    var mesh = new THREE.InstancedMesh(geo, mat, count);
+    var dummy = new THREE.Object3D(), col = new THREE.Color();
+    for (var i = 0; i < count; i++) {
+      var a = Math.random() * Math.PI * 2, r = inner + Math.random() * (outer - inner);
+      dummy.position.set(Math.cos(a) * r, -0.1, Math.sin(a) * r);
+      dummy.rotation.set((Math.random() - 0.5) * tilt, Math.random() * Math.PI, (Math.random() - 0.5) * tilt);
+      dummy.scale.set(0.7 + Math.random() * 0.8, 0.55 + Math.random() * 0.8, 1);
+      dummy.updateMatrix();
+      mesh.setMatrixAt(i, dummy.matrix);
+      col.setHex(colors[(Math.random() * colors.length) | 0]);
+      col.multiplyScalar(0.55 + Math.random() * 0.5);
+      mesh.setColorAt(i, col);
+    }
+    mesh.instanceMatrix.needsUpdate = true;
+    if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
+    town.add(mesh);
+    return mesh;
+  }
+  strokeField(11000, 5, 95, [0x4c6b2f, 0x6d7a2c, 0x8d8a2e, 0x39512a], 0.5, 0.7);      // 草
+  strokeField(7000, 42, 120, [0xd8a93a, 0xe8c35a, 0xb98a2c], 0.8, 0.35);              // 麦田
+
+  // ---------- 建筑：每一处对应一幅画 ----------
+  var landmarks = [];
+  function addLandmark(obj, x, z, title, sub) {
+    obj.position.set(x, 0, z);
+    town.add(obj);
+    landmarks.push({ x: x, z: z, title: title, sub: sub });
+  }
+
+  // 《黄房子》
+  (function () {
+    var g = new THREE.Group();
+    var body = new THREE.Mesh(new THREE.BoxGeometry(9, 6, 7), paint(0xe8b93c));
+    body.position.y = 3; g.add(body);
+    var wing = new THREE.Mesh(new THREE.BoxGeometry(5, 4.4, 6), paint(0xd9a733));
+    wing.position.set(-6.4, 2.2, -0.4); g.add(wing);
+    var roof = new THREE.Mesh(new THREE.BoxGeometry(9.6, 0.5, 7.6), paint(0x6a5326));
+    roof.position.y = 6.2; g.add(roof);
+    // 蓝绿色百叶窗
+    for (var fx = -1; fx <= 1; fx++) {
+      for (var fy = 0; fy < 2; fy++) {
+        var win = new THREE.Mesh(new THREE.BoxGeometry(1.1, 1.6, 0.2), paint(0x2c6b6b, { emissive: 0x143434 }));
+        win.position.set(fx * 2.8, 1.9 + fy * 2.2, 3.55);
+        g.add(win);
+      }
+    }
+    var door = new THREE.Mesh(new THREE.BoxGeometry(1.3, 2.4, 0.24), paint(0x1f4d4d));
+    door.position.set(0, 1.2, 3.56); g.add(door);
+    addLandmark(g, -16, -6, '黄房子', 'The Yellow House · Arles 1888');
+  })();
+
+  // 《夜间露天咖啡座》
+  (function () {
+    var g = new THREE.Group();
+    var wall = new THREE.Mesh(new THREE.BoxGeometry(8, 5.5, 5), paint(0xb8862f));
+    wall.position.set(0, 2.75, -2.4); g.add(wall);
+    var awning = new THREE.Mesh(new THREE.BoxGeometry(9.4, 0.35, 6.4), paint(0xf5c33f, { emissive: 0x6a4c0e }));
+    awning.position.set(0, 3.5, 1.6);
+    awning.rotation.x = -0.07; g.add(awning);
+    // 灯：把露台照成暖黄
+    var lamp = new THREE.PointLight(0xffcf72, 2.2, 17, 2);
+    lamp.position.set(0, 3.1, 1.4); g.add(lamp);
+    var bulb = new THREE.Mesh(new THREE.SphereGeometry(0.16, 10, 8), new THREE.MeshBasicMaterial({ color: 0xfff0b8 }));
+    bulb.position.copy(lamp.position); g.add(bulb);
+    // 桌椅
+    for (var i = 0; i < 5; i++) {
+      var tx = -3.2 + i * 1.6, tz = 2.4 + (i % 2) * 1.6;
+      var top = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.55, 0.12, 12), paint(0xdcc79a));
+      top.position.set(tx, 0.85, tz); g.add(top);
+      var leg = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.85, 8), paint(0x4a3a22));
+      leg.position.set(tx, 0.42, tz); g.add(leg);
+      for (var c = 0; c < 2; c++) {
+        var chair = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.1, 0.5), paint(0x8a6a33));
+        chair.position.set(tx + (c ? 0.95 : -0.95), 0.55, tz + 0.2); g.add(chair);
+      }
+    }
+    // 鹅卵石广场
+    var plaza = new THREE.Mesh(new THREE.CircleGeometry(9, 26), paint(0x4b4470));
+    plaza.rotation.x = -Math.PI / 2; plaza.position.y = 0.05; g.add(plaza);
+    addLandmark(g, 14, 4, '夜间的露天咖啡座', 'Café Terrace at Night · Arles 1888');
+  })();
+
+  // 《奥维尔的教堂》
+  (function () {
+    var g = new THREE.Group();
+    var nave = new THREE.Mesh(new THREE.BoxGeometry(7, 7, 10), paint(0x3d4a86));
+    nave.position.y = 3.5; g.add(nave);
+    var tower = new THREE.Mesh(new THREE.BoxGeometry(4.2, 12, 4.2), paint(0x45538f));
+    tower.position.set(0, 6, 5.4); g.add(tower);
+    var spire = new THREE.Mesh(new THREE.ConeGeometry(3.1, 5.5, 4), paint(0x2a3468));
+    spire.position.set(0, 14.6, 5.4); spire.rotation.y = Math.PI / 4; g.add(spire);
+    var roof = new THREE.Mesh(new THREE.BoxGeometry(7.6, 0.6, 10.6), paint(0x2b3564));
+    roof.position.y = 7.2; g.add(roof);
+    for (var w = 0; w < 3; w++) {
+      var win = new THREE.Mesh(new THREE.BoxGeometry(0.25, 2.6, 1.1), new THREE.MeshBasicMaterial({ color: 0xffc95e }));
+      win.position.set(3.55, 3.6, -3 + w * 3); g.add(win);
+    }
+    addLandmark(g, -6, -34, '奥维尔的教堂', 'The Church at Auvers · 1890');
+  })();
+
+  // 《罗纳河上的星夜》：河与倒影
+  (function () {
+    var g = new THREE.Group();
+    var river = new THREE.Mesh(
+      new THREE.PlaneGeometry(28, 130, 1, 40),
+      new THREE.MeshPhongMaterial({ color: 0x16306b, shininess: 120, specular: 0xa9c6ff, transparent: true, opacity: 0.92 })
+    );
+    river.rotation.x = -Math.PI / 2;
+    river.position.y = -0.35;
+    g.add(river);
+    g.userData.river = river;
+    for (var i = 0; i < 9; i++) {
+      var refl = new THREE.Mesh(new THREE.PlaneGeometry(0.6, 9),
+        new THREE.MeshBasicMaterial({ color: 0xffd77a, transparent: true, opacity: 0.42, blending: THREE.AdditiveBlending, depthWrite: false }));
+      refl.rotation.x = -Math.PI / 2;
+      refl.position.set(-11 + i * 2.6, -0.3, -14 + (i % 3) * 12);
+      g.add(refl);
+    }
+    addLandmark(g, 36, -26, '罗纳河上的星夜', 'Starry Night Over the Rhône · 1888');
+    riverGroup = g;
+  })();
+  var riverGroup;
+
+  // 柏树（《星月夜》里的那一株）
+  function cypress(x, z, h) {
+    var g = new THREE.Group();
+    for (var i = 0; i < 7; i++) {
+      var seg = new THREE.Mesh(
+        new THREE.ConeGeometry(1.5 - i * 0.17, h / 4.2, 6),
+        paint(i % 2 ? 0x1f3320 : 0x28402a)
+      );
+      seg.position.y = 1.4 + i * (h / 8.4);
+      seg.rotation.y = i * 0.7;
+      seg.scale.set(1, 1, 0.85);
+      g.add(seg);
+    }
+    g.position.set(x, 0, z);
+    g.userData.sway = Math.random() * 6.28;
+    town.add(g);
+    return g;
+  }
+  var cypresses = [
+    cypress(-3, 12, 15), cypress(3.5, 15, 11), cypress(-26, -18, 13),
+    cypress(24, -12, 12), cypress(-34, 8, 10), cypress(44, 10, 14)
+  ];
+
+  // 零散的农舍，把小镇填满
+  for (var h = 0; h < 12; h++) {
+    var ha = Math.random() * Math.PI * 2, hr = 30 + Math.random() * 52;
+    var hx = Math.cos(ha) * hr, hz = Math.sin(ha) * hr;
+    if (Math.abs(hx - 36) < 18 && Math.abs(hz + 26) < 60) continue;   // 避开河
+    var hg = new THREE.Group();
+    var hw = 3 + Math.random() * 3, hh = 2.6 + Math.random() * 2.4;
+    var hb = new THREE.Mesh(new THREE.BoxGeometry(hw, hh, hw * 0.9), paint([0xb8a06a, 0xa88f5e, 0xc9b077][(Math.random() * 3) | 0]));
+    hb.position.y = hh / 2; hg.add(hb);
+    var hr2 = new THREE.Mesh(new THREE.ConeGeometry(hw * 0.9, 1.8, 4), paint(0x7b3f2c));
+    hr2.position.y = hh + 0.9; hr2.rotation.y = Math.PI / 4; hg.add(hr2);
+    var hwin = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.7, 0.12), new THREE.MeshBasicMaterial({ color: 0xffcb63 }));
+    hwin.position.set(0, hh * 0.6, hw * 0.46); hg.add(hwin);
+    hg.position.set(hx, 0, hz);
+    hg.rotation.y = Math.random() * 6.28;
+    town.add(hg);
+  }
+
+  // ---------- 第一人称漫游 ----------
+  var yaw = Math.PI, pitch = -0.04, pos = new THREE.Vector3(0, 1.7, 26);
+  var keys = {}, dragging = false, lx = 0, ly = 0, autoWalk = true, running = false;
+  var el = renderer.domElement;
+  el.addEventListener('pointerdown', function (e) { dragging = true; lx = e.clientX; ly = e.clientY; });
+  addEventListener('pointerup', function () { dragging = false; });
+  addEventListener('pointermove', function (e) {
+    if (!dragging) return;
+    yaw -= (e.clientX - lx) * 0.004;
+    pitch = THREE.MathUtils.clamp(pitch - (e.clientY - ly) * 0.003, -0.7, 0.7);
+    lx = e.clientX; ly = e.clientY;
+    setAuto(false);
+  });
+  addEventListener('keydown', function (e) {
+    keys[e.key.toLowerCase()] = true;
+    if ('wasd'.indexOf(e.key.toLowerCase()) >= 0) setAuto(false);
+  });
+  addEventListener('keyup', function (e) { keys[e.key.toLowerCase()] = false; });
+  function setAuto(on) { autoWalk = on; document.getElementById('auto').classList.toggle('on', on); }
+  document.getElementById('auto').onclick = function () { setAuto(!autoWalk); };
+  document.getElementById('run').onclick = function () { running = !running; this.classList.toggle('on', running); };
+
+  var nightEl = document.getElementById('night'), swirlEl = document.getElementById('swirl');
+  nightEl.oninput = function () { document.getElementById('nightv').textContent = (+nightEl.value).toFixed(2); };
+  swirlEl.oninput = function () { document.getElementById('swirlv').textContent = (+swirlEl.value).toFixed(2); };
+
+  addEventListener('resize', function () {
+    camera.aspect = innerWidth / innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(innerWidth, innerHeight);
+  });
+
+  var q = new URLSearchParams(location.search);
+  if (q.get('x')) pos.x = +q.get('x');
+  if (q.get('z')) pos.z = +q.get('z');
+  if (q.get('yaw')) yaw = +q.get('yaw');
+  if (q.get('auto') === '0') setAuto(false);
+
+  // ---------- 主循环 ----------
+  var clock = new THREE.Clock();
+  var placard = document.getElementById('placard'), hintEl = document.getElementById('hint');
+  var curLandmark = null, fwd = new THREE.Vector3(), right = new THREE.Vector3();
+
+  function tick() {
+    requestAnimationFrame(tick);
+    var dt = Math.min(clock.getDelta(), 0.05), t = clock.elapsedTime;
+    var night = +nightEl.value;
+
+    skyMat.uniforms.uTime.value = t;
+    skyMat.uniforms.uNight.value = night;
+    skyMat.uniforms.uSwirl.value = +swirlEl.value;
+    moon.intensity = 0.35 + (1 - night) * 1.5;
+    amb.intensity = 0.45 + (1 - night) * 0.85;
+    amb.color.setHSL(0.62 - (1 - night) * 0.13, 0.45, 0.45 + (1 - night) * 0.12);
+    scene.fog.color.setHSL(0.63 - (1 - night) * 0.1, 0.45, 0.1 + (1 - night) * 0.32);
+
+    // 移动
+    var speed = (running ? 13 : 6.2) * dt;
+    fwd.set(Math.sin(yaw), 0, Math.cos(yaw));
+    right.set(Math.sin(yaw + Math.PI / 2), 0, Math.cos(yaw + Math.PI / 2));
+    if (autoWalk) {
+      yaw += Math.sin(t * 0.08) * dt * 0.22;
+      pos.addScaledVector(fwd, -speed * 0.62);
+    } else {
+      if (keys['w'] || keys['arrowup']) pos.addScaledVector(fwd, -speed);
+      if (keys['s'] || keys['arrowdown']) pos.addScaledVector(fwd, speed);
+      if (keys['a'] || keys['arrowleft']) pos.addScaledVector(right, -speed);
+      if (keys['d'] || keys['arrowright']) pos.addScaledVector(right, speed);
+    }
+    var rad = Math.hypot(pos.x, pos.z);
+    if (rad > 96) { pos.x *= 96 / rad; pos.z *= 96 / rad; if (autoWalk) yaw += 2.4; }
+
+    // 地面起伏 + 走路时的轻微起落
+    var groundY = Math.sin(pos.x * 0.07) * 0.5 + Math.cos(pos.z * 0.05) * 0.6 - 0.2;
+    camera.position.set(pos.x, groundY + 1.75 + Math.sin(t * 6) * 0.035, pos.z);
+    camera.rotation.set(0, 0, 0);
+    camera.rotateY(yaw);
+    camera.rotateX(pitch);
+
+    // 柏树随风
+    for (var i = 0; i < cypresses.length; i++) {
+      var cy = cypresses[i];
+      cy.rotation.z = Math.sin(t * 0.6 + cy.userData.sway) * 0.05;
+      cy.rotation.x = Math.cos(t * 0.45 + cy.userData.sway) * 0.035;
+    }
+    // 河面微澜
+    if (riverGroup) riverGroup.userData.river.material.shininess = 90 + Math.sin(t * 0.8) * 40;
+
+    // 走近哪幅画
+    var near = null, best = 22;
+    for (var k = 0; k < landmarks.length; k++) {
+      var d = Math.hypot(landmarks[k].x - pos.x, landmarks[k].z - pos.z);
+      if (d < best) { best = d; near = landmarks[k]; }
+    }
+    if (near !== curLandmark) {
+      curLandmark = near;
+      if (near) {
+        placard.innerHTML = '<span>' + near.sub.split('·')[1].trim() + '</span><b>' + near.title + '</b><i>' + near.sub.split('·')[0].trim() + '</i>';
+        placard.style.opacity = 1;
+      } else {
+        placard.style.opacity = 0;
+      }
+    }
+    if (t > 8) hintEl.style.opacity = 0;
+
+    renderer.render(scene, camera);
+  }
+
+  tick();
+  setTimeout(function () { document.getElementById('loading').classList.add('gone'); }, 600);
+})();
+</script>
+</body>
+</html>

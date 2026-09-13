@@ -1,0 +1,509 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>V8 四冲程剖面 · Opus 临摹</title>
+<meta name="description" content="对 @DilumSanjaya 用 GPT-6 Astra 做的交互式 V8 发动机可视化的临摹重写：曲轴、连杆、气门正时与点火顺序都按真实几何在跑。">
+<link rel="stylesheet" href="../../assets/work.css">
+<style>
+  body { background: radial-gradient(110% 80% at 50% 30%, #1b1f25 0%, #0c0e12 60%, #05070a 100%); }
+  .firing {
+    position: fixed; z-index: 18; right: 18px; top: 62px; width: 212px;
+    padding: 14px 16px; border: 1px solid var(--line); border-radius: 14px;
+    background: var(--glass); backdrop-filter: blur(14px); font-size: 12px;
+  }
+  .firing h2 { margin: 0 0 10px; font-size: 10px; letter-spacing: .1em; white-space: nowrap; text-transform: uppercase; color: var(--dim); }
+  .order { display: flex; gap: 5px; margin-bottom: 14px; }
+  .order i {
+    flex: 1; height: 26px; display: grid; place-items: center; font-style: normal;
+    border: 1px solid var(--line); border-radius: 7px; font-size: 11px; color: var(--dim);
+    transition: all .12s;
+  }
+  .order i.hot { background: #ff8a3d; border-color: #ff8a3d; color: #1a0d04; font-weight: 700; }
+  .bars { display: grid; gap: 5px; }
+  .bars div { display: flex; align-items: center; gap: 7px; font-size: 10.5px; color: var(--dim); }
+  .bars span { flex: 1; height: 6px; border-radius: 4px; background: rgba(255,255,255,.09); overflow: hidden; }
+  .bars span b { display: block; height: 100%; width: 0%; border-radius: 4px; background: linear-gradient(90deg, #4fd8ff, #ff8a3d); }
+  .bars em { width: 52px; font-style: normal; letter-spacing: .02em; }
+  .strokelead {
+    position: fixed; z-index: 16; left: 50%; top: 60px; transform: translateX(-50%);
+    text-align: center; pointer-events: none;
+  }
+  .strokelead span { font-size: 10.5px; letter-spacing: .34em; text-transform: uppercase; color: rgba(242,245,248,.45); }
+  .strokelead b { display: block; margin-top: 5px; font-size: 18px; font-weight: 600; letter-spacing: .1em; }
+  @media (max-width: 960px) { .firing { display: none; } }
+</style>
+</head>
+<body>
+
+<div class="loading" id="loading">装配发动机 · BUILDING THE V8</div>
+
+<div class="topbar">
+  <a href="../../index.html">← 对照总览</a>
+  <div class="ttl">V8 四冲程剖面<span>OPUS 临摹</span></div>
+  <div class="spacer"></div>
+  <a href="https://x.com/DilumSanjaya/status/2096280244663775423" target="_blank" rel="noopener">原作 @DilumSanjaya ↗</a>
+</div>
+
+<div class="strokelead"><span id="focusName">CYLINDER 1</span><b id="focusStroke">做功</b></div>
+
+<div class="firing">
+  <h2>点火顺序 1-8-4-3-6-5-7-2</h2>
+  <div class="order" id="order"></div>
+  <h2>缸内压力</h2>
+  <div class="bars" id="bars"></div>
+</div>
+
+<div class="panel">
+  <h2>运行参数</h2>
+  <label>转速 <b id="rpmv">1200</b> rpm</label>
+  <input type="range" id="rpm" min="0" max="6500" step="50" value="1200">
+  <div class="btnrow">
+    <button class="btn on" id="cut">剖切缸体</button>
+    <button class="btn" id="slow">单步慢放</button>
+  </div>
+  <div class="btnrow">
+    <button class="btn on" id="phase">冲程配色</button>
+    <button class="btn on" id="spin">自动旋转</button>
+  </div>
+</div>
+
+<div class="readout">
+  <div class="big" id="deg">0°</div>
+  <div class="sub">crank angle</div>
+</div>
+
+<div class="hint" id="hint">拖拽旋转 · 滚轮缩放 · 点击任意缸锁定观察</div>
+
+<script src="../../assets/vendor/three.min.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  // ================= 参数 =================
+  var R = 1.0;            // 曲柄半径（冲程的一半）
+  var L = 2.75;           // 连杆长度
+  var BORE = 0.82;        // 缸径半径
+  var SPACING = 2.5;      // 相邻曲拐间距
+  var BANK = Math.PI / 4; // 两列夹角 90° → 各偏 45°
+  var DEG = Math.PI / 180;
+
+  // 十字平面曲轴：四个曲拐相位 0/90/270/180
+  var PIN = [0, 90, 270, 180];
+  // 缸号 → {bank: -1 左 / +1 右, throw: 0..3}
+  var CYL = [
+    { id: 1, bank: -1, thr: 0 }, { id: 3, bank: -1, thr: 1 }, { id: 5, bank: -1, thr: 2 }, { id: 7, bank: -1, thr: 3 },
+    { id: 2, bank: 1, thr: 0 },  { id: 4, bank: 1, thr: 1 },  { id: 6, bank: 1, thr: 2 },  { id: 8, bank: 1, thr: 3 }
+  ];
+  var ORDER = [1, 8, 4, 3, 6, 5, 7, 2];   // 经典十字平面 V8 点火顺序
+
+  // ================= 渲染基础 =================
+  var renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  renderer.setSize(innerWidth, innerHeight);
+  document.body.appendChild(renderer.domElement);
+
+  var scene = new THREE.Scene();
+  var camera = new THREE.PerspectiveCamera(42, innerWidth / innerHeight, 0.1, 300);
+
+  scene.add(new THREE.AmbientLight(0x46505c, 0.9));
+  var key = new THREE.DirectionalLight(0xffffff, 1.0); key.position.set(9, 12, 8); scene.add(key);
+  var fill = new THREE.DirectionalLight(0x89b6ff, 0.5); fill.position.set(-10, 4, -8); scene.add(fill);
+  var under = new THREE.PointLight(0xff8b3c, 0.9, 30, 2); under.position.set(0, -4, 0); scene.add(under);
+
+  var engine = new THREE.Group();
+  scene.add(engine);
+
+  function metal(color, shininess, opts) {
+    return new THREE.MeshPhongMaterial(Object.assign({
+      color: color, shininess: shininess || 60, specular: 0x8899aa
+    }, opts || {}));
+  }
+
+  // ================= 曲轴 =================
+  var crank = new THREE.Group();
+  engine.add(crank);
+  var crankMat = metal(0x9aa6b4, 110);
+  var counterMat = metal(0x6b7684, 70);
+
+  // 主轴颈：一根贯穿的轴
+  var shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.42, SPACING * 4.4, 20), crankMat);
+  shaft.rotation.x = Math.PI / 2;
+  crank.add(shaft);
+
+  var pins = [];
+  for (var k = 0; k < 4; k++) {
+    var z = (k - 1.5) * SPACING;
+    var throwGrp = new THREE.Group();
+    throwGrp.position.z = z;
+    // 曲拐销
+    var pin = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 1.5, 16), crankMat);
+    pin.rotation.x = Math.PI / 2;
+    pin.position.x = R;
+    throwGrp.add(pin);
+    // 曲柄臂 + 配重
+    for (var side = -1; side <= 1; side += 2) {
+      var web = new THREE.Mesh(new THREE.BoxGeometry(R * 2.5, 1.25, 0.42), counterMat);
+      web.position.set(R / 2, 0, side * 0.92);
+      throwGrp.add(web);
+      var cw = new THREE.Mesh(new THREE.CylinderGeometry(1.15, 1.15, 0.4, 18, 1, false, Math.PI * 0.55, Math.PI * 0.9), counterMat);
+      cw.rotation.x = Math.PI / 2;
+      cw.rotation.z = Math.PI;
+      cw.position.set(0, 0, side * 0.92);
+      throwGrp.add(cw);
+    }
+    throwGrp.rotation.z = PIN[k] * DEG;
+    crank.add(throwGrp);
+    pins.push({ k: k, z: z });
+  }
+
+  // ================= 缸体 / 缸盖 =================
+  var blockMat = metal(0x3b444f, 26, { transparent: true, opacity: 0.2, depthWrite: false });
+  var blockSolid = { opacity: 0.92, depthWrite: true };
+  var headMat = metal(0x2f3741, 30, { transparent: true, opacity: 0.24, depthWrite: false });
+  var blockParts = [];
+
+  [-1, 1].forEach(function (b) {
+    var bankGrp = new THREE.Group();
+    // 缸体：一块沿 z 的斜板
+    var slab = new THREE.Mesh(new THREE.BoxGeometry(2.5, 5.6, SPACING * 4.1), blockMat);
+    slab.position.set(0, 3.3, 0);
+    bankGrp.add(slab);
+    // 缸盖
+    var head = new THREE.Mesh(new THREE.BoxGeometry(2.7, 1.5, SPACING * 4.1), headMat);
+    head.position.set(0, 6.7, 0);
+    bankGrp.add(head);
+    // 摇臂罩
+    var cover = new THREE.Mesh(new THREE.BoxGeometry(2.0, 0.8, SPACING * 4.0), metal(0x8e3226, 40, { transparent: true, opacity: 0.32, depthWrite: false }));
+    cover.position.set(0, 7.6, 0);
+    bankGrp.add(cover);
+    blockParts.push(slab, head, cover);
+
+    bankGrp.rotation.z = -b * BANK;
+    engine.add(bankGrp);
+  });
+
+  // 油底壳 + 主轴承座
+  var pan = new THREE.Mesh(new THREE.BoxGeometry(4.6, 2.2, SPACING * 4.2), metal(0x262c34, 20));
+  pan.position.y = -2.4;
+  engine.add(pan);
+  var deck = new THREE.Mesh(new THREE.BoxGeometry(5.2, 0.5, SPACING * 4.2), metal(0x333b45, 26));
+  deck.position.y = -1.15;
+  engine.add(deck);
+
+  // ================= 活塞 / 连杆 / 气门 =================
+  var pistonMat = metal(0xd9dee4, 90);
+  var rodMat = metal(0x8d98a6, 80);
+  var valveMat = metal(0xc9d2dc, 100);
+  var boreMat = new THREE.MeshPhongMaterial({
+    color: 0x17202a, shininess: 10, transparent: true, opacity: 0.35, side: THREE.DoubleSide, depthWrite: false
+  });
+  var flameMat = function () {
+    return new THREE.MeshBasicMaterial({ color: 0xff7a1e, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false });
+  };
+
+  var units = [];
+  var pickables = [];
+
+  CYL.forEach(function (c) {
+    var dirAngle = Math.PI / 2 - c.bank * BANK;             // 该列的轴线方向（从 +X 轴量起）
+    var dir = new THREE.Vector2(Math.cos(dirAngle), Math.sin(dirAngle));
+    var z = (c.thr - 1.5) * SPACING;
+
+    var g = new THREE.Group();
+    engine.add(g);
+
+    // 缸套
+    var bore = new THREE.Mesh(new THREE.CylinderGeometry(BORE + 0.12, BORE + 0.12, 3.6, 22, 1, true), boreMat);
+    bore.position.set(dir.x * 4.3, dir.y * 4.3, z);
+    bore.rotation.z = dirAngle - Math.PI / 2;
+    g.add(bore);
+
+    // 活塞（含活塞环）
+    var piston = new THREE.Mesh(new THREE.CylinderGeometry(BORE, BORE, 1.15, 22), pistonMat.clone());
+    var ring1 = new THREE.Mesh(new THREE.TorusGeometry(BORE, 0.05, 6, 24), metal(0x5c646e, 40));
+    ring1.rotation.x = Math.PI / 2; ring1.position.y = 0.34; piston.add(ring1);
+    var ring2 = ring1.clone(); ring2.position.y = 0.14; piston.add(ring2);
+    piston.rotation.z = dirAngle - Math.PI / 2;
+    g.add(piston);
+    pickables.push(piston);
+    piston.userData.cyl = c.id;
+
+    // 连杆
+    var rod = new THREE.Mesh(new THREE.BoxGeometry(0.34, L, 0.5), rodMat);
+    var rodBig = new THREE.Mesh(new THREE.CylinderGeometry(0.46, 0.46, 0.52, 14), rodMat);
+    rodBig.rotation.x = Math.PI / 2; rodBig.position.y = -L / 2; rod.add(rodBig);
+    g.add(rod);
+
+    // 燃烧室 + 火焰
+    var flame = new THREE.Mesh(new THREE.SphereGeometry(BORE * 0.95, 14, 10), flameMat());
+    g.add(flame);
+
+    // 两支气门：进气 / 排气
+    var valves = [];
+    [-1, 1].forEach(function (vs) {
+      var v = new THREE.Group();
+      var stem = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 1.9, 10), valveMat);
+      var headV = new THREE.Mesh(new THREE.CylinderGeometry(0.34, 0.3, 0.16, 14), valveMat);
+      headV.position.y = -0.98;
+      v.add(stem); v.add(headV);
+      v.userData.side = vs;
+      v.rotation.z = dirAngle - Math.PI / 2;
+      g.add(v);
+      valves.push(v);
+    });
+
+    // 火花塞
+    var plug = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.11, 0.8, 10), metal(0xe8e2cf, 40));
+    plug.rotation.z = dirAngle - Math.PI / 2;
+    plug.position.set(dir.x * 6.55, dir.y * 6.55, z);
+    g.add(plug);
+    var spark = new THREE.PointLight(0xffb066, 0, 6, 2);
+    spark.position.copy(plug.position);
+    g.add(spark);
+
+    units.push({ c: c, dir: dir, dirAngle: dirAngle, z: z, piston: piston, rod: rod, flame: flame, valves: valves, spark: spark, bore: bore });
+  });
+
+  // 凸轮轴：每列一根，半速旋转
+  var cams = [];
+  [-1, 1].forEach(function (b) {
+    var cam = new THREE.Group();
+    var axle = new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.17, SPACING * 4.1, 12), metal(0x7b8694, 70));
+    axle.rotation.x = Math.PI / 2;
+    cam.add(axle);
+    for (var i = 0; i < 8; i++) {
+      var lobe = new THREE.Mesh(new THREE.SphereGeometry(0.3, 10, 8), metal(0x9aa5b2, 70));
+      lobe.scale.set(1, 1.5, 0.5);
+      lobe.position.z = (i - 3.5) * (SPACING / 2);
+      lobe.rotation.z = i * 0.8;
+      cam.add(lobe);
+    }
+    var da = Math.PI / 2 - b * BANK;
+    cam.position.set(Math.cos(da) * 7.35, Math.sin(da) * 7.35, 0);
+    // 凸轮轴本身沿 z 轴放置，自转也绕 z —— 绕别的轴转会把整根轴甩起来
+    engine.add(cam);
+    cams.push(cam);
+  });
+
+  engine.position.y = -1.4;
+
+  // ================= 四冲程逻辑 =================
+  // 相位 0–720°：0–180 做功，180–360 排气，360–540 进气，540–720 压缩
+  var STROKES = [
+    { to: 180, name: '做功', color: 0xff7a3c },
+    { to: 360, name: '排气', color: 0x9aa5b2 },
+    { to: 540, name: '进气', color: 0x4fd8ff },
+    { to: 720, name: '压缩', color: 0xffd166 }
+  ];
+  function strokeOf(phase) {
+    for (var i = 0; i < STROKES.length; i++) if (phase < STROKES[i].to) return STROKES[i];
+    return STROKES[3];
+  }
+  // 气门升程：排气门在 140–380 开，进气门在 340–580 开
+  function lift(phase, open, close) {
+    var p = phase;
+    if (close > 720 && p < close - 720) p += 720;
+    if (p < open || p > close) return 0;
+    return Math.sin((p - open) / (close - open) * Math.PI);
+  }
+  // 缸压：压缩末端陡升，做功初段峰值后衰减
+  function pressure(phase) {
+    if (phase < 180) return Math.max(0.08, Math.exp(-phase / 62) * 1.0 + 0.06);
+    if (phase < 360) return 0.1;
+    if (phase < 540) return 0.05;
+    return 0.08 + 0.92 * Math.pow((phase - 540) / 180, 2.4);
+  }
+  // 每缸点火时刻：按点火顺序每 90° 一个
+  var fireAt = {};
+  ORDER.forEach(function (id, i) { fireAt[id] = i * 90; });
+
+  // ================= DOM =================
+  var orderEl = document.getElementById('order'), barsEl = document.getElementById('bars');
+  var orderCells = {}, barFills = {};
+  ORDER.forEach(function (id) {
+    var i = document.createElement('i');
+    i.textContent = id;
+    orderEl.appendChild(i);
+    orderCells[id] = i;
+  });
+  for (var ci = 1; ci <= 8; ci++) {
+    var row = document.createElement('div');
+    var em = document.createElement('em'); em.textContent = '缸 ' + ci;
+    var sp = document.createElement('span'); var bb = document.createElement('b');
+    sp.appendChild(bb); row.appendChild(em); row.appendChild(sp);
+    barsEl.appendChild(row);
+    barFills[ci] = bb;
+  }
+
+  // ================= 交互 =================
+  var dist = 26, targetDist = 26, yaw = 0.85, pitch = 0.3, autoSpin = true, dragging = false, px = 0, py = 0;
+  var focusCyl = 1;
+  function place() {
+    camera.position.set(
+      Math.cos(pitch) * Math.sin(yaw) * dist,
+      Math.sin(pitch) * dist + 1.5,
+      Math.cos(pitch) * Math.cos(yaw) * dist
+    );
+    camera.lookAt(0, 1.2, 0);
+  }
+  var el = renderer.domElement;
+  el.addEventListener('pointerdown', function (e) { dragging = true; px = e.clientX; py = e.clientY; setSpin(false); });
+  addEventListener('pointerup', function () { dragging = false; });
+  addEventListener('pointermove', function (e) {
+    if (!dragging) return;
+    yaw -= (e.clientX - px) * 0.006;
+    pitch = THREE.MathUtils.clamp(pitch + (e.clientY - py) * 0.004, -0.9, 1.25);
+    px = e.clientX; py = e.clientY;
+  });
+  el.addEventListener('wheel', function (e) {
+    e.preventDefault();
+    targetDist = THREE.MathUtils.clamp(targetDist + e.deltaY * 0.016, 11, 52);
+  }, { passive: false });
+
+  var ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
+  el.addEventListener('click', function (e) {
+    ndc.set(e.clientX / innerWidth * 2 - 1, -(e.clientY / innerHeight) * 2 + 1);
+    ray.setFromCamera(ndc, camera);
+    var hit = ray.intersectObjects(pickables, false)[0];
+    if (hit) focusCyl = hit.object.userData.cyl;
+  });
+
+  var rpmEl = document.getElementById('rpm');
+  var cutOn = true, phaseColor = true, slowMo = false;
+  function setSpin(on) { autoSpin = on; document.getElementById('spin').classList.toggle('on', on); }
+  document.getElementById('spin').onclick = function () { setSpin(!autoSpin); };
+  document.getElementById('cut').onclick = function () {
+    cutOn = !cutOn;
+    this.classList.toggle('on', cutOn);
+    blockParts.forEach(function (p) {
+      p.material.opacity = cutOn ? (p.material.userData.cut || 0.22) : 0.92;
+      p.material.depthWrite = !cutOn;
+      p.material.needsUpdate = true;
+    });
+    boreMat.opacity = cutOn ? 0.35 : 0.75;
+  };
+  document.getElementById('phase').onclick = function () {
+    phaseColor = !phaseColor;
+    this.classList.toggle('on', phaseColor);
+  };
+  document.getElementById('slow').onclick = function () {
+    slowMo = !slowMo;
+    this.classList.toggle('on', slowMo);
+  };
+  rpmEl.oninput = function () { document.getElementById('rpmv').textContent = rpmEl.value; };
+
+  addEventListener('resize', function () {
+    camera.aspect = innerWidth / innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(innerWidth, innerHeight);
+  });
+
+  var q = new URLSearchParams(location.search);
+  if (q.get('rpm')) { rpmEl.value = q.get('rpm'); rpmEl.oninput(); }
+  if (q.get('yaw')) yaw = +q.get('yaw');
+  if (q.get('spin') === '0') setSpin(false);
+
+  // ================= 主循环 =================
+  var clock = new THREE.Clock();
+  var theta = 0;                       // 曲轴角，单位 °，0–720 为一个完整循环
+  var up = new THREE.Vector3(0, 1, 0);
+  var vA = new THREE.Vector3(), vB = new THREE.Vector3(), vDir = new THREE.Vector3();
+  var degEl = document.getElementById('deg'), hintEl = document.getElementById('hint');
+  var focusNameEl = document.getElementById('focusName'), focusStrokeEl = document.getElementById('focusStroke');
+  var tmpColor = new THREE.Color();
+
+  function tick() {
+    requestAnimationFrame(tick);
+    var dt = Math.min(clock.getDelta(), 0.05), t = clock.elapsedTime;
+    var rpm = +rpmEl.value * (slowMo ? 0.06 : 1);
+
+    theta = (theta + rpm * 6 * dt) % 720;          // rpm → °/s 是 rpm*360/60 = rpm*6
+    if (autoSpin) yaw += dt * 0.1;
+    dist += (targetDist - dist) * Math.min(1, dt * 4);
+    place();
+
+    crank.rotation.z = theta * DEG;
+    cams.forEach(function (cam, i) { cam.rotation.z = (i ? -1 : 1) * theta * 0.5 * DEG; });
+
+    units.forEach(function (u) {
+      var alpha = (theta + PIN[u.c.thr]) * DEG;                 // 曲拐销当前角度
+      var psi = alpha - u.dirAngle;                             // 相对该列轴线
+      var s = R * Math.cos(psi) + Math.sqrt(Math.max(0.0001, L * L - R * R * Math.sin(psi) * Math.sin(psi)));
+      var pistonDist = s + 2.05;                                // 加上活塞销到顶面的偏置
+
+      // 活塞
+      vA.set(u.dir.x * pistonDist, u.dir.y * pistonDist, u.z);
+      u.piston.position.copy(vA);
+
+      // 连杆：从曲拐销指向活塞销
+      vB.set(Math.cos(alpha) * R, Math.sin(alpha) * R, u.z);
+      var pinToPiston = vA.clone().sub(vB);
+      var len = pinToPiston.length();
+      vDir.copy(pinToPiston).normalize();
+      u.rod.position.copy(vB).addScaledVector(vDir, len / 2);
+      u.rod.quaternion.setFromUnitVectors(up, vDir);
+      u.rod.scale.y = len / L;
+
+      // 冲程相位：theta 本身就在 0–720 之间跑（曲轴两圈 = 一个四冲程循环）
+      var phase = (theta + 720 - fireAt[u.c.id]) % 720;
+      var st = strokeOf(phase);
+
+      // 气门升程
+      var exh = lift(phase, 140, 380);
+      var intk = lift(phase, 340, 580);
+      u.valves[0].position.set(
+        u.dir.x * (6.95 - exh * 0.45) - u.dir.y * 0.34,
+        u.dir.y * (6.95 - exh * 0.45) + u.dir.x * 0.34,
+        u.z - 0.42
+      );
+      u.valves[1].position.set(
+        u.dir.x * (6.95 - intk * 0.45) + u.dir.y * 0.34,
+        u.dir.y * (6.95 - intk * 0.45) - u.dir.x * 0.34,
+        u.z + 0.42
+      );
+
+      // 燃烧火焰 + 火花
+      var burn = phase < 120 ? Math.exp(-phase / 34) : 0;
+      u.flame.material.opacity = burn * 0.85;
+      var fpos = pistonDist + 0.9;
+      u.flame.position.set(u.dir.x * fpos, u.dir.y * fpos, u.z);
+      u.flame.scale.setScalar(0.6 + burn * 0.8);
+      u.spark.intensity = (phase > 705 || phase < 12) ? 5.5 : 0;
+
+      // 冲程配色
+      if (phaseColor) {
+        tmpColor.setHex(st.color);
+        u.piston.material.color.lerp(tmpColor, 0.18);
+      } else {
+        tmpColor.setHex(0xd9dee4);
+        u.piston.material.color.lerp(tmpColor, 0.18);
+      }
+
+      // 仪表
+      var pr = pressure(phase);
+      barFills[u.c.id].style.width = (pr * 100).toFixed(0) + '%';
+      orderCells[u.c.id].classList.toggle('hot', phase < 90);
+
+      if (u.c.id === focusCyl) {
+        focusNameEl.textContent = 'CYLINDER ' + u.c.id + (u.c.bank < 0 ? ' · 左列' : ' · 右列');
+        focusStrokeEl.textContent = st.name;
+        focusStrokeEl.style.color = '#' + st.color.toString(16).padStart(6, '0');
+      }
+    });
+
+    degEl.textContent = Math.round(theta % 360) + '°';
+    if (t > 7) hintEl.style.opacity = 0;
+
+    renderer.render(scene, camera);
+  }
+
+  place();
+  tick();
+  document.getElementById('cut').classList.add('on');
+  setTimeout(function () { document.getElementById('loading').classList.add('gone'); }, 500);
+})();
+</script>
+</body>
+</html>
