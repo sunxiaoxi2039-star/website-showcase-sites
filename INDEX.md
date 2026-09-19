@@ -19,3 +19,10 @@
 - [AI Motion Sites 致敬站](ideas/motion-sites-ai/index.html)：未修改。
 
 原子站与模型使用子站独立 Git 保存。父仓只保存合集导航和恢复锚点，不把嵌套仓误当作空子模块。
+
+## 今日整合
+
+- [SELENE 月面漫游](ideas/selene/index.html)：待公开发布，本地子路径已验证。
+- [Habitat 家居空间](ideas/habitat/index.html)：已公开。
+- [统一画廊](../website-gallery/index.html)。
+- 私有本地源快照：`sources/moonlit-forge/` 与 `ideas/*/source/`，Git 忽略，不公开。

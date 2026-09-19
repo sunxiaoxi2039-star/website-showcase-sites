@@ -23,3 +23,11 @@
 本地子站：`ideas/moonlit-forge/`，独立 Git；GitHub remote 名 `github`，Sites remote 名 `sites`，互不覆盖。
 异机恢复：`git clone https://github.com/sunxiaoxi2039-star/moonlit-forge.git`，按子站 README 运行。
 父项目公开 origin 本轮没有推送；源视频和本地取证原件仍在 `reference/guizang-20260905/`。
+
+## 2026-09-19 今日网站并入展示页
+
+- SELENE：成品加入 `ideas/selene/`，真实子目录加载、纹理与车辆行驶通过；统一画廊点击进入通过。未公开推送，待小茜批准。
+- Habitat：已由原任务发布至同一仓库 `ideas/habitat/`；远端发布提交 `1539de387bafd36a7f9cea4d6074476099dfe07b`。画廊已发布提交 `19068dbb5a820a8141b198be0b8ba80746c5a094`。
+- Moonlit Forge：沿用现有 Sites 网页；原任务负责按其授权公开小屋展卡。私有源码与 Blender 快照只保存于本地 `sources/moonlit-forge/`，已 Git 忽略，绝不随公开网页提交。原私有仓库与历史保留。
+- 本地可编辑源码还在 `ideas/selene/source/`、`ideas/habitat/source/`，均不随公开仓库推送。没有新建网站独立仓库。
+- 合集预览：http://127.0.0.1:5180/website-gallery/ 。启动：`python3 -m http.server 5180 --bind 127.0.0.1 --directory "/Volumes/X10 Pro/site-repos"`。

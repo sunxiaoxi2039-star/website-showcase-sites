@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="theme-color" content="#0a0b0c" />
+<meta name="description" content="SELENE — 在实时三维月面上，跟随探测车探索宁静而辽阔的未知。" />
+<title>SELENE — 月面漫游</title>
+<link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+  <script type="module" crossorigin src="./assets/index-CDoC-swN.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-DhurEk0y.css">
+</head>
+<body>
+<div id="app">
+  <div id="scene" aria-label="可旋转、缩放和自由漫游的三维月面探测车场景"></div>
+  <div class="vignette" aria-hidden="true"></div>
+  <div class="interface">
+    <header class="topbar">
+      <a class="wordmark" href="#" aria-label="SELENE 返回初始视角"><svg class="brand-symbol" viewBox="0 0 38 38" fill="none"><circle cx="19" cy="19" r="12" stroke="currentColor" stroke-width="1.3"/><ellipse cx="19" cy="19" rx="20" ry="6" transform="rotate(-40 19 19)" stroke="currentColor" stroke-width="1.3"/><circle cx="27.9" cy="9.2" r="2.5" fill="#e7be77"/></svg><span>SELENE<small>LUNAR EXPLORATION PROGRAM</small></span></a>
+      <div class="top-location"><span class="tiny-cross">+</span> 地球之外 <span class="slash">/</span> 月球 · 静海</div>
+      <div class="header-right"><span class="live"><i></i> 实时探索</span><button id="info-button" class="icon-button" aria-label="探索指南" title="探索指南"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 11v6m0-10v1"/></svg></button></div>
+    </header>
+    <main class="intro">
+      <div class="eyebrow"><span></span> EXPEDITION 001</div>
+      <h1>寂静之上。<br><span>未知之间。</span></h1>
+      <p>循着车辙，走向人类目光之外。</p>
+      <div class="coordinates"><span>00° 40′ 26.6″ N</span><span>23° 28′ 22.7″ E</span></div>
+    </main>
+    <aside class="telemetry" aria-label="探测车实时模拟数据">
+      <div class="telemetry-heading"><span class="signal"><i></i><i></i><i></i><i></i></span> 遥测数据 <span class="sim-label">SIM</span></div>
+      <div class="telemetry-data"><span class="data-label">行驶速度</span><div><strong id="speed-value">0.12</strong><small>m/s</small></div><div class="meter"><span id="speed-meter"></span></div></div>
+      <div class="telemetry-data"><span class="data-label">探索距离</span><div><strong id="distance-value">0.0</strong><small>m</small></div></div>
+      <div class="telemetry-minor"><span>月面重力</span><span>1.62 <small>m/s²</small></span></div>
+      <div class="telemetry-minor"><span>任务计时</span><span id="time-value">00:00:00</span></div>
+      <div class="telemetry-footer"><span id="drive-dot"></span><span id="drive-status">自主巡航中</span></div>
+    </aside>
+    <div class="right-tools">
+      <button class="icon-button" id="zoom-in" title="放大" aria-label="放大"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
+      <button class="icon-button" id="zoom-out" title="缩小" aria-label="缩小"><svg viewBox="0 0 24 24"><path d="M5 12h14"/></svg></button>
+      <span></span>
+      <button class="icon-button" id="reset-view" title="重置视角 · R" aria-label="重置视角"><svg viewBox="0 0 24 24"><path d="M4 10a8 8 0 1 1 1 7M4 4v6h6"/></svg></button>
+      <button class="icon-button" id="fullscreen-button" title="全屏" aria-label="全屏"><svg viewBox="0 0 24 24"><path d="M9 4H4v5m11-5h5v5M4 15v5h5m11-5v5h-5"/></svg></button>
+    </div>
+    <section class="vehicle-caption"><span class="caption-index">01 <span>/</span> LUNAR ROVER</span><h2>SELENE–01</h2><p>六轮独立悬挂 <span>·</span> 全地形科学探测车</p></section>
+    <div class="compass" aria-hidden="true"><div class="compass-ring"><span>N</span><svg id="compass-needle" viewBox="0 0 64 64"><path d="M32 13 37 37 32 33 27 37Z" fill="#d8c29c"/><path d="M32 51 27 37 32 41 37 37Z" fill="#777"/></svg></div><span id="heading-value">HDG 000°</span></div>
+    <div class="bottom-controls">
+      <div class="playback"><button id="play-button" aria-label="暂停行驶" title="暂停行驶 · 空格"><svg id="play-icon" viewBox="0 0 20 20"><path d="M6 4v12M14 4v12"/></svg></button><div class="playback-text"><span id="play-label">巡航中</span><small>AUTO DRIVE</small></div><button id="speed-button" title="切换巡航速度" aria-label="巡航速度 1 倍">1×</button></div>
+      <div class="mode-switch" role="group" aria-label="视角模式">
+        <button class="mode active" data-mode="orbit" aria-pressed="true"><svg viewBox="0 0 20 20"><ellipse cx="10" cy="10" rx="8" ry="4" transform="rotate(-30 10 10)"/><circle cx="10" cy="10" r="2"/></svg><span>环绕视角</span><kbd>1</kbd></button>
+        <button class="mode" data-mode="onboard" aria-pressed="false"><svg viewBox="0 0 20 20"><path d="M2 7h4l2-3h4l2 3h4v9H2Z"/><circle cx="10" cy="11" r="2.5"/></svg><span>车载视角</span><kbd>2</kbd></button>
+        <button class="mode" data-mode="free" aria-pressed="false"><svg viewBox="0 0 20 20"><path d="m10 2 6 15-6-3-6 3Z"/></svg><span>自由漫游</span><kbd>3</kbd></button>
+      </div>
+      <button class="hide-ui icon-button" id="hide-ui" title="隐藏界面 · H" aria-label="隐藏界面"><svg viewBox="0 0 24 24"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg></button>
+    </div>
+    <footer><span id="control-hint"><span class="mouse-icon"></span> 拖动旋转 <b>·</b> 滚轮缩放 <b>·</b> 右键平移</span><span class="footer-center">A SMALL STEP. AN INFINITE HORIZON.</span><span class="render-status"><i></i> 3D 实时渲染</span></footer>
+  </div>
+  <button id="show-ui" aria-label="显示界面">显示界面 <kbd>H</kbd></button>
+  <div id="toast" role="status"></div>
+  <div id="loading"><div class="loading-orbit"></div><span>SELENE</span><p id="loading-text">正在构建月面世界</p><div class="loading-bar"><i></i></div></div>
+  <dialog id="guide">
+    <button id="close-guide" class="icon-button" aria-label="关闭探索指南"><svg viewBox="0 0 24 24"><path d="m6 6 12 12M6 18 18 6"/></svg></button>
+    <span class="eyebrow">FIELD NOTES / 001</span><h2>欢迎来到月球。</h2><p>一辆探测车，一片未被打扰的旷野。<br>从任何角度，开始你的探索。</p>
+    <div class="guide-controls"><div><span>旋转视角</span><span>鼠标左键拖动</span></div><div><span>靠近 / 远离</span><span>鼠标滚轮 / 双指缩放</span></div><div><span>平移视角</span><span>鼠标右键 / 双指拖动</span></div><div><span>自由漫游</span><span>W A S D 移动 · Q E 升降</span></div><div><span>暂停 / 继续</span><kbd>SPACE</kbd></div><div><span>重置视角 / 隐藏界面</span><span>R / H</span></div></div>
+    <div class="guide-settings"><label for="tracks-toggle">显示月面车辙</label><input type="checkbox" id="tracks-toggle" checked /></div>
+    <div class="guide-settings"><label for="quality-select">渲染画质</label><select id="quality-select"><option value="high">精细</option><option value="balanced">流畅</option></select></div>
+    <p class="guide-note">这是一个艺术化的月面探索模拟。车辆与地形为程序化三维模型，遥测数值来自当前模拟，不代表真实任务。</p>
+    <button id="start-exploring">继续探索 <span>↗</span></button>
+  </dialog>
+</div>
+</body>
+</html>
