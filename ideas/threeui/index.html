@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ThreeUI 精选档案 · ideas/threeui</title>
+<style>
+  :root { --bg:#0a0a0c; --card:#141417; --line:#232328; --txt:#e8e6e3; --dim:#8b8b93; --accent:#a78bfa; }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--bg); color:var(--txt); font-family:-apple-system,"SF Pro Text","PingFang SC","Noto Sans SC",sans-serif; min-height:100vh; }
+  .wrap { max-width:1200px; margin:0 auto; padding:64px 32px 96px; }
+  header { margin-bottom:56px; }
+  .crumb { font-size:13px; color:var(--dim); letter-spacing:.05em; margin-bottom:18px; }
+  .crumb a { color:var(--dim); text-decoration:none; } .crumb a:hover { color:var(--accent); }
+  h1 { font-size:clamp(34px,5vw,56px); font-weight:800; letter-spacing:-.02em; line-height:1.1; }
+  h1 em { font-style:normal; color:var(--accent); }
+  .meta { margin-top:16px; color:var(--dim); font-size:15px; line-height:1.7; max-width:640px; }
+  .meta a { color:var(--accent); text-decoration:none; border-bottom:1px solid transparent; }
+  .meta a:hover { border-bottom-color:var(--accent); }
+  .tags { display:flex; gap:8px; margin-top:20px; flex-wrap:wrap; }
+  .tag { font-size:12px; color:var(--dim); border:1px solid var(--line); border-radius:99px; padding:4px 12px; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:24px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:16px; overflow:hidden; text-decoration:none; color:inherit; display:block; transition:transform .25s ease,border-color .25s ease; }
+  .card:hover { transform:translateY(-4px); border-color:var(--accent); }
+  .thumb { aspect-ratio:16/10; overflow:hidden; background:#000; }
+  .thumb img { width:100%; height:100%; object-fit:cover; display:block; transition:transform .4s ease; }
+  .card:hover .thumb img { transform:scale(1.04); }
+  .body { padding:18px 20px 22px; }
+  .name { font-size:17px; font-weight:700; display:flex; align-items:center; gap:8px; }
+  .free { font-size:10px; font-weight:600; color:#4ade80; border:1px solid #4ade8044; border-radius:6px; padding:2px 6px; letter-spacing:.05em; }
+  .why { margin-top:8px; font-size:13.5px; color:var(--dim); line-height:1.65; }
+  .num { font-size:11px; color:var(--dim); letter-spacing:.15em; margin-bottom:6px; font-variant-numeric:tabular-nums; }
+  .pro-sec { margin-top:64px; border-top:1px solid var(--line); padding-top:40px; }
+  .pro-sec h2 { font-size:20px; margin-bottom:14px; }
+  .pro-list { color:var(--dim); font-size:14px; line-height:2; }
+  .pro-list b { color:var(--txt); font-weight:600; }
+  footer { margin-top:72px; color:var(--dim); font-size:12.5px; line-height:1.8; border-top:1px solid var(--line); padding-top:24px; }
+  footer a { color:var(--dim); } footer a:hover { color:var(--accent); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="crumb"><a href="../../../">website-showcase-sites</a> / <a href="../../">ideas</a> / threeui</div>
+    <h1>ThreeUI <em>精选档案</em></h1>
+    <p class="meta">
+      Meng To 开源的 three.js 组件库（220+ 组件，纯过程化 JS，每个 100–200 KB，可复制为 prompt 交给 agent 改写）。
+      这里只收我认为好看、值得回头翻的 <b>8 个</b>——全部免费，点击卡片直达官网实时预览。
+      来源：<a href="https://threeui.com">threeui.com</a> · <a href="https://github.com/MengTo/threeui">GitHub (MIT)</a>
+    </p>
+    <div class="tags">
+      <span class="tag">素材积累型</span><span class="tag">灵感库</span><span class="tag">three.js</span><span class="tag">落地页</span><span class="tag">2026-08-22 收录</span>
+    </div>
+  </header>
+
+  <div class="grid">
+    <a class="card" href="https://threeui.com/hero/sylva/living-green" target="_blank" rel="noopener">
+      <div class="thumb"><img loading="lazy" src="https://threeui.com/thumbnails/sylva-hero.jpg" alt="Sylva Living Green"></div>
+      <div class="body"><div class="num">01</div><div class="name">Sylva — Living Green <span class="free">FREE</span></div>
+      <p class="why">苔藓覆盖的 3D 枝条 + 蝴蝶 + 漂浮卡片。全库最具代表性的「活的落地页」，hero 区教科书。</p></div>
+    </a>
+    <a class="card" href="https://threeui.com/three-js/sylva-living-world/living-green" target="_blank" rel="noopener">
+      <div class="thumb"><img loading="lazy" src="https://threeui.com/thumbnails/sylva-living-world.jpg" alt="Sylva Living World"></div>
+      <div class="body"><div class="num">02</div><div class="name">Sylva Living World <span class="free">FREE</span></div>
+      <p class="why">上面那套的纯 Three.js 场景版，无页面布局干扰，适合拆出来当背景复刻。</p></div>
+    </a>
+    <a class="card" href="https://threeui.com/three-js/landscape/sunset" target="_blank" rel="noopener">
+      <div class="thumb"><img loading="lazy" src="https://threeui.com/thumbnails/landscape-sunset.jpg" alt="Landscape"></div>
+      <div class="body"><div class="num">03</div><div class="name">Landscape · 七态 <span class="free">FREE ×7</span></div>
+      <p class="why">同一片低多边形风景的日出/正午/日落/夜/雨/风暴/雪。「一套场景多套氛围」的最佳教材。</p></div>
+    </a>
+    <a class="card" href="https://threeui.com/three-js/temple-night/temple-night" target="_blank" rel="noopener">
+      <div class="thumb"><img loading="lazy" src="https://threeui.com/thumbnails/temple-night.jpg" alt="Temple Night"></div>
+      <div class="body"><div class="num">04</div><div class="name">Temple Night <span class="free">FREE</span></div>
+      <p class="why">鸟居 + 夜色的东方意境场景，克制又高级。日落变体在 Pro。</p></div>
+    </a>
+    <a class="card" href="https://threeui.com/three-js/country-towers/japan" target="_blank" rel="noopener">
+      <div class="thumb"><img loading="lazy" src="https://threeui.com/thumbnails/japanese-tower.jpg" alt="Country Towers"></div>
+      <div class="body"><div class="num">05</div><div class="name">Country Towers <span class="free">FREE ×6</span></div>
+      <p class="why">程序化生成六国地标塔楼（日本/中国/越南/泰国/柬埔寨/土耳其），国家主题落地页好素材。</p></div>
+    </a>
+    <a class="card" href="https://threeui.com/landing-pages/meng-to-sketchbook-landing-page" target="_blank" rel="noopener">
+      <div class="thumb"><img loading="lazy" src="https://threeui.com/thumbnails/meng-to-sketchbook-landing-page.jpg" alt="Sketchbook"></div>
+      <div class="body"><div class="num">06</div><div class="name">Sketchbook <span class="free">FREE</span></div>
+      <p class="why">手账速写风 3D 落地页，纸张质感 + 手绘线条，风格在整个库里独一份。</p></div>
+    </a>
+    <a class="card" href="https://threeui.com/landing-pages/kage-landing-page" target="_blank" rel="noopener">
+      <div class="thumb"><img loading="lazy" src="https://threeui.com/thumbnails/kage-landing-page.jpg" alt="Kage"></div>
+      <div class="body"><div class="num">07</div><div class="name">Kage <span class="free">FREE</span></div>
+      <p class="why">他的成名作「影」——暗调东方美学 + 超大字号排版 + 红日意象。</p></div>
+    </a>
+    <a class="card" href="https://threeui.com/three-js/structure-flow/structure-flow" target="_blank" rel="noopener">
+      <div class="thumb"><img loading="lazy" src="https://threeui.com/thumbnails/structure-flow.jpg" alt="Structure Flow"></div>
+      <div class="body"><div class="num">08</div><div class="name">Structure Flow <span class="free">FREE ×13</span></div>
+      <p class="why">数据流线 / 点阵 / 星云式抽象 3D 背景，13 个变体，做技术感 hero 的万能底。</p></div>
+    </a>
+  </div>
+
+  <section class="pro-sec">
+    <h2>Pro 备选（付费，先记账不花钱）</h2>
+    <p class="pro-list">
+      <b>Sunset Valley</b> —— 日落/森林晨雾/极光夜/蓝调时刻 4 变体<br>
+      <b>Sakura Branch</b> —— 樱花枝场景<br>
+      <b>Wood Icons</b> —— 木纹 3D 图标（Gameboy / 键盘 / 椅子）
+    </p>
+  </section>
+
+  <footer>
+    纯链接档案，不搬代码 · 复刻成品请进 Kimimotion（GitHub 侧同步 ideas/kimimotion/）·
+    复刻时优先用组件页的 <b>Copy Prompt</b> 按钮 ·
+    README：<a href="https://github.com/sunxiaoxi2039-star/website-showcase-sites/blob/main/ideas/threeui/README.md">ideas/threeui/README.md</a>
+  </footer>
+</div>
+</body>
+</html>
