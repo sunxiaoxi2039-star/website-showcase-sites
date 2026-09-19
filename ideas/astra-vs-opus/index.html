@@ -126,6 +126,34 @@
   .tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 16px; }
   .tags span { padding: 4px 9px; border: 1px solid var(--line); border-radius: 6px; font-size: 11px; color: var(--faint); }
 
+  /* ---------- 生成 prompt ---------- */
+  .promptbox {
+    margin-top: 16px; border: 1px solid rgba(124, 215, 255, .22); border-radius: 12px;
+    background: rgba(124, 215, 255, .045);
+  }
+  .promptbox summary {
+    list-style: none; cursor: pointer; padding: 11px 15px;
+    display: flex; align-items: center; gap: 10px;
+    font-size: 12px; font-weight: 600; color: var(--opus);
+  }
+  .promptbox summary::-webkit-details-marker { display: none; }
+  .promptbox summary::before { content: '▸'; display: inline-block; transition: transform .2s; }
+  .promptbox[open] summary::before { transform: rotate(90deg); }
+  .promptbox summary em { font-style: normal; font-weight: 400; font-size: 11px; color: var(--faint); margin-left: auto; margin-right: 64px; }
+  .promptbox:not([open]) summary em { margin-right: 0; }
+  .pbody { position: relative; padding: 0 15px 14px; }
+  .pbody pre {
+    margin: 0; white-space: pre-wrap; word-break: break-word;
+    font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+    font-size: 12px; line-height: 1.8; color: var(--dim);
+  }
+  .pcopy {
+    position: absolute; top: -34px; right: 13px; padding: 4px 12px;
+    border: 1px solid var(--line); border-radius: 999px; background: rgba(8, 12, 18, .8);
+    color: var(--dim); font: inherit; font-size: 11px; cursor: pointer; transition: all .16s;
+  }
+  .pcopy:hover { color: #04121a; background: var(--opus); border-color: var(--opus); font-weight: 600; }
+
   /* ---------- 对照表 ---------- */
   .tablewrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 14px; }
   table { border-collapse: collapse; width: 100%; min-width: 760px; font-size: 13px; }
@@ -290,6 +318,15 @@ const WORKS = [
       '原作有真实的物种分层（鮟鱇、管虫、章鱼各归各的深度），我只做了体型与配色的分层',
       '没有做水下体积光与焦散，靠加性光柱近似'
     ],
+    prompt: `写一个单文件 HTML + Three.js 的程序化海洋，从海面一路下潜到 1400 米。
+
+地形用径向函数生成：中心是一块珊瑚礁盘，向外经大陆坡降到海沟；相机沿着贴着斜坡的螺旋路线自动下潜，也能用滚轮 / W S 手动控制深度，拖拽环视。
+
+按深度分五个区（表层水柱 / 阳光珊瑚礁 / 海藻林 / 大陆坡 / 深渊热液区），每区有自己的雾色、雾密度与光强，切换时在屏幕中间淡入区名。浅水区做垂直夸张，让礁区可逛、深渊又真的深。
+
+内容：成片生长的珊瑚（鹿角、脑珊瑚、管海绵三种程序化形态）；在顶点着色器里随洋流摆动的海藻；绕圈巡游的鱼群和扇动胸鳍的蝠鲼；深处脉动的热液喷口与管虫；贯穿全深度的海雪与深水生物荧光粒子；海面下方可见的阳光光柱。
+
+面板：种子输入框（换种子整片海重新生成）、洋流强度、生物密度、自动下潜开关；右下角实时显示深度（米）。全部平面着色的低多边形几何，不用任何外部模型或贴图。`,
     tags: ['程序化地形', '顶点着色器摆动', '种子可复现', '加性粒子'],
     row: {
       sell: '一个连续可下潜、按种子生成的整片海洋生态',
@@ -316,6 +353,13 @@ const WORKS = [
       '原作的机械细节（摇臂、气门弹簧、正时链）建模精度高得多，我这边是盒子与圆柱拼的示意',
       '没有做进排气歧管与冷却水道的走向'
     ],
+    prompt: `写一个单文件 HTML + Three.js 的交互式 V8 发动机剖面，机构要按真实运动学跑。
+
+几何与运动：十字平面曲轴，四个曲拐相位 0/90/270/180；两列缸夹角 90°；活塞位移用 s = r·cosψ + √(L² − r²·sin²ψ) 解算，连杆每帧在曲拐销与活塞销之间重新定向；凸轮轴半速旋转。
+
+四冲程用 720° 相位循环，点火顺序 1-8-4-3-6-5-7-2（每缸相差 90°）。按相位算气门升程（排气门 140–380°、进气门 340–580°）驱动两支气门；做功初段在燃烧室点一团衰减的火焰，火花塞在上止点闪一下。
+
+UI：转速滑杆 0–6500 rpm、单步慢放、剖切缸体（缸体/缸盖/摇臂罩变半透明）、按冲程给活塞配色；右侧面板显示点火顺序（高亮正在做功的缸）与八条缸压条；点任意缸锁定观察，顶部显示该缸当前冲程；右下角显示曲轴转角。`,
     tags: ['运动学解算', '四冲程时序', '剖切视图', '实时仪表'],
     row: {
       sell: '把复杂机械拆成可操作的 3D 课堂',
@@ -342,6 +386,13 @@ const WORKS = [
       '地标是按印象做的示意体块，不是实测比例；城市肌理也不对应真实路网',
       '没有做地面街道与车流'
     ],
+    prompt: `写一个单文件 HTML + Three.js 的微缩首尔立体地图。
+
+城市：汉江用 Catmull-Rom 曲线铺一条带状水面横穿画面，配三座桥（桥塔 + 一串桥灯）；六个城区按密度程序化生成上千栋楼，楼身窗格用 Canvas 现画成贴图当 emissiveMap，只有夜里才亮；高楼顶上加闪烁的航空灯。
+
+手工做五处地标：南山 + N 首尔塔、乐天世界塔（四面收束的锥体）、景福宫（两重屋檐的正殿 + 院墙 + 光化门）、东大门 DDP（没有直边的银色壳体）、63 大厦。下方胶囊按钮和场景里的地标本体都能点，镜头补间飞过去，右侧卡片显示中英文名、高度、建成年份和一句介绍。
+
+一条时间滑杆从正午推到凌晨两点：天色、日照角度与颜色、窗灯、桥灯、航空灯、江面反射一起联动。再加一个自动巡游模式，每 7 秒换一处地标。`,
     tags: ['程序化城市', 'Canvas 贴图窗灯', '相机补间', '昼夜循环'],
     row: {
       sell: '微缩城市 + 地标飞行 + 昼夜切换',
@@ -368,6 +419,15 @@ const WORKS = [
       '原作是六幅画，我只搭了四处；且没有做真正的笔触后期（我用的是叠加纹理与顶点色）',
       '建筑是体块化的，没有画里那种扭曲透视'
     ],
+    prompt: `写一个单文件 HTML + Three.js 的可步行梵高小镇，第一人称 W A S D 移动 + 拖拽环视。
+
+天空是重点：在天穹的片元着色器里做两次域扭曲的 fbm 噪声，卷成《星月夜》那种旋涡笔触；星星用分格取点画成带厚颜料光晕的亮斑，再加一轮月亮。
+
+地面铺一万根以上实例化的小色块当笔触草与麦浪（InstancedMesh，逐实例随机颜色、大小与倾角）。
+
+四处场景对应四幅画：黄房子（芥末黄墙体 + 蓝绿百叶窗）、夜间的露天咖啡座（暖黄雨棚下一盏灯把广场照亮，配桌椅与鹅卵石地面）、奥维尔的教堂（蓝紫色塔楼与尖顶）、罗纳河上的星夜（河面几条金色倒影）。走近任意一处，底部淡入该画的中文名、原题与年份。柏树随风轻摆。
+
+面板：夜色滑杆（能把夜推回白天）、笔触涌动速度、自动漫游与加速。最后叠一层极淡的斜向条纹当画布纹理。`,
     tags: ['旋涡天空 shader', 'InstancedMesh 笔触', '第一人称漫游', '昼夜滑杆'],
     row: {
       sell: '六幅画长成一座可步行的小镇',
@@ -394,6 +454,13 @@ const WORKS = [
       '原作的核心是 Blender 建模导入，材质与倒角精度不是程序化几何能追平的',
       '没有做真正的辉光后期（Bloom），靠加性壳体近似'
     ],
+    prompt: `写一个单文件 HTML + Three.js 的「双环能量核心」产品展示页，纯程序化几何，不导入任何模型。
+
+中心是一颗平面着色的多面体内核，外面套两层菲涅尔辉光壳（用 BackSide 渲染，所以法线点乘要取 abs，才能得到边缘亮、正中透的效果）；核心里绕着几条抖动的等离子丝，整体按呼吸节奏脉动。
+
+两组环反向自转，环内侧嵌一圈发光条，每组环上均布六枚白色约束模块；鼠标悬停时模块高亮并弹出名称与规格（例如「约束线圈 A · 超导磁笼 4.2 K」）。再撒一千多颗加性混合的火花粒子绕着核心转。
+
+左栏走产品页排版：kicker、大标题、一段说明、四项参数（输出功率 / 环转速 / 模块数 / 冷却剂），其中功率与转速跟着滑杆实时变。控制台：能量输出、环转速、爆炸视图（模块沿半径推开、两环上下分离）、自动旋转。相机用手写的轨道控制：拖拽转、滚轮推近。`,
     tags: ['菲涅尔 shader', '加性粒子', '爆炸视图', '产品页排版'],
     row: {
       sell: 'Blender 精度的模型放进网页里自由观察',
@@ -420,6 +487,15 @@ const WORKS = [
       '原作内置的是真实的协奏曲演奏，我这边是按织体生成的巴赫风格段落，<b>不是原谱转录</b>',
       '音色是合成器近似，没有采样钢琴的层次'
     ],
+    prompt: `写一个单文件 HTML：Three.js 画一架 E2–C6 的 3D 键盘（白键黑键、木质琴身、红色呢条），用 WebAudio 合成羽管键琴音色。
+
+音色：锯齿波 + 三角波泛音 → 带包络的低通滤波 → 快衰减振幅包络，另接一路延迟反馈当房间感；明亮度做成可调滑杆。
+
+内置乐句按巴赫《勃兰登堡协奏曲第三号》第一乐章的织体生成：八小节和声循环 G–D/F#–Em–Bm–C–G/B–Am7–D7，右手在和弦音上跑连绵的十六分音符（几套音型轮换），左手每拍一个行走低音。用前瞻调度器提前约 2.2 秒排程。
+
+视觉：琴键上方生成 Synthesia 式的音符条从高处落下，落到琴键的瞬间触发按键下沉、键面发光与一圈扩散的光晕；右上角显示当前和弦与小节数。
+
+交互：速度滑杆 52–184 BPM、延音开关、暂停；用户也能点琴键或用电脑键盘自己弹。首次进入用一个覆盖层接一次点击再启动 AudioContext。`,
     tags: ['WebAudio 合成', '前瞻调度器', '音符河流', '巴洛克织体生成'],
     row: {
       sell: '虚拟键盘 + 内置巴赫演奏',
@@ -471,6 +547,13 @@ WORKS.forEach((w, i) => {
           </div>
         </div>
         <div class="tags">${w.tags.map(t => `<span>${t}</span>`).join('')}</div>
+        <details class="promptbox">
+          <summary>生成这件临摹用的 prompt<em>点开查看 · 可一键复制</em></summary>
+          <div class="pbody">
+            <button class="pcopy" data-copy="${i}">复制</button>
+            <pre>${esc(w.prompt)}</pre>
+          </div>
+        </details>
       </div>
     </div>`;
   pairs.appendChild(el);
@@ -483,6 +566,21 @@ WORKS.forEach((w, i) => {
     <td><span class="score">${w.row.score}%<i><b style="width:${w.row.score}%"></b></i></span></td>
     <td class="dim">${w.row.gap}</td>`;
   tbody.appendChild(tr);
+});
+
+function esc(s) {
+  return String(s).replace(/[&<>"]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[m]));
+}
+
+// 复制 prompt
+pairs.addEventListener('click', e => {
+  const btn = e.target.closest('.pcopy');
+  if (!btn) return;
+  const text = WORKS[+btn.dataset.copy].prompt;
+  navigator.clipboard?.writeText(text).then(() => {
+    btn.textContent = '已复制';
+    setTimeout(() => { btn.textContent = '复制'; }, 1600);
+  }).catch(() => { btn.textContent = '复制失败'; });
 });
 
 // 内嵌预览：点了才加载 iframe，避免一进页面就跑六个 3D 场景
