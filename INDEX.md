@@ -1,0 +1,21 @@
+# 网站灵感合集 索引
+
+- [当前状态](NOW.md) · [项目边界](PROJECT.md) · [收藏日志](log/2026-09-19.md)
+- [本地合集入口](index.html)
+
+## Moonlit Forge · 四季小屋
+
+- [GitHub 私有收藏](https://github.com/sunxiaoxi2039-star/moonlit-forge)
+- [Sites 私人网站](https://xiaoxi-moonlit-forge.sun-xiaoxi.chatgpt.site)
+- [源码与运行说明](ideas/moonlit-forge/README.md)
+- [Blender 原文件](ideas/moonlit-forge/model-source/cottage.blend)
+- [模型重建说明](ideas/moonlit-forge/model-source/README.md)
+- [原始微博](https://weibo.com/6182606334/5339877644437211)
+- 本地来源与模型验证原件：`reference/guizang-20260905/`。
+- 第二站：待第二条微博链接。
+
+## 已有子站
+
+- [AI Motion Sites 致敬站](ideas/motion-sites-ai/index.html)：未修改。
+
+原子站与模型使用子站独立 Git 保存。父仓只保存合集导航和恢复锚点，不把嵌套仓误当作空子模块。
