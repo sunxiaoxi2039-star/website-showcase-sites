@@ -21,6 +21,15 @@ GPT-6 Astra（OpenAI，2026-09-03 发布）发布周里，X 上出现了一批�
 | `works/orbital-core/` 轨道核心 | Orbital Core Showcase | @oneruofeng | `x.com/oneruofeng/status/2096551010089263181` |
 | `works/brandenburg-piano/` 勃兰登堡键盘 | Brandenburg Piano | @DeryaTR_ | `x.com/DeryaTR_/status/2096090915790069857` |
 
+## 案例集（`cases/`）
+
+`cases/index.html` 是发布周作品的索引页：**128 件**（游戏 48 / 网页 51 / Blender·3D 23 / 视频 4 / 绘画 2，其中 52 件有 live demo），
+可按分类筛选、按关键词搜索，已临摹的 6 件带角标直接跳到本站版本。数据内联在页面里，纯静态、无请求。
+
+- 数据来源：`github.com/magiccreator-ai/awesome-gpt-6-astra`（该仓库自述 171 条，本次转录 128 条），标题与描述经中文改写，链接原样保留、**未逐条人工核对**。
+- 页内另有「官方公开演示」一栏（财务建模 / 模板演示稿 / 建站与前端 QA / Blender→UE5 / 日常 computer use）：
+  **转述自公开报道，不是 openai.com 原文** —— 本环境的出口网络屏蔽了 `openai.com`，抓不到官方页面。拿到官方链接或正文可随时按原文替换这一栏。
+
 ## 技术栈
 
 - three.js **r128**，已 vendored 到 `assets/vendor/three.min.js`（无 CDN 依赖、无构建步骤）
