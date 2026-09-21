@@ -1,5 +1,5 @@
 # 网站灵感合集 当前状态
-> 最后更新　2026-09-19　Callen
+> 最后更新　2026-09-21　Callen
 
 ## 已实现与验证
 
@@ -26,8 +26,12 @@
 
 ## 2026-09-19 今日网站并入展示页
 
-- SELENE：成品加入 `ideas/selene/`，真实子目录加载、纹理与车辆行驶通过；统一画廊点击进入通过。未公开推送，待小茜批准。
+- SELENE：成品加入 `ideas/selene/`，真实子目录加载、纹理与车辆行驶通过；统一画廊点击进入通过。已公开发布，正式页面行驶与纹理加载验证通过。
 - Habitat：已由原任务发布至同一仓库 `ideas/habitat/`；远端发布提交 `1539de387bafd36a7f9cea4d6074476099dfe07b`。画廊已发布提交 `19068dbb5a820a8141b198be0b8ba80746c5a094`。
 - Moonlit Forge：沿用现有 Sites 网页；原任务负责按其授权公开小屋展卡。私有源码与 Blender 快照只保存于本地 `sources/moonlit-forge/`，已 Git 忽略，绝不随公开网页提交。原私有仓库与历史保留。
 - 本地可编辑源码还在 `ideas/selene/source/`、`ideas/habitat/source/`，均不随公开仓库推送。没有新建网站独立仓库。
 - 合集预览：http://127.0.0.1:5180/website-gallery/ 。启动：`python3 -m http.server 5180 --bind 127.0.0.1 --directory "/Volumes/X10 Pro/site-repos"`。
+
+## 2026-09-21 公开上线验收
+
+SELENE 及统一画廊全部已 push，并通过 GitHub Pages 部署。子站发布版本 7548860；画廊发布版本 827b326。正式入口 https://sunxiaoxi2039-star.github.io/website-gallery/ 。从首页进入月面车、车辆持续行驶、地球纹理 200、三个 Prompt 显示与完整复制、手机无横向溢出均验证通过，无页面运行错误。Kimimotion 链接已改到有效 Kimi 站。没有新建独立仓库，私有源码及 Blender 快照未公开。

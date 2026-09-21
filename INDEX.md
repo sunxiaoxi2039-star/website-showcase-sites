@@ -22,7 +22,7 @@
 
 ## 今日整合
 
-- [SELENE 月面漫游](ideas/selene/index.html)：待公开发布，本地子路径已验证。
+- [SELENE 月面漫游](ideas/selene/index.html)：已公开发布，正式 HTTPS 入口已验证。
 - [Habitat 家居空间](ideas/habitat/index.html)：已公开。
 - [统一画廊](../website-gallery/index.html)。
 - 私有本地源快照：`sources/moonlit-forge/` 与 `ideas/*/source/`，Git 忽略，不公开。
