@@ -1,0 +1,10 @@
+
+# Local metadata and independently versioned Moonlit Forge
+._*
+.DS_Store
+/ideas/moonlit-forge/
+/reference/guizang-20260905/
+
+# Local editable source snapshots; public repository serves built websites only.
+/sources/
+/ideas/*/source/
