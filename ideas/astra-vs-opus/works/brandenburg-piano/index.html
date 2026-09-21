@@ -1,0 +1,465 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>勃兰登堡键盘 · Opus 临摹</title>
+<meta name="description" content="对 @DeryaTR_ 用 GPT-6 Astra 做的 Brandenburg Piano 的临摹重写：会自己演奏巴赫式织体的 3D 键盘。">
+<link rel="stylesheet" href="../../assets/work.css">
+<style>
+  body { background: radial-gradient(120% 100% at 50% 18%, #1a1b22 0%, #0b0c10 58%, #050608 100%); }
+  .piece {
+    position: fixed; z-index: 16; left: 50%; top: 62px; transform: translateX(-50%);
+    text-align: center; pointer-events: none; max-width: 90vw;
+  }
+  .piece span { font-size: 10.5px; letter-spacing: .32em; text-transform: uppercase; color: rgba(255, 214, 140, .7); }
+  .piece b { display: block; margin-top: 6px; font-size: 19px; font-weight: 500; letter-spacing: .06em; }
+  .piece i { display: block; margin-top: 5px; font-size: 11px; font-style: normal; color: rgba(242,245,248,.45); }
+  .gate {
+    position: fixed; inset: 0; z-index: 40; display: grid; place-items: center;
+    background: rgba(5, 6, 9, .82); backdrop-filter: blur(8px); cursor: pointer;
+    transition: opacity .5s;
+  }
+  .gate .inner { text-align: center; }
+  .gate .play {
+    width: 78px; height: 78px; margin: 0 auto 18px; border-radius: 50%;
+    border: 1px solid rgba(255, 214, 140, .5); display: grid; place-items: center;
+    color: #ffd68c; font-size: 24px; background: rgba(255, 214, 140, .07);
+  }
+  .gate p { margin: 0; font-size: 12.5px; letter-spacing: .16em; color: rgba(242,245,248,.7); }
+  .gate small { display: block; margin-top: 8px; font-size: 11px; color: rgba(242,245,248,.4); letter-spacing: .06em; }
+  .gate.gone { opacity: 0; pointer-events: none; }
+  .nowplaying {
+    position: fixed; z-index: 16; right: 18px; top: 62px; width: 196px;
+    padding: 13px 16px; border: 1px solid var(--line); border-radius: 14px;
+    background: var(--glass); backdrop-filter: blur(14px); font-size: 12px; line-height: 1.7;
+  }
+  .nowplaying h2 { margin: 0 0 8px; font-size: 10.5px; letter-spacing: .18em; text-transform: uppercase; color: var(--dim); }
+  .nowplaying .chord { font-size: 22px; font-weight: 600; letter-spacing: .04em; }
+  .nowplaying .bar { margin-top: 4px; font-size: 11px; color: var(--dim); font-variant-numeric: tabular-nums; }
+  @media (max-width: 860px) { .nowplaying { display: none; } }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <a href="../../index.html">← 对照总览</a>
+  <div class="ttl">勃兰登堡键盘<span>OPUS 临摹</span></div>
+  <div class="spacer"></div>
+  <a href="https://x.com/DeryaTR_/status/2096090915790069857" target="_blank" rel="noopener">原作 @DeryaTR_ ↗</a>
+</div>
+
+<div class="piece">
+  <span>G major · after BWV 1048</span>
+  <b>勃兰登堡式的 G 大调织体</b>
+  <i>照第三号协奏曲第一乐章的写法生成：连绵的十六分音符压在行走低音上（非原谱转录）</i>
+</div>
+
+<div class="nowplaying">
+  <h2>Now Playing</h2>
+  <div class="chord" id="chord">—</div>
+  <div class="bar" id="barno">第 0 小节 · 0 音</div>
+</div>
+
+<div class="panel">
+  <h2>演奏</h2>
+  <label>速度 <b id="bpmv">108</b> BPM</label>
+  <input type="range" id="bpm" min="52" max="184" step="1" value="108">
+  <label>音色明亮度 <b id="brightv">0.60</b></label>
+  <input type="range" id="bright" min="0" max="1" step="0.01" value="0.6">
+  <div class="btnrow">
+    <button class="btn on" id="play">暂停</button>
+    <button class="btn" id="sustain">延音</button>
+  </div>
+</div>
+
+<div class="hint" id="hint">点琴键可以自己弹 · 键盘 A S D F G H J K 也行</div>
+
+<div class="gate" id="gate">
+  <div class="inner">
+    <div class="play">▶</div>
+    <p>点击开始演奏</p>
+    <small>浏览器要求先有一次点击，才允许发声</small>
+  </div>
+</div>
+
+<script src="../../assets/vendor/three.min.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  // ================== 3D 键盘 ==================
+  var renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  renderer.setSize(innerWidth, innerHeight);
+  document.body.appendChild(renderer.domElement);
+
+  var scene = new THREE.Scene();
+  var camera = new THREE.PerspectiveCamera(40, innerWidth / innerHeight, 0.1, 200);
+
+  scene.add(new THREE.AmbientLight(0x4b5260, 0.8));
+  var key = new THREE.DirectionalLight(0xfff0da, 0.95); key.position.set(3, 12, 9); scene.add(key);
+  var back = new THREE.DirectionalLight(0x7fa8ff, 0.4); back.position.set(-6, 5, -9); scene.add(back);
+  var stageLight = new THREE.PointLight(0xffc987, 1.4, 30, 2); stageLight.position.set(0, 6, 4); scene.add(stageLight);
+
+  var LOW = 40, HIGH = 84;                                  // E2 – C6，低音与右手跑动都落得下
+  var BLACK = { 1: 1, 3: 1, 6: 1, 8: 1, 10: 1 };
+  var WHITE_W = 0.52, WHITE_D = 3.0, BLACK_W = 0.3, BLACK_D = 1.95;
+
+  var keyboard = new THREE.Group();
+  scene.add(keyboard);
+
+  var whiteMat = new THREE.MeshPhongMaterial({ color: 0xf2f0ea, shininess: 70, specular: 0x9aa0aa });
+  var blackMat = new THREE.MeshPhongMaterial({ color: 0x181a1f, shininess: 110, specular: 0x6a7280 });
+  var keys = {};          // midi → { mesh, x, black, mat }
+  var whiteIndex = 0;
+
+  for (var m = LOW; m <= HIGH; m++) {
+    var pc = m % 12, black = !!BLACK[pc];
+    var mesh, x;
+    if (!black) {
+      x = whiteIndex * WHITE_W;
+      mesh = new THREE.Mesh(new THREE.BoxGeometry(WHITE_W * 0.94, 0.3, WHITE_D), whiteMat.clone());
+      mesh.position.set(x, 0, 0);
+      whiteIndex++;
+    } else {
+      x = whiteIndex * WHITE_W - WHITE_W / 2;
+      mesh = new THREE.Mesh(new THREE.BoxGeometry(BLACK_W, 0.36, BLACK_D), blackMat.clone());
+      mesh.position.set(x, 0.24, -(WHITE_D - BLACK_D) / 2);
+    }
+    keyboard.add(mesh);
+    keys[m] = { mesh: mesh, x: x, black: black, mat: mesh.material, press: 0, home: mesh.position.y };
+  }
+  var span = whiteIndex * WHITE_W;
+  keyboard.position.x = -span / 2 + WHITE_W / 2;
+
+  // 琴身
+  var caseMat = new THREE.MeshPhongMaterial({ color: 0x2a2118, shininess: 60, specular: 0x6b5a44 });
+  var backBoard = new THREE.Mesh(new THREE.BoxGeometry(span + 0.9, 1.5, 1.1), caseMat);
+  backBoard.position.set(0, 0.5, -(WHITE_D / 2 + 0.55));
+  scene.add(backBoard);
+  var frontRail = new THREE.Mesh(new THREE.BoxGeometry(span + 0.9, 0.34, 0.5), caseMat);
+  frontRail.position.set(0, -0.05, WHITE_D / 2 + 0.24);
+  scene.add(frontRail);
+  var felt = new THREE.Mesh(new THREE.BoxGeometry(span + 0.9, 0.08, 0.4), new THREE.MeshPhongMaterial({ color: 0x8c2b2b }));
+  felt.position.set(0, 0.18, -(WHITE_D / 2 - 0.05));
+  scene.add(felt);
+
+  // 落下的音符条（Synthesia 式的谱面河流）
+  var noteMatW = new THREE.MeshBasicMaterial({ color: 0xffc06a, transparent: true, opacity: 0.92 });
+  var noteMatB = new THREE.MeshBasicMaterial({ color: 0x7cd7ff, transparent: true, opacity: 0.92 });
+  var fallers = [];
+  var FALL_LEAD = 2.2;        // 音符提前多少秒出现
+  var FALL_HEIGHT = 11;       // 从多高落下
+
+  function spawnFaller(midi, at, dur, isBass) {
+    var k = keys[midi];
+    if (!k) return;
+    var h = Math.max(0.22, dur * (FALL_HEIGHT / FALL_LEAD) * 0.42);
+    var mesh = new THREE.Mesh(
+      new THREE.BoxGeometry(k.black ? BLACK_W : WHITE_W * 0.8, h, 0.22),
+      isBass ? noteMatB : noteMatW
+    );
+    mesh.position.set(keyboard.position.x + k.x, FALL_HEIGHT, -1.2);
+    scene.add(mesh);
+    fallers.push({ mesh: mesh, at: at, h: h });
+  }
+
+  // 击键时的光晕
+  var flashMat = new THREE.MeshBasicMaterial({ color: 0xffd89a, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false });
+  var flashes = [];
+  for (var i = 0; i < 24; i++) {
+    var f = new THREE.Mesh(new THREE.PlaneGeometry(1.4, 1.4), flashMat.clone());
+    f.rotation.x = -Math.PI / 2;
+    f.visible = false;
+    scene.add(f);
+    flashes.push(f);
+  }
+  var flashCursor = 0;
+  function flashAt(midi) {
+    var k = keys[midi]; if (!k) return;
+    var f = flashes[flashCursor = (flashCursor + 1) % flashes.length];
+    f.position.set(keyboard.position.x + k.x, 0.28, k.black ? -0.5 : 0.2);
+    f.material.opacity = 0.85;
+    f.material.color.setHex(k.black ? 0x8fdcff : 0xffd89a);
+    f.scale.setScalar(1);
+    f.visible = true;
+  }
+
+  // ================== 声音 ==================
+  var actx = null, master = null, delayGain = null, sustainOn = false;
+  function initAudio() {
+    if (actx) return;
+    actx = new (window.AudioContext || window.webkitAudioContext)();
+    master = actx.createGain();
+    master.gain.value = 0.26;
+    var comp = actx.createDynamicsCompressor();
+    master.connect(comp);
+    comp.connect(actx.destination);
+    // 一点点房间感：短延迟反馈
+    var delay = actx.createDelay(1.0);
+    delay.delayTime.value = 0.19;
+    delayGain = actx.createGain();
+    delayGain.gain.value = 0.22;
+    var damp = actx.createBiquadFilter();
+    damp.type = 'lowpass'; damp.frequency.value = 2600;
+    master.connect(delay); delay.connect(damp); damp.connect(delayGain);
+    delayGain.connect(delay); delayGain.connect(comp);
+  }
+  function freq(midi) { return 440 * Math.pow(2, (midi - 69) / 12); }
+
+  // 羽管键琴式音色：锯齿波 + 快速衰减 + 带通
+  function playNote(midi, at, dur, vel) {
+    if (!actx) return;
+    var t = Math.max(at, actx.currentTime + 0.001);
+    var bright = +document.getElementById('bright').value;
+    var g = actx.createGain();
+    var filt = actx.createBiquadFilter();
+    filt.type = 'lowpass';
+    filt.Q.value = 0.9 + bright * 3;
+    filt.frequency.setValueAtTime(900 + bright * 5200 + midi * 22, t);
+    filt.frequency.exponentialRampToValueAtTime(420 + bright * 1400, t + Math.max(0.2, dur));
+
+    var o1 = actx.createOscillator(); o1.type = 'sawtooth'; o1.frequency.value = freq(midi);
+    var o2 = actx.createOscillator(); o2.type = 'triangle'; o2.frequency.value = freq(midi) * 2.001;
+    var g2 = actx.createGain(); g2.gain.value = 0.22 + bright * 0.3;
+    o1.connect(filt); o2.connect(g2); g2.connect(filt);
+    filt.connect(g); g.connect(master);
+
+    var peak = 0.5 * (vel || 1) * (1 - (midi - LOW) / (HIGH - LOW) * 0.35);
+    var rel = sustainOn ? Math.max(1.6, dur * 3) : Math.max(0.32, dur * 1.35);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(peak, t + 0.006);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + rel);
+    o1.start(t); o2.start(t);
+    o1.stop(t + rel + 0.05); o2.stop(t + rel + 0.05);
+  }
+
+  // ================== 乐句生成 ==================
+  // 以 BWV 1048 第一乐章的织体为模型：右手连绵十六分音符的分解和弦，左手行走低音。
+  var PROG = [
+    { name: 'G',   root: 55, chord: [55, 59, 62, 67] },
+    { name: 'D/F#', root: 54, chord: [54, 57, 62, 66] },
+    { name: 'Em',  root: 52, chord: [52, 55, 59, 64] },
+    { name: 'Bm',  root: 47, chord: [47, 54, 59, 62] },
+    { name: 'C',   root: 48, chord: [48, 52, 55, 60] },
+    { name: 'G/B', root: 47, chord: [47, 55, 59, 62] },
+    { name: 'Am7', root: 45, chord: [45, 52, 55, 60] },
+    { name: 'D7',  root: 50, chord: [50, 54, 57, 60] }
+  ];
+  // 每小节 16 个十六分音符，右手在和弦音上跑动的几种音型
+  var FIGURES = [
+    [0, 1, 2, 3, 2, 1, 0, 1, 2, 3, 4, 3, 2, 1, 2, 3],
+    [0, 2, 1, 3, 2, 4, 3, 5, 4, 3, 2, 1, 2, 3, 2, 1],
+    [4, 3, 2, 1, 0, 1, 2, 3, 4, 5, 4, 3, 2, 3, 2, 1],
+    [0, 1, 2, 1, 2, 3, 2, 3, 4, 3, 4, 5, 4, 3, 2, 1]
+  ];
+  function chordTone(chord, i) {
+    var oct = Math.floor(i / chord.length), idx = ((i % chord.length) + chord.length) % chord.length;
+    return chord[idx] + 12 * oct + 12;     // 右手整体高一个八度
+  }
+
+  var bar = 0, step = 0, nextTime = 0;
+  var currentChord = PROG[0];
+
+  function scheduleStep(when) {
+    var p = PROG[bar % PROG.length];
+    currentChord = p;
+    var fig = FIGURES[(bar + (bar >> 2)) % FIGURES.length];
+    var sixteenth = 60 / (+document.getElementById('bpm').value) / 4;
+
+    // 右手：每个十六分一个音
+    var midi = chordTone(p.chord, fig[step]);
+    // 句尾加一点装饰，避免太机械
+    if (step === 15 && (bar % 4 === 3)) midi += 2;
+    playNote(midi, when, sixteenth * 1.8, step % 4 === 0 ? 1 : 0.72);
+    spawnFaller(midi, when, sixteenth * 1.8, false);
+
+    // 左手：每拍一个低音（第 0/4/8/12 个十六分）
+    if (step % 4 === 0) {
+      var beat = step / 4;
+      var bassSeq = [p.root, p.root + 7, p.root + 12, p.root + 7];
+      var bassNote = bassSeq[beat] - 12;
+      if (bassNote < LOW) bassNote += 12;
+      playNote(bassNote, when, sixteenth * 3.4, 0.95);
+      spawnFaller(bassNote, when, sixteenth * 3.4, true);
+    }
+
+    step++;
+    if (step >= 16) { step = 0; bar++; }
+    return sixteenth;
+  }
+
+  // 时钟：有声音时跟着 AudioContext 走；纯看画面（?silent=1）时退回到墙钟
+  var wallStart = performance.now() / 1000;
+  function nowTime() {
+    return (actx && actx.state === 'running') ? actx.currentTime : performance.now() / 1000 - wallStart;
+  }
+
+  var playing = true, started = false;
+  function scheduler() {
+    if (!started || !playing) return;
+    var horizon = nowTime() + FALL_LEAD + 0.1;
+    var guard = 0;
+    while (nextTime < horizon && guard++ < 64) {
+      nextTime += scheduleStep(nextTime);
+    }
+  }
+  setInterval(scheduler, 60);
+
+  // ================== 交互 ==================
+  var ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
+  var keyMeshes = Object.keys(keys).map(function (k) { keys[k].mesh.userData.midi = +k; return keys[k].mesh; });
+
+  function hit(cx, cy) {
+    ndc.set(cx / innerWidth * 2 - 1, -(cy / innerHeight) * 2 + 1);
+    ray.setFromCamera(ndc, camera);
+    var h = ray.intersectObjects(keyMeshes, false)[0];
+    return h ? h.object.userData.midi : null;
+  }
+  renderer.domElement.addEventListener('pointerdown', function (e) {
+    var midi = hit(e.clientX, e.clientY);
+    if (midi != null) { strike(midi); }
+  });
+
+  function strike(midi) {
+    initAudio();
+    if (actx && actx.state === 'suspended') actx.resume();
+    playNote(midi, actx ? actx.currentTime : 0, 0.5, 1);
+    keys[midi].press = 1;
+    flashAt(midi);
+  }
+
+  // 电脑键盘：白键 A S D F G H J K …，黑键在上排
+  var KEYMAP = {
+    a: 60, w: 61, s: 62, e: 63, d: 64, f: 65, t: 66, g: 67, y: 68, h: 69, u: 70, j: 71,
+    k: 72, o: 73, l: 74, p: 75, ';': 76
+  };
+  addEventListener('keydown', function (e) {
+    var k = e.key.toLowerCase();
+    if (KEYMAP[k] && !e.repeat) strike(KEYMAP[k]);
+  });
+
+  var gate = document.getElementById('gate');
+  function openGate() {
+    initAudio();
+    if (actx.state === 'suspended') actx.resume();
+    started = true;
+    nextTime = actx.currentTime + 0.25;
+    gate.classList.add('gone');
+  }
+  gate.addEventListener('click', openGate);
+
+  document.getElementById('play').onclick = function () {
+    playing = !playing;
+    this.classList.toggle('on', playing);
+    this.textContent = playing ? '暂停' : '继续';
+    if (playing && actx) nextTime = Math.max(nextTime, actx.currentTime + 0.1);
+  };
+  document.getElementById('sustain').onclick = function () {
+    sustainOn = !sustainOn;
+    this.classList.toggle('on', sustainOn);
+  };
+  var bpmEl = document.getElementById('bpm'), brightEl = document.getElementById('bright');
+  bpmEl.oninput = function () { document.getElementById('bpmv').textContent = bpmEl.value; };
+  brightEl.oninput = function () { document.getElementById('brightv').textContent = (+brightEl.value).toFixed(2); };
+
+  addEventListener('resize', function () {
+    camera.aspect = innerWidth / innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(innerWidth, innerHeight);
+  });
+
+  // 相机：略微俯视的三四分视角，可拖拽
+  var camYaw = 0, camPitch = 0.48, dragging = false, lx = 0, ly = 0;
+  renderer.domElement.addEventListener('pointerdown', function (e) { dragging = true; lx = e.clientX; ly = e.clientY; });
+  addEventListener('pointerup', function () { dragging = false; });
+  addEventListener('pointermove', function (e) {
+    if (!dragging) return;
+    camYaw = THREE.MathUtils.clamp(camYaw - (e.clientX - lx) * 0.003, -0.6, 0.6);
+    camPitch = THREE.MathUtils.clamp(camPitch + (e.clientY - ly) * 0.002, 0.2, 0.95);
+    lx = e.clientX; ly = e.clientY;
+  });
+
+  var q = new URLSearchParams(location.search);
+  if (q.get('silent') === '1') {                             // 只看画面（截图用）：走墙钟，不发声
+    gate.classList.add('gone');
+    started = true;
+    nextTime = nowTime() + 0.25;
+  }
+
+  // ================== 主循环 ==================
+  var clock = new THREE.Clock();
+  var chordEl = document.getElementById('chord'), barEl = document.getElementById('barno');
+  var hintEl = document.getElementById('hint');
+  var noteCount = 0;
+
+  function tick() {
+    requestAnimationFrame(tick);
+    var dt = Math.min(clock.getDelta(), 0.05), t = clock.elapsedTime;
+    var now = nowTime();
+
+    var d = 13.5;
+    camera.position.set(
+      Math.sin(camYaw) * d,
+      Math.sin(camPitch) * d,
+      Math.cos(camYaw) * Math.cos(camPitch) * d + 2.5
+    );
+    camera.lookAt(0, 0.2, -0.2);
+
+    // 音符条下落；到达琴键时触发按键动画
+    for (var i = fallers.length - 1; i >= 0; i--) {
+      var f = fallers[i];
+      var left = f.at - now;
+      f.mesh.position.y = 0.35 + left * (FALL_HEIGHT / FALL_LEAD) + f.h / 2;
+      if (left < -0.25) {
+        scene.remove(f.mesh);
+        f.mesh.geometry.dispose();
+        fallers.splice(i, 1);
+      } else if (left <= 0 && !f.hitDone) {
+        f.hitDone = true;
+        var midi = null;
+        // 找到最近的琴键（按 x 位置反推）
+        var bx = f.mesh.position.x - keyboard.position.x;
+        var bestD = 1e9;
+        for (var mk in keys) {
+          var dd = Math.abs(keys[mk].x - bx);
+          if (dd < bestD) { bestD = dd; midi = +mk; }
+        }
+        if (midi != null && playing) { keys[midi].press = 1; flashAt(midi); noteCount++; }
+      }
+    }
+
+    // 琴键回弹
+    for (var mk2 in keys) {
+      var k2 = keys[mk2];
+      if (k2.press > 0) k2.press = Math.max(0, k2.press - dt * 4.5);
+      k2.mesh.position.y = k2.home - k2.press * 0.11;
+      k2.mesh.rotation.x = -k2.press * 0.035;
+      var lit = k2.press;
+      k2.mat.emissive.setRGB(lit * (k2.black ? 0.18 : 0.35), lit * (k2.black ? 0.4 : 0.28), lit * (k2.black ? 0.6 : 0.1));
+    }
+
+    // 击键光晕淡出
+    for (var fi = 0; fi < flashes.length; fi++) {
+      var fl = flashes[fi];
+      if (!fl.visible) continue;
+      fl.material.opacity -= dt * 2.2;
+      fl.scale.multiplyScalar(1 + dt * 1.6);
+      if (fl.material.opacity <= 0) fl.visible = false;
+    }
+
+    stageLight.intensity = 1.2 + Math.sin(t * 1.3) * 0.12;
+
+    chordEl.textContent = currentChord.name;
+    barEl.textContent = '第 ' + (bar + 1) + ' 小节 · ' + noteCount + ' 音';
+    if (t > 10) hintEl.style.opacity = 0;
+
+    renderer.render(scene, camera);
+  }
+
+  tick();
+})();
+</script>
+</body>
+</html>

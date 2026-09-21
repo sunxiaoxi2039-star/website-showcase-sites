@@ -1,0 +1,275 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Astra 案例集｜发布周 128 件作品索引</title>
+<meta name="description" content="GPT-6 Astra 发布周作品索引：游戏、Blender/3D、网页、视频共 128 件，含作者、原帖与可玩链接，可按分类筛选与搜索。">
+<style>
+  :root {
+    --bg: #07080b; --panel: #0e1016; --ink: #f2f4f7;
+    --dim: rgba(242,244,247,.6); --faint: rgba(242,244,247,.38); --line: rgba(242,244,247,.13);
+    --astra: #6ee7a5; --opus: #7cd7ff;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink); line-height: 1.7;
+    font-family: "Inter", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: inherit; }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 0 24px; }
+
+  header.hero {
+    padding: 46px 0 34px;
+    background: radial-gradient(70% 120% at 15% -20%, rgba(110,231,165,.13) 0%, transparent 58%);
+    border-bottom: 1px solid var(--line);
+  }
+  .back { font-size: 12.5px; color: var(--dim); text-decoration: none; }
+  .back:hover { color: var(--opus); }
+  h1 { margin: 18px 0 0; font-size: clamp(26px, 4.4vw, 40px); font-weight: 600; letter-spacing: -.02em; }
+  .lede { margin: 16px 0 0; max-width: 760px; font-size: 14.5px; color: var(--dim); }
+
+  .note {
+    margin: 26px 0 0; padding: 18px 20px;
+    border: 1px solid var(--line); border-left: 2px solid var(--astra); border-radius: 0 12px 12px 0;
+    background: rgba(110,231,165,.04); font-size: 13px; color: var(--dim);
+  }
+  .note b { color: var(--ink); font-weight: 600; }
+  .note p { margin: 0 0 8px; } .note p:last-child { margin: 0; }
+  .note a { color: var(--opus); }
+
+  section { padding: 46px 0 0; }
+  .sechead { display: flex; align-items: baseline; gap: 13px; margin-bottom: 8px; }
+  .sechead h2 { margin: 0; font-size: 20px; font-weight: 600; }
+  .sechead span { font-size: 10.5px; letter-spacing: .22em; text-transform: uppercase; color: var(--faint); }
+  .secsub { margin: 0 0 24px; font-size: 13px; color: var(--dim); max-width: 720px; }
+
+  /* 官方演示 */
+  .official { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 14px; }
+  .official div { padding: 18px 20px; border: 1px solid var(--line); border-radius: 13px; background: var(--panel); }
+  .official h4 { margin: 0 0 6px; font-size: 14.5px; font-weight: 600; }
+  .official p { margin: 0; font-size: 12.5px; color: var(--dim); }
+
+  /* 工具条 */
+  .toolbar {
+    position: sticky; top: 0; z-index: 5; margin: 0 -24px; padding: 14px 24px;
+    background: rgba(7,8,11,.88); backdrop-filter: blur(14px); border-bottom: 1px solid var(--line);
+    display: flex; flex-wrap: wrap; gap: 10px; align-items: center;
+  }
+  .toolbar input {
+    flex: 1 1 220px; min-width: 160px; padding: 9px 14px; border: 1px solid var(--line); border-radius: 999px;
+    background: rgba(255,255,255,.03); color: var(--ink); font: inherit; font-size: 13px; outline: none;
+  }
+  .toolbar input:focus { border-color: rgba(124,215,255,.6); }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chips button {
+    padding: 7px 13px; border: 1px solid var(--line); border-radius: 999px; background: transparent;
+    color: var(--dim); font: inherit; font-size: 12px; cursor: pointer; transition: all .16s; white-space: nowrap;
+  }
+  .chips button:hover { color: var(--ink); border-color: rgba(242,244,247,.4); }
+  .chips button.on { background: var(--astra); border-color: var(--astra); color: #06210f; font-weight: 600; }
+  .count { font-size: 12px; color: var(--faint); font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+  /* 案例网格 */
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(288px, 1fr)); gap: 14px; margin-top: 22px; }
+  .card {
+    display: flex; flex-direction: column; padding: 18px 19px;
+    border: 1px solid var(--line); border-radius: 14px; background: var(--panel);
+    transition: border-color .18s, transform .18s;
+  }
+  .card:hover { border-color: rgba(242,244,247,.3); transform: translateY(-2px); }
+  .card .top { display: flex; align-items: center; gap: 8px; margin-bottom: 9px; }
+  .cat { font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: var(--astra); font-weight: 600; }
+  .card.copied { border-color: rgba(124,215,255,.45); background: linear-gradient(180deg, rgba(124,215,255,.06), var(--panel)); }
+  .mine { margin-left: auto; padding: 3px 8px; border: 1px solid rgba(124,215,255,.5); border-radius: 999px; font-size: 10px; color: var(--opus); text-decoration: none; white-space: nowrap; }
+  .mine:hover { background: var(--opus); color: #04121a; font-weight: 600; }
+  .card h3 { margin: 0 0 3px; font-size: 15.5px; font-weight: 600; line-height: 1.35; }
+  .card .by { font-size: 11.5px; color: var(--faint); }
+  .card p { margin: 10px 0 0; font-size: 12.5px; color: var(--dim); flex: 1; }
+  .card .links { display: flex; gap: 7px; margin-top: 14px; flex-wrap: wrap; }
+  .card .links a {
+    padding: 5px 11px; border: 1px solid var(--line); border-radius: 999px;
+    font-size: 11px; color: var(--dim); text-decoration: none; transition: all .16s; white-space: nowrap;
+  }
+  .card .links a:hover { color: var(--ink); border-color: rgba(242,244,247,.4); }
+  .card .links a.live { border-color: rgba(110,231,165,.45); color: var(--astra); }
+  .card .links a.live:hover { background: var(--astra); color: #06210f; font-weight: 600; }
+  .empty { padding: 40px 0; text-align: center; color: var(--faint); font-size: 13px; }
+
+  /* 复刻 prompt */
+  .promptbox {
+    margin-top: 12px; border: 1px solid rgba(124,215,255,.22); border-radius: 11px;
+    background: rgba(124,215,255,.05);
+  }
+  .promptbox summary {
+    list-style: none; cursor: pointer; padding: 9px 13px;
+    display: flex; align-items: center; gap: 8px;
+    font-size: 11.5px; font-weight: 600; color: var(--opus);
+  }
+  .promptbox summary::-webkit-details-marker { display: none; }
+  .promptbox summary::before { content: '▸'; display: inline-block; transition: transform .2s; }
+  .promptbox[open] summary::before { transform: rotate(90deg); }
+  .pbody { position: relative; padding: 0 13px 12px; }
+  .pbody pre {
+    margin: 0; white-space: pre-wrap; word-break: break-word;
+    font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+    font-size: 11.5px; line-height: 1.8; color: var(--dim);
+  }
+  .pcopy {
+    position: absolute; top: -31px; right: 11px; padding: 3px 10px;
+    border: 1px solid var(--line); border-radius: 999px; background: rgba(8,12,18,.8);
+    color: var(--dim); font: inherit; font-size: 10.5px; cursor: pointer; transition: all .16s;
+  }
+  .pcopy:hover { color: #04121a; background: var(--opus); border-color: var(--opus); font-weight: 600; }
+
+  footer { margin-top: 70px; padding: 30px 0 56px; border-top: 1px solid var(--line); font-size: 12.5px; color: var(--faint); }
+  footer a { color: var(--dim); }
+
+  @media (max-width: 700px) {
+    .toolbar { position: static; margin: 0; padding: 14px 0; }
+    header.hero { padding: 32px 0 26px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <a class="back" href="../index.html">← 回到 Astra × Opus 对照</a>
+    <h1>Astra 案例集</h1>
+    <p class="lede">
+      GPT-6 Astra 发布周（2026-09-03 起）公开作品的索引：游戏、Blender/3D、网页应用、视频与绘画共 <b id="total">128</b> 件，
+      每条都带作者、原帖与可玩链接。其中 <b>6 件</b>已经在本站做了 Opus 临摹，卡片右上角会标出来。
+    </p>
+
+    <div class="note">
+      <p><b>关于「OpenAI 官方案例集」：本环境访问不到 openai.com。</b></p>
+      <p>运行环境的出口网络屏蔽了 <code>openai.com</code> 与 <code>x.com</code>，我没法直接抓官方页面逐条拷贝。下面「官方公开演示」一栏是<b>转述自公开报道与搜索结果</b>的要点，不是官方原文；如果你手上有官方案例集的链接或正文，贴给我，我可以按原文替换这一栏。</p>
+      <p><b>每张卡片下面挂着一条「复刻 prompt」</b>：那是我按作品描述反推的起手提示词，点开可一键复制、直接丢给模型跑，<b>不是原作者当时用的原始 prompt</b> —— 绝大多数原作者并没有公开自己的 prompt。</p>
+      <p>下面这份 128 件的清单来自社区整理 <a href="https://github.com/magiccreator-ai/awesome-gpt-6-astra" target="_blank" rel="noopener">magiccreator-ai/awesome-gpt-6-astra</a>（该仓库自述收录 171 条，本次转录到 128 条），标题与描述经中文改写，链接原样保留、未逐条人工打开核对。</p>
+    </div>
+  </div>
+</header>
+
+<section>
+  <div class="wrap">
+    <div class="sechead"><h2>官方公开演示</h2><span>reported by openai</span></div>
+    <p class="secsub">OpenAI 在发布材料与公开报道里给出的能力演示（转述，非官方原文）。</p>
+    <div class="official">
+      <div><h4>财务建模</h4><p>用 computer use 完成 Financial Modeling World Cup 的题目，速度约为人类冠军的四倍。</p></div>
+      <div><h4>按模板做演示稿</h4><p>用 OpenAI 自己的模板做一份关于虚构模型「GPT-Gaia」的幻灯片，语气与版式保持一致。</p></div>
+      <div><h4>文档与表格</h4><p>按你的模板和指令产出文档、电子表格与演示文稿，中途加需求也能跟着改。</p></div>
+      <div><h4>建站与前端 QA</h4><p>在 ChatGPT 的 Sites 里由 prompt 生成网站、Web App 与游戏并托管分享；写完页面会自己打开检查，发现按钮不工作再改回去。</p></div>
+      <div><h4>Blender → 虚幻 5</h4><p>发布期被反复引用的官方向演示：先在 Blender 里建出住宅，再搬进 Unreal Engine 5 做成可走动的场景。</p></div>
+      <div><h4>日常 computer use</h4><p>报税、点餐、找工作这类要跨浏览器与软件的多步骤任务。</p></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="sechead"><h2>社区收录的作品</h2><span>community index</span></div>
+    <p class="secsub">可按分类筛选，也可以搜标题、作者或描述里的关键词。标「已临摹」的可以直接跳到本站的 Opus 版本。</p>
+
+    <div class="toolbar">
+      <input id="q" type="search" placeholder="搜索标题 / 作者 / 关键词，例如：Blender、发动机、三国" autocomplete="off">
+      <div class="chips" id="chips"></div>
+      <div class="count" id="count"></div>
+    </div>
+
+    <div class="grid" id="grid"></div>
+    <div class="empty" id="empty" hidden>没有匹配的案例，换个关键词试试。</div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    数据来源：<a href="https://github.com/magiccreator-ai/awesome-gpt-6-astra" target="_blank" rel="noopener">awesome-gpt-6-astra</a> ·
+    作品版权归各原作者所有，本页仅作索引与学习对照用途。
+    <br>整理日期 2026-09-14 · 本页为纯静态，无依赖。
+  </div>
+</footer>
+
+<script>
+const CASES = [{"c":"Games","t":"Rocket League Style Game","a":"am.will","p":"https://x.com/LLMJunky/status/2096028790925488452","d":"","s":"车足球原型：开球、加速与进球，配一座细节完整的体育场","pr":"做一个打开浏览器就能玩的《Rocket League Style Game》：车足球原型：开球、加速与进球，配一座细节完整的体育场。\n要求：关卡与几何尽量程序化生成、不依赖外部素材；键鼠与触屏都能操作；要有明确的目标、计分或胜负判定，以及重开按钮；先给一个能跑通的最小版本，再补美术、音效与手感。"},{"c":"Games","t":"Paperboy Browser Remake","a":"Emm Tee","p":"https://x.com/builtbysketch/status/2098777028078211283","d":"https://www.paperroute.lol/","s":"用 Blender 模型重做的浏览器版《送报小子》，可玩的送报关卡","pr":"做一个打开浏览器就能玩的《Paperboy Browser Remake》：用 Blender 模型重做的浏览器版《送报小子》，可玩的送报关卡。\n要求：关卡与几何尽量程序化生成、不依赖外部素材；键鼠与触屏都能操作；要有明确的目标、计分或胜负判定，以及重开按钮；先给一个能跑通的最小版本，再补美术、音效与手感。"},{"c":"Games","t":"Browser 3D Game Prototype","a":"Theo - t3.gg","p":"https://x.com/theo/status/2095599934766764338","d":"","s":"一句话生成的浏览器 3D 游戏原型","pr":"做一个打开浏览器就能玩的《Browser 3D Game Prototype》：一句话生成的浏览器 3D 游戏原型。\n要求：关卡与几何尽量程序化生成、不依赖外部素材；键鼠与触屏都能操作；要有明确的目标、计分或胜负判定，以及重开按钮；先给一个能跑通的最小版本，再补美术、音效与手感。"},{"c":"Games","t":"Sonic in Godot: Max vs Medium","a":"AiBattle","p":"https://x.com/AiBattle_/status/2095994051354919049","d":"","s":"在 Godot 里对比 Astra 不同推理档位做出的索尼克风格 3D 游戏","pr":"做一个打开浏览器就能玩的《Sonic in Godot: Max vs Medium》：在 Godot 里对比 Astra 不同推理档位做出的索尼克风格 3D 游戏。\n要求：关卡与几何尽量程序化生成、不依赖外部素材；键鼠与触屏都能操作；要有明确的目标、计分或胜负判定，以及重开按钮；先给一个能跑通的最小版本，再补美术、音效与手感。"},{"c":"Games","t":"Age of Empires IV on Apple Silicon","a":"Marc Ibrahim","p":"https://x.com/marc_ibrahim/status/2096365209111724235","d":"","s":"针对 Apple Silicon 的游戏优化，帧率从 70 提到 150","pr":"做一个打开浏览器就能玩的《Age of Empires IV on Apple Silicon》：针对 Apple Silicon 的游戏优化，帧率从 70 提到 150。\n要求：关卡与几何尽量程序化生成、不依赖外部素材；键鼠与触屏都能操作；要有明确的目标、计分或胜负判定，以及重开按钮；先给一个能跑通的最小版本，再补美术、音效与手感。"},{"c":"Games","t":"Minecraft-Style World","a":"Flavio Adamo","p":"https://x.com/flavioAd/status/2095597137849446688","d":"","s":"单条 prompt 生成的体素方块世界","pr":"做一个打开浏览器就能玩的《Minecraft-Style World》：单条 prompt 生成的体素方块世界。\n要求：关卡与几何尽量程序化生成、不依赖外部素材；键鼠与触屏都能操作；要有明确的目标、计分或胜负判定，以及重开按钮；先给一个能跑通的最小版本，再补美术、音效与手感。"},{"c":"Games","t":"Reference-Image Aquarium Game","a":"Tim Jayas","p":"https://x.com/TimJayas/status/2095611134992945385","d":"","s":"围绕参考图对比做出的 3D 水族馆游戏","pr":"做一个打开浏览器就能玩的《Reference-Image Aquarium Game》：围绕参考图对比做出的 3D 水族馆游戏。\n要求：关卡与几何尽量程序化生成、不依赖外部素材；键鼠与触屏都能操作；要有明确的目标、计分或胜负判定，以及重开按钮；先给一个能跑通的最小版本，再补美术、音效与手感。"},{"c":"Games","t":"League of Legends Browser Clone","a":"Konsti Wohlwend","p":"https://x.com/konstiwohlwend/status/2097164513527357608","d":"","s":"浏览器里重现英雄联盟的英雄与机制","pr":"做一个打开浏览器就能玩的《League of Legends Browser Clone》：浏览器里重现英雄联盟的英雄与机制。\n要求：关卡与几何尽量程序化生成、不依赖外部素材；键鼠与触屏都能操作；要有明确的目标、计分或胜负判定，以及重开按钮；先给一个能跑通的最小版本，再补美术、音效与手感。"},{"c":"Games","t":"Catan-Style Three.js Board Game","a":"Meng To","p":"https://x.com/MengTo/status/2097291240672993773","d":"","s":"Three.js 桌游：带动画棋子与 AI 对手","pr":"做一个打开浏览器就能玩的《Catan-Style Three.js Board Game》：Three.js 桌游：带动画棋子与 AI 对手。\n要求：关卡与几何尽量程序化生成、不依赖外部素材；键鼠与触屏都能操作；要有明确的目标、计分或胜负判定，以及重开按钮；先给一个能跑通的最小版本，再补美术、音效与手感。"},{"c":"Games","t":"Universe Duel","a":"ハヤシモン","p":"https://x.com/hayashimon1/status/2096255665778069957","d":"https://universe-duel.vercel.app","s":"浏览器机器人对决：冲刺、追踪攻击与光刃格斗","pr":"做一个打开浏览器就能玩的《Universe Duel》：浏览器机器人对决：冲刺、追踪攻击与光刃格斗。\n要求：关卡与几何尽量程序化生成、不依赖外部素材；键鼠与触屏都能操作；要有明确的目标、计分或胜负判定，以及重开按钮；先给一个能跑通的最小版本，再补美术、音效与手感。"},{"c":"Games","t":"Mobile Ad Game Remake","a":"daniel","p":"https://x.com/buildingadlicio/status/2096111709496680842","d":"","s":"30 分钟内把手游广告做成真的可玩原型","pr":"做一个打开浏览器就能玩的《Mobile Ad Game Remake》：30 分钟内把手游广告做成真的可玩原型。\n要求：关卡与几何尽量程序化生成、不依赖外部素材；键鼠与触屏都能操作；要有明确的目标、计分或胜负判定，以及重开按钮；先给一个能跑通的最小版本，再补美术、音效与手感。"},{"c":"Games","t":"Photorealistic Contra Game","a":"Anish Acharya","p":"https://x.com/illscience/status/2097059547328241971","d":"https://runner-stage1.vercel.app/","s":"一个周末做出的写实风横版射击，致敬经典街机","pr":"做一个打开浏览器就能玩的《Photorealistic Contra Game》：一个周末做出的写实风横版射击，致敬经典街机。\n要求：关卡与几何尽量程序化生成、不依赖外部素材；键鼠与触屏都能操作；要有明确的目标、计分或胜负判定，以及重开按钮；先给一个能跑通的最小版本，再补美术、音效与手感。"},{"c":"Games","t":"Scorpid Creature Animation","a":"Stefan 3D AI","p":"https://x.com/Stefan_3D_AI/status/2098387407565730203","d":"","s":"Tripo 生成的怪物带五套动画接进 Unity","pr":"做一个打开浏览器就能玩的《Scorpid Creature Animation》：Tripo 生成的怪物带五套动画接进 Unity。\n要求：关卡与几何尽量程序化生成、不依赖外部素材；键鼠与触屏都能操作；要有明确的目标、计分或胜负判定，以及重开按钮；先给一个能跑通的最小版本，再补美术、音效与手感。"},{"c":"Games","t":"Afterlight Robot World","a":"Anshu","p":"https://x.com/anshuc/status/2096584624432374151","d":"","s":"末世机器人场景：雨、灯光、街道与程序化飞鸟","pr":"做一个打开浏览器就能玩的《Afterlight Robot World》：末世机器人场景：雨、灯光、街道与程序化飞鸟。\n要求：关卡与几何尽量程序化生成、不依赖外部素材；键鼠与触屏都能操作；要有明确的目标、计分或胜负判定，以及重开按钮；先给一个能跑通的最小版本，再补美术、音效与手感。"},{"c":"Games","t":"A Godot Roguelike Level","a":"歸藏 guizang.ai","p":"https://x.com/op7418/status/2096494840431386950","d":"","s":"3D 战斗关卡：天气、武器、技能与昼夜循环","pr":"做一个打开浏览器就能玩的《A Godot Roguelike Level》：3D 战斗关卡：天气、武器、技能与昼夜循环。\n要求：关卡与几何尽量程序化生成、不依赖外部素材；键鼠与触屏都能操作；要有明确的目标、计分或胜负判定，以及重开按钮；先给一个能跑通的最小版本，再补美术、音效与手感。"},{"c":"Games","t":"Zork in 3D","a":"Ethan Mollick","p":"https://x.com/emollick/status/2096047660662722620","d":"https://zork-underground-empire.netlify.app/","s":"把《Zork》改成带 3D 场景、谜题与战斗的浏览器版","pr":"做一个打开浏览器就能玩的《Zork in 3D》：把《Zork》改成带 3D 场景、谜题与战斗的浏览器版。\n要求：关卡与几何尽量程序化生成、不依赖外部素材；键鼠与触屏都能操作；要有明确的目标、计分或胜负判定，以及重开按钮；先给一个能跑通的最小版本，再补美术、音效与手感。"},{"c":"Games","t":"Jelly Baby Playground","a":"Scott","p":"https://x.com/scottstts/status/2096364764054131119","d":"https://jelly.scottsun.io/","s":"会拉伸、投掷与回弹的果冻角色物理玩具","pr":"做一个打开浏览器就能玩的《Jelly Baby Playground》：会拉伸、投掷与回弹的果冻角色物理玩具。\n要求：关卡与几何尽量程序化生成、不依赖外部素材；键鼠与触屏都能操作；要有明确的目标、计分或胜负判定，以及重开按钮；先给一个能跑通的最小版本，再补美术、音效与手感。"},{"c":"Games","t":"Floating Blimp Unity Prototype","a":"Chong-U","p":"https://x.com/chongdashu/status/2096628135630615028","d":"","s":"从一张图出发，经 Blender 与 Unity 做成飞艇游戏原型","pr":"做一个打开浏览器就能玩的《Floating Blimp Unity Prototype》：从一张图出发，经 Blender 与 Unity 做成飞艇游戏原型。\n要求：关卡与几何尽量程序化生成、不依赖外部素材；键鼠与触屏都能操作；要有明确的目标、计分或胜负判定，以及重开按钮；先给一个能跑通的最小版本，再补美术、音效与手感。"},{"c":"Games","t":"Elderwood Realms","a":"Rohan Varma","p":"https://x.com/TheRohanVarma/status/2096744577332068549","d":"https://elderwood-realms.rohannvarma.chatgpt.site/","s":"RuneScape 风格的多人浏览器世界，还配了宣传片","pr":"做一个打开浏览器就能玩的《Elderwood Realms》：RuneScape 风格的多人浏览器世界，还配了宣传片。\n要求：关卡与几何尽量程序化生成、不依赖外部素材；键鼠与触屏都能操作；要有明确的目标、计分或胜负判定，以及重开按钮；先给一个能跑通的最小版本，再补美术、音效与手感。"},{"c":"Games","t":"Astral War","a":"Rishi","p":"https://x.com/0xRishi/status/2096079660605997264","d":"http://astralwar.io","s":"生者 / 亡者双模式的多人浏览器射击","pr":"做一个打开浏览器就能玩的《Astral War》：生者 / 亡者双模式的多人浏览器射击。\n要求：关卡与几何尽量程序化生成、不依赖外部素材；键鼠与触屏都能操作；要有明确的目标、计分或胜负判定，以及重开按钮；先给一个能跑通的最小版本，再补美术、音效与手感。"},{"c":"Games","t":"Halo-Inspired Tesana FPS","a":"Halfdan","p":"https://x.com/VikiingAI/status/2095598026916049024","d":"","s":"一条 prompt 出的 10v10 光环风格多人 FPS 原型","pr":"做一个打开浏览器就能玩的《Halo-Inspired Tesana FPS》：一条 prompt 出的 10v10 光环风格多人 FPS 原型。\n要求：关卡与几何尽量程序化生成、不依赖外部素材；键鼠与触屏都能操作；要有明确的目标、计分或胜负判定，以及重开按钮；先给一个能跑通的最小版本，再补美术、音效与手感。"},{"c":"Games","t":"Anti-Gravity Combat Racer","a":"Alexey Fateev","p":"https://x.com/superalesha/status/2095967568825582044","d":"https://alesha-pro.github.io/bench-portal/games/voidrunner-astra/","s":"霓虹赛道 + Blender 载具模型的反重力竞速","pr":"做一个打开浏览器就能玩的《Anti-Gravity Combat Racer》：霓虹赛道 + Blender 载具模型的反重力竞速。\n要求：关卡与几何尽量程序化生成、不依赖外部素材；键鼠与触屏都能操作；要有明确的目标、计分或胜负判定，以及重开按钮；先给一个能跑通的最小版本，再补美术、音效与手感。"},{"c":"Games","t":"Rogue Arena Prototype","a":"JUMPERZ","p":"https://x.com/jumperz/status/2096600055301984738","d":"http://rogue-omega.vercel.app","s":"四小时做出的 PvP 竞技场，可单人可联机","pr":"做一个打开浏览器就能玩的《Rogue Arena Prototype》：四小时做出的 PvP 竞技场，可单人可联机。\n要求：关卡与几何尽量程序化生成、不依赖外部素材；键鼠与触屏都能操作；要有明确的目标、计分或胜负判定，以及重开按钮；先给一个能跑通的最小版本，再补美术、音效与手感。"},{"c":"Games","t":"Gogh Strike","a":"Peter Gostev","p":"https://x.com/petergostev/status/2096013280519016608","d":"https://gogh-strike.surge.sh/","s":"以梵高小镇为战场的画家主题射击，带 bot 队友","pr":"做一个打开浏览器就能玩的《Gogh Strike》：以梵高小镇为战场的画家主题射击，带 bot 队友。\n要求：关卡与几何尽量程序化生成、不依赖外部素材；键鼠与触屏都能操作；要有明确的目标、计分或胜负判定，以及重开按钮；先给一个能跑通的最小版本，再补美术、音效与手感。"},{"c":"Games","t":"Voidbound: The Choir of Ash","a":"Alexey Fateev","p":"https://x.com/superalesha/status/2095988972879335792","d":"https://alesha-pro.github.io/bench-portal/games/voidbound-choir-of-ash/","s":"大教堂竞技场的第三人称剑战：闪避与范围魔法","pr":"做一个打开浏览器就能玩的《Voidbound: The Choir of Ash》：大教堂竞技场的第三人称剑战：闪避与范围魔法。\n要求：关卡与几何尽量程序化生成、不依赖外部素材；键鼠与触屏都能操作；要有明确的目标、计分或胜负判定，以及重开按钮；先给一个能跑通的最小版本，再补美术、音效与手感。"},{"c":"Games","t":"Arena Zero iPhone Fighting Game","a":"Higgsfield AI","p":"https://x.com/higgsfield_ai/status/2097470354897740109","d":"","s":"iPhone 上的触屏格斗，109 段动画片段","pr":"做一个打开浏览器就能玩的《Arena Zero iPhone Fighting Game》：iPhone 上的触屏格斗，109 段动画片段。\n要求：关卡与几何尽量程序化生成、不依赖外部素材；键鼠与触屏都能操作；要有明确的目标、计分或胜负判定，以及重开按钮；先给一个能跑通的最小版本，再补美术、音效与手感。"},{"c":"Games","t":"Sunwake Sailing Game","a":"Thomas Ricouard","p":"https://x.com/Dimillian/status/2096863961203220741","d":"","s":"帆船游戏：海面光照、行进波浪与两套渲染模式","pr":"做一个打开浏览器就能玩的《Sunwake Sailing Game》：帆船游戏：海面光照、行进波浪与两套渲染模式。\n要求：关卡与几何尽量程序化生成、不依赖外部素材；键鼠与触屏都能操作；要有明确的目标、计分或胜负判定，以及重开按钮；先给一个能跑通的最小版本，再补美术、音效与手感。"},{"c":"Games","t":"Snakes and Ladders in Unreal","a":"Higgsfield AI","p":"https://x.com/higgsfield_ai/status/2097464282829168955","d":"","s":"虚幻引擎里的蛇梯棋，带 3D 动画与音效","pr":"做一个打开浏览器就能玩的《Snakes and Ladders in Unreal》：虚幻引擎里的蛇梯棋，带 3D 动画与音效。\n要求：关卡与几何尽量程序化生成、不依赖外部素材；键鼠与触屏都能操作；要有明确的目标、计分或胜负判定，以及重开按钮；先给一个能跑通的最小版本，再补美术、音效与手感。"},{"c":"Games","t":"Fighting Game Animation Test","a":"YuK1","p":"https://x.com/YuK1_Game/status/2097446904942780699","d":"","s":"GPT Image 2.5 的原画 + Astra Pro 合成格斗动画","pr":"做一个打开浏览器就能玩的《Fighting Game Animation Test》：GPT Image 2.5 的原画 + Astra Pro 合成格斗动画。\n要求：关卡与几何尽量程序化生成、不依赖外部素材；键鼠与触屏都能操作；要有明确的目标、计分或胜负判定，以及重开按钮；先给一个能跑通的最小版本，再补美术、音效与手感。"},{"c":"Games","t":"Metal Slug Dream Loop Remake","a":"ashen","p":"https://x.com/ashen_one/status/2097539441900261645","d":"","s":"一小时左右复刻出合金弹头的手感","pr":"做一个打开浏览器就能玩的《Metal Slug Dream Loop Remake》：一小时左右复刻出合金弹头的手感。\n要求：关卡与几何尽量程序化生成、不依赖外部素材；键鼠与触屏都能操作；要有明确的目标、计分或胜负判定，以及重开按钮；先给一个能跑通的最小版本，再补美术、音效与手感。"},{"c":"Games","t":"Rink Life","a":"Jake Boyles","p":"https://x.com/JakeBoyles/status/2096983366327226501","d":"https://vyrld.com/w/rink-life","s":"第一人称冰场经营模拟，含浇冰车作业","pr":"做一个打开浏览器就能玩的《Rink Life》：第一人称冰场经营模拟，含浇冰车作业。\n要求：关卡与几何尽量程序化生成、不依赖外部素材；键鼠与触屏都能操作；要有明确的目标、计分或胜负判定，以及重开按钮；先给一个能跑通的最小版本，再补美术、音效与手感。"},{"c":"Games","t":"Bubble Wrap Simulator","a":"FinkTheArtist","p":"https://x.com/crtvTeknologist/status/2096980188126986533","d":"https://bubble-wrap-simulator.vercel.app/","s":"捏泡泡纸的 Three.js 玩具，附带火箭筒破坏物理","pr":"做一个打开浏览器就能玩的《Bubble Wrap Simulator》：捏泡泡纸的 Three.js 玩具，附带火箭筒破坏物理。\n要求：关卡与几何尽量程序化生成、不依赖外部素材；键鼠与触屏都能操作；要有明确的目标、计分或胜负判定，以及重开按钮；先给一个能跑通的最小版本，再补美术、音效与手感。"},{"c":"Games","t":"Heroes III Generative Remaster","a":"Zihao Ye","p":"https://x.com/ye_combinator/status/2097562847215845500","d":"https://yzh119.github.io/series/enhancing-heroes-iii-with-generative-ai/","s":"用 VCMI 模组重做英雄无敌 3 的死亡之城，全新 3D 模型","pr":"做一个打开浏览器就能玩的《Heroes III Generative Remaster》：用 VCMI 模组重做英雄无敌 3 的死亡之城，全新 3D 模型。\n要求：关卡与几何尽量程序化生成、不依赖外部素材；键鼠与触屏都能操作；要有明确的目标、计分或胜负判定，以及重开按钮；先给一个能跑通的最小版本，再补美术、音效与手感。"},{"c":"Games","t":"Machining Factory Game","a":"gin0","p":"https://x.com/chod3s/status/2097563137784385541","d":"","s":"Godot 原型：把金属方块加工做成工厂建造游戏","pr":"做一个打开浏览器就能玩的《Machining Factory Game》：Godot 原型：把金属方块加工做成工厂建造游戏。\n要求：关卡与几何尽量程序化生成、不依赖外部素材；键鼠与触屏都能操作；要有明确的目标、计分或胜负判定，以及重开按钮；先给一个能跑通的最小版本，再补美术、音效与手感。"},{"c":"Games","t":"Infinite Garden","a":"—","p":"","d":"https://infinite-garden.yelin8130.chatgpt.site/","s":"重力翻转的庭院解谜世界","pr":"做一个打开浏览器就能玩的《Infinite Garden》：重力翻转的庭院解谜世界。\n要求：关卡与几何尽量程序化生成、不依赖外部素材；键鼠与触屏都能操作；要有明确的目标、计分或胜负判定，以及重开按钮；先给一个能跑通的最小版本，再补美术、音效与手感。"},{"c":"Games","t":"Mario: Mushroom Kingdom","a":"—","p":"","d":"https://mushroom-arcade-0905.jumaomaomaoju.chatgpt.site/","s":"马里奥风格的浏览器平台跳跃","pr":"做一个打开浏览器就能玩的《Mario: Mushroom Kingdom》：马里奥风格的浏览器平台跳跃。\n要求：关卡与几何尽量程序化生成、不依赖外部素材；键鼠与触屏都能操作；要有明确的目标、计分或胜负判定，以及重开按钮；先给一个能跑通的最小版本，再补美术、音效与手感。"},{"c":"Games","t":"Courtside 26","a":"—","p":"","d":"https://huhuhu.page.gd/COURTSIDE26.html","s":"浏览器篮球游戏","pr":"做一个打开浏览器就能玩的《Courtside 26》：浏览器篮球游戏。\n要求：关卡与几何尽量程序化生成、不依赖外部素材；键鼠与触屏都能操作；要有明确的目标、计分或胜负判定，以及重开按钮；先给一个能跑通的最小版本，再补美术、音效与手感。"},{"c":"Games","t":"Three Kingdoms: Wind and Cloud","a":"—","p":"","d":"https://sanguo-wind-cloud.amery2010.workers.dev/","s":"三国题材的浏览器游戏","pr":"做一个打开浏览器就能玩的《Three Kingdoms: Wind and Cloud》：三国题材的浏览器游戏。\n要求：关卡与几何尽量程序化生成、不依赖外部素材；键鼠与触屏都能操作；要有明确的目标、计分或胜负判定，以及重开按钮；先给一个能跑通的最小版本，再补美术、音效与手感。"},{"c":"Games","t":"PvZ: Garden Defenders","a":"—","p":"","d":"https://seth-xh.github.io/pvz/","s":"植物大战僵尸风格的花园防守","pr":"做一个打开浏览器就能玩的《PvZ: Garden Defenders》：植物大战僵尸风格的花园防守。\n要求：关卡与几何尽量程序化生成、不依赖外部素材；键鼠与触屏都能操作；要有明确的目标、计分或胜负判定，以及重开按钮；先给一个能跑通的最小版本，再补美术、音效与手感。"},{"c":"Games","t":"Melon Lab","a":"Ayi1337","p":"","d":"https://melon-game.jack-514.chatgpt.site/","s":"可形变水果合成物理游戏，一次生成","pr":"做一个打开浏览器就能玩的《Melon Lab》：可形变水果合成物理游戏，一次生成。\n要求：关卡与几何尽量程序化生成、不依赖外部素材；键鼠与触屏都能操作；要有明确的目标、计分或胜负判定，以及重开按钮；先给一个能跑通的最小版本，再补美术、音效与手感。"},{"c":"Games","t":"Balatro Web Edition","a":"—","p":"","d":"https://balatro-v1-1.longyh2333521818.chatgpt.site/","s":"Balatro 风格的浏览器卡牌","pr":"做一个打开浏览器就能玩的《Balatro Web Edition》：Balatro 风格的浏览器卡牌。\n要求：关卡与几何尽量程序化生成、不依赖外部素材；键鼠与触屏都能操作；要有明确的目标、计分或胜负判定，以及重开按钮；先给一个能跑通的最小版本，再补美术、音效与手感。"},{"c":"Games","t":"Mosswing","a":"Ayi1337","p":"","d":"https://mosswing-quiet-flight.jack-514.chatgpt.site/","s":"单键操作的 3D 飞行小游戏，一次生成","pr":"做一个打开浏览器就能玩的《Mosswing》：单键操作的 3D 飞行小游戏，一次生成。\n要求：关卡与几何尽量程序化生成、不依赖外部素材；键鼠与触屏都能操作；要有明确的目标、计分或胜负判定，以及重开按钮；先给一个能跑通的最小版本，再补美术、音效与手感。"},{"c":"Games","t":"Dust II: Desert Operations","a":"—","p":"","d":"https://dust-ii-map.yelin8130.chatgpt.site/","s":"在浏览器里重建 Dust II 的射击场景","pr":"做一个打开浏览器就能玩的《Dust II: Desert Operations》：在浏览器里重建 Dust II 的射击场景。\n要求：关卡与几何尽量程序化生成、不依赖外部素材；键鼠与触屏都能操作；要有明确的目标、计分或胜负判定，以及重开按钮；先给一个能跑通的最小版本，再补美术、音效与手感。"},{"c":"Games","t":"Magic Carpet Wizard","a":"threapchills","p":"https://github.com/threapchills/MagicCarpetWizard","d":"https://threapchills.github.io/MagicCarpetWizard/","s":"骑魔毯放法术的 3D 浏览器街机","pr":"做一个打开浏览器就能玩的《Magic Carpet Wizard》：骑魔毯放法术的 3D 浏览器街机。\n要求：关卡与几何尽量程序化生成、不依赖外部素材；键鼠与触屏都能操作；要有明确的目标、计分或胜负判定，以及重开按钮；先给一个能跑通的最小版本，再补美术、音效与手感。"},{"c":"Games","t":"THUNDERFALL","a":"jackroc","p":"https://github.com/MartinDelophy/awesome-gpt-6-astra/blob/main/works/thunderfall/README.md","d":"","s":"纵版弹幕射击：三架战机、五个区域","pr":"做一个打开浏览器就能玩的《THUNDERFALL》：纵版弹幕射击：三架战机、五个区域。\n要求：关卡与几何尽量程序化生成、不依赖外部素材；键鼠与触屏都能操作；要有明确的目标、计分或胜负判定，以及重开按钮；先给一个能跑通的最小版本，再补美术、音效与手感。"},{"c":"Games","t":"Three Kingdoms: Hundred Heroes","a":"MartinDelophy","p":"https://github.com/MartinDelophy/awesome-gpt-6-astra/blob/main/works/three-kingdoms/CREATION.md","d":"https://sanguo-jiangshan.vercel.app","s":"15 座城池的回合制战役，含资源与敌对势力","pr":"做一个打开浏览器就能玩的《Three Kingdoms: Hundred Heroes》：15 座城池的回合制战役，含资源与敌对势力。\n要求：关卡与几何尽量程序化生成、不依赖外部素材；键鼠与触屏都能操作；要有明确的目标、计分或胜负判定，以及重开按钮；先给一个能跑通的最小版本，再补美术、音效与手感。"},{"c":"Games","t":"Last Beacon","a":"stackloomdev","p":"https://github.com/stackloomdev/last-beacon/blob/main/docs/CREATION.md","d":"https://last-beacon.loupengju.cc","s":"海岛防守：电网建设与可升级塔防","pr":"做一个打开浏览器就能玩的《Last Beacon》：海岛防守：电网建设与可升级塔防。\n要求：关卡与几何尽量程序化生成、不依赖外部素材；键鼠与触屏都能操作；要有明确的目标、计分或胜负判定，以及重开按钮；先给一个能跑通的最小版本，再补美术、音效与手感。"},{"c":"Games","t":"Toy2Game","a":"asmoyou","p":"https://github.com/MartinDelophy/awesome-gpt-6-astra/issues/24","d":"https://games.asmo.top/","s":"四种桌面玩具变成浏览器游戏，含冰壶与停车解谜","pr":"做一个打开浏览器就能玩的《Toy2Game》：四种桌面玩具变成浏览器游戏，含冰壶与停车解谜。\n要求：关卡与几何尽量程序化生成、不依赖外部素材；键鼠与触屏都能操作；要有明确的目标、计分或胜负判定，以及重开按钮；先给一个能跑通的最小版本，再补美术、音效与手感。"},{"c":"Blender/3D","t":"Craig Federighi in Blender","a":"Peter Gostev","p":"https://x.com/petergostev/status/2096264296099459079","d":"","s":"在 Blender 里复刻 Craig Federighi 的视频片段","pr":"用 Blender 的 Python API 做《Craig Federighi in Blender》：在 Blender 里复刻 Craig Federighi 的视频片段。\n要求：所有几何由脚本生成，并按部件命名分层，方便后期手动改；材质用节点搭，别贴现成贴图；三点布光加 HDRI 环境光，Cycles 出图；最后渲一段 8 秒的环绕动画。"},{"c":"Blender/3D","t":"Steam Train in Blender","a":"Tom Krcha","p":"https://x.com/tomkrcha/status/2095756085890310311","d":"","s":"一张老蒸汽机车图纸还原成 3295 个可编辑物体","pr":"用 Blender 的 Python API 做《Steam Train in Blender》：一张老蒸汽机车图纸还原成 3295 个可编辑物体。\n要求：所有几何由脚本生成，并按部件命名分层，方便后期手动改；材质用节点搭，别贴现成贴图；三点布光加 HDRI 环境光，Cycles 出图；最后渲一段 8 秒的环绕动画。"},{"c":"Blender/3D","t":"Rickroll Blender Recreation","a":"Vaibhav Srivastav","p":"https://x.com/reach_vb/status/2096612996256579653","d":"","s":"Blender 版 Rickroll，与原片并排对照","pr":"用 Blender 的 Python API 做《Rickroll Blender Recreation》：Blender 版 Rickroll，与原片并排对照。\n要求：所有几何由脚本生成，并按部件命名分层，方便后期手动改；材质用节点搭，别贴现成贴图；三点布光加 HDRI 环境光，Cycles 出图；最后渲一段 8 秒的环绕动画。"},{"c":"Blender/3D","t":"Backrooms in Blender","a":"Duncan Trussell","p":"https://x.com/duncantrussell/status/2096003511104508411","d":"","s":"带 VHS 效果与音效的 Backrooms 场景","pr":"用 Blender 的 Python API 做《Backrooms in Blender》：带 VHS 效果与音效的 Backrooms 场景。\n要求：所有几何由脚本生成，并按部件命名分层，方便后期手动改；材质用节点搭，别贴现成贴图；三点布光加 HDRI 环境光，Cycles 出图；最后渲一段 8 秒的环绕动画。"},{"c":"Blender/3D","t":"Photorealistic Bat in Blender","a":"Alix Ollivier","p":"https://x.com/aollivier82/status/2096226819401801896","d":"","s":"长时间自主运行做出的写实蝙蝠模型","pr":"用 Blender 的 Python API 做《Photorealistic Bat in Blender》：长时间自主运行做出的写实蝙蝠模型。\n要求：所有几何由脚本生成，并按部件命名分层，方便后期手动改；材质用节点搭，别贴现成贴图；三点布光加 HDRI 环境光，Cycles 出图；最后渲一段 8 秒的环绕动画。"},{"c":"Blender/3D","t":"Blender to Unreal House","a":"Thomas Ricouard","p":"https://x.com/Dimillian/status/2095596700815516004","d":"","s":"现代住宅在 Blender 建模后导入虚幻 5","pr":"用 Blender 的 Python API 做《Blender to Unreal House》：现代住宅在 Blender 建模后导入虚幻 5。\n要求：所有几何由脚本生成，并按部件命名分层，方便后期手动改；材质用节点搭，别贴现成贴图；三点布光加 HDRI 环境光，Cycles 出图；最后渲一段 8 秒的环绕动画。"},{"c":"Blender/3D","t":"Palace of Fine Arts","a":"Sharif Shameem","p":"https://x.com/sharifshameem/status/2095653641164329143","d":"","s":"旧金山艺术宫的 Blender 建筑短片","pr":"用 Blender 的 Python API 做《Palace of Fine Arts》：旧金山艺术宫的 Blender 建筑短片。\n要求：所有几何由脚本生成，并按部件命名分层，方便后期手动改；材质用节点搭，别贴现成贴图；三点布光加 HDRI 环境光，Cycles 出图；最后渲一段 8 秒的环绕动画。"},{"c":"Blender/3D","t":"House Photo to Blender Model","a":"Tom Krcha","p":"https://x.com/tomkrcha/status/2095598645190291775","d":"","s":"一张房屋参考图还原成可编辑的 Blender 几何体","pr":"用 Blender 的 Python API 做《House Photo to Blender Model》：一张房屋参考图还原成可编辑的 Blender 几何体。\n要求：所有几何由脚本生成，并按部件命名分层，方便后期手动改；材质用节点搭，别贴现成贴图；三点布光加 HDRI 环境光，Cycles 出图；最后渲一段 8 秒的环绕动画。"},{"c":"Blender/3D","t":"Oval Office in Cycles","a":"Higgsfield AI","p":"https://x.com/higgsfield_ai/status/2095630197257367857","d":"","s":"程序化生成的椭圆形办公室，Cycles 渲染","pr":"用 Blender 的 Python API 做《Oval Office in Cycles》：程序化生成的椭圆形办公室，Cycles 渲染。\n要求：所有几何由脚本生成，并按部件命名分层，方便后期手动改；材质用节点搭，别贴现成贴图；三点布光加 HDRI 环境光，Cycles 出图；最后渲一段 8 秒的环绕动画。"},{"c":"Blender/3D","t":"Verdant Forest","a":"Leon Lin","p":"https://x.com/LexnLin/status/2096263046918197609","d":"https://verdant-forest.lexn8.chatgpt.site","s":"可步行的森林：密草、蕨类与自定义光照着色器","pr":"用 Blender 的 Python API 做《Verdant Forest》：可步行的森林：密草、蕨类与自定义光照着色器。\n要求：所有几何由脚本生成，并按部件命名分层，方便后期手动改；材质用节点搭，别贴现成贴图；三点布光加 HDRI 环境光，Cycles 出图；最后渲一段 8 秒的环绕动画。"},{"c":"Blender/3D","t":"iPod Codex Thread Viewer","a":"Pietro Schirano","p":"https://x.com/skirano/status/2095648379455861054","d":"","s":"用 Blender 做的 3D iPod 当作 Codex 会话浏览器","pr":"用 Blender 的 Python API 做《iPod Codex Thread Viewer》：用 Blender 做的 3D iPod 当作 Codex 会话浏览器。\n要求：所有几何由脚本生成，并按部件命名分层，方便后期手动改；材质用节点搭，别贴现成贴图；三点布光加 HDRI 环境光，Cycles 出图；最后渲一段 8 秒的环绕动画。"},{"c":"Blender/3D","t":"Phone Photos to Blender Building","a":"Bad Decisions Studio","p":"https://x.com/badxstudio/status/2095982983379653113","d":"","s":"iPhone 实拍照片 30 分钟内重建成建筑模型","pr":"用 Blender 的 Python API 做《Phone Photos to Blender Building》：iPhone 实拍照片 30 分钟内重建成建筑模型。\n要求：所有几何由脚本生成，并按部件命名分层，方便后期手动改；材质用节点搭，别贴现成贴图；三点布光加 HDRI 环境光，Cycles 出图；最后渲一段 8 秒的环绕动画。"},{"c":"Blender/3D","t":"Tripo Character Rigging Workflow","a":"Nano","p":"https://x.com/Dstudio_ai/status/2098760566672417240","d":"","s":"Tripo 多部件角色在 Blender 里组装、绑骨与动画","pr":"用 Blender 的 Python API 做《Tripo Character Rigging Workflow》：Tripo 多部件角色在 Blender 里组装、绑骨与动画。\n要求：所有几何由脚本生成，并按部件命名分层，方便后期手动改；材质用节点搭，别贴现成贴图；三点布光加 HDRI 环境光，Cycles 出图；最后渲一段 8 秒的环绕动画。"},{"c":"Blender/3D","t":"Street Scene from an Image","a":"Hirokazu Yokohara","p":"https://x.com/Yokohara_h/status/2096622171011666003","d":"","s":"参考图变成 Blender 街景，并反复迭代细化","pr":"用 Blender 的 Python API 做《Street Scene from an Image》：参考图变成 Blender 街景，并反复迭代细化。\n要求：所有几何由脚本生成，并按部件命名分层，方便后期手动改；材质用节点搭，别贴现成贴图；三点布光加 HDRI 环境光，Cycles 出图；最后渲一段 8 秒的环绕动画。"},{"c":"Blender/3D","t":"Lisbon in Blender","a":"Gonçalo Canhoto","p":"https://x.com/goncalo_canhoto/status/2096298425914450021","d":"","s":"里斯本商业广场的 Blender 重建","pr":"用 Blender 的 Python API 做《Lisbon in Blender》：里斯本商业广场的 Blender 重建。\n要求：所有几何由脚本生成，并按部件命名分层，方便后期手动改；材质用节点搭，别贴现成贴图；三点布光加 HDRI 环境光，Cycles 出图；最后渲一段 8 秒的环绕动画。"},{"c":"Blender/3D","t":"Walk Through Van Gogh","a":"Peter Gostev","p":"https://x.com/petergostev/status/2095776685807346105","d":"https://van-goghs-town.surge.sh/","s":"六幅画重新想象成一座可步行的笔触小镇","pr":"用 Blender 的 Python API 做《Walk Through Van Gogh》：六幅画重新想象成一座可步行的笔触小镇。\n要求：所有几何由脚本生成，并按部件命名分层，方便后期手动改；材质用节点搭，别贴现成贴图；三点布光加 HDRI 环境光，Cycles 出图；最后渲一段 8 秒的环绕动画。"},{"c":"Blender/3D","t":"Holographic 3D Cards","a":"EverettFish","p":"https://x.com/everettfish0408/status/2096765359282061544","d":"","s":"肖像与插画变成带视差的旋转全息卡","pr":"用 Blender 的 Python API 做《Holographic 3D Cards》：肖像与插画变成带视差的旋转全息卡。\n要求：所有几何由脚本生成，并按部件命名分层，方便后期手动改；材质用节点搭，别贴现成贴图；三点布光加 HDRI 环境光，Cycles 出图；最后渲一段 8 秒的环绕动画。"},{"c":"Blender/3D","t":"Summer Palace Tower in Blender","a":"Sac","p":"https://x.com/Saccc_c/status/2097225315089256814","d":"","s":"颐和园佛香阁的精细重建","pr":"用 Blender 的 Python API 做《Summer Palace Tower in Blender》：颐和园佛香阁的精细重建。\n要求：所有几何由脚本生成，并按部件命名分层，方便后期手动改；材质用节点搭，别贴现成贴图；三点布光加 HDRI 环境光，Cycles 出图；最后渲一段 8 秒的环绕动画。"},{"c":"Blender/3D","t":"Schematic-to-3D Mechanism","a":"Dilum Sanjaya","p":"https://x.com/DilumSanjaya/status/2097005668389802027","d":"","s":"平面机械图纸变成会动的 3D 机构","pr":"用 Blender 的 Python API 做《Schematic-to-3D Mechanism》：平面机械图纸变成会动的 3D 机构。\n要求：所有几何由脚本生成，并按部件命名分层，方便后期手动改；材质用节点搭，别贴现成贴图；三点布光加 HDRI 环境光，Cycles 出图；最后渲一段 8 秒的环绕动画。"},{"c":"Blender/3D","t":"Taj Mahal in Blender","a":"Senthil Nayagam","p":"https://x.com/senthilnayagam/status/2096543077917986823","d":"","s":"泰姬陵的建筑渲染，含穹顶与花园","pr":"用 Blender 的 Python API 做《Taj Mahal in Blender》：泰姬陵的建筑渲染，含穹顶与花园。\n要求：所有几何由脚本生成，并按部件命名分层，方便后期手动改；材质用节点搭，别贴现成贴图；三点布光加 HDRI 环境光，Cycles 出图；最后渲一段 8 秒的环绕动画。"},{"c":"Blender/3D","t":"Fighter Jet Sketch to Blender","a":"Karan","p":"https://x.com/karankendre/status/2097430655336620509","d":"","s":"手绘战机变成写实参考图与 Blender 模型","pr":"用 Blender 的 Python API 做《Fighter Jet Sketch to Blender》：手绘战机变成写实参考图与 Blender 模型。\n要求：所有几何由脚本生成，并按部件命名分层，方便后期手动改；材质用节点搭，别贴现成贴图；三点布光加 HDRI 环境光，Cycles 出图；最后渲一段 8 秒的环绕动画。"},{"c":"Blender/3D","t":"Looping Water in Geometry Nodes","a":"黒曜陣","p":"https://x.com/uB95A7tobA17057/status/2096521798150242631","d":"","s":"用 Geometry Nodes 做的可循环水面","pr":"用 Blender 的 Python API 做《Looping Water in Geometry Nodes》：用 Geometry Nodes 做的可循环水面。\n要求：所有几何由脚本生成，并按部件命名分层，方便后期手动改；材质用节点搭，别贴现成贴图；三点布光加 HDRI 环境光，Cycles 出图；最后渲一段 8 秒的环绕动画。"},{"c":"Blender/3D","t":"Cube City Image to Blender","a":"Will Oldgram","p":"https://x.com/old_pgmrs_will/status/2097506064078147861","d":"","s":"GPT Image 2.5 生成的方块城市图在 Blender 里重建","pr":"用 Blender 的 Python API 做《Cube City Image to Blender》：GPT Image 2.5 生成的方块城市图在 Blender 里重建。\n要求：所有几何由脚本生成，并按部件命名分层，方便后期手动改；材质用节点搭，别贴现成贴图；三点布光加 HDRI 环境光，Cycles 出图；最后渲一段 8 秒的环绕动画。"},{"c":"Website","t":"Exploded Male Anatomy","a":"ashe","p":"https://x.com/ashebytes/status/2096221988763173186","d":"https://human-atlas-seven.vercel.app","s":"把男性人体拆成一个个部件的 3D 解剖网站","pr":"写一个单文件 HTML + Three.js 页面《Exploded Male Anatomy》：把男性人体拆成一个个部件的 3D 解剖网站。\n要求：几何全部程序化生成，不加载外部模型或贴图；关键部件可点选并弹出说明；配一块半透明控制面板放 2–3 个实时可调参数；深色背景、克制配色；手机上也要能用。"},{"c":"Website","t":"Interactive V8 Engine","a":"Dilum Sanjaya","p":"https://x.com/DilumSanjaya/status/2096280244663775423","d":"","s":"浏览器里的精细 V8 发动机可视化","pr":"写一个单文件 HTML + Three.js 页面《Interactive V8 Engine》：浏览器里的精细 V8 发动机可视化。\n要求：几何全部程序化生成，不加载外部模型或贴图；关键部件可点选并弹出说明；配一块半透明控制面板放 2–3 个实时可调参数；深色背景、克制配色；手机上也要能用。"},{"c":"Website","t":"Interface Generation Study","a":"Marvin Schwaibold","p":"https://x.com/MSchwaibold/status/2096059496812716307","d":"","s":"Astra 生成 UI 设计的演示","pr":"写一个单文件 HTML + Three.js 页面《Interface Generation Study》：Astra 生成 UI 设计的演示。\n要求：几何全部程序化生成，不加载外部模型或贴图；关键部件可点选并弹出说明；配一块半透明控制面板放 2–3 个实时可调参数；深色背景、克制配色；手机上也要能用。"},{"c":"Website","t":"Interactive Hidden-Book Photo","a":"Rohan Nuttall","p":"https://x.com/rohancalum/status/2097009625627500814","d":"","s":"一张静态书架照片变成找书挑战","pr":"写一个单文件 HTML + Three.js 页面《Interactive Hidden-Book Photo》：一张静态书架照片变成找书挑战。\n要求：几何全部程序化生成，不加载外部模型或贴图；关键部件可点选并弹出说明；配一块半透明控制面板放 2–3 个实时可调参数；深色背景、克制配色；手机上也要能用。"},{"c":"Website","t":"Model X Studio","a":"ashe","p":"https://x.com/ashebytes/status/2096009146248122416","d":"https://model-x-studio.vercel.app","s":"特斯拉 Model X 的交互看板：爆炸视图与部件隔离","pr":"写一个单文件 HTML + Three.js 页面《Model X Studio》：特斯拉 Model X 的交互看板：爆炸视图与部件隔离。\n要求：几何全部程序化生成，不加载外部模型或贴图；关键部件可点选并弹出说明；配一块半透明控制面板放 2–3 个实时可调参数；深色背景、克制配色；手机上也要能用。"},{"c":"Website","t":"Custom LEGO Set Generator","a":"Emm","p":"https://x.com/emmanuel_2m/status/2096377028945576370","d":"","s":"图片或文字变成自定义积木模型，可导出 LDraw","pr":"写一个单文件 HTML + Three.js 页面《Custom LEGO Set Generator》：图片或文字变成自定义积木模型，可导出 LDraw。\n要求：几何全部程序化生成，不加载外部模型或贴图；关键部件可点选并弹出说明；配一块半透明控制面板放 2–3 个实时可调参数；深色背景、克制配色；手机上也要能用。"},{"c":"Website","t":"Interactive 3D Ankle Atlas","a":"Emanuel AOF","p":"https://x.com/Emanuel_Andre7/status/2096528986390085696","d":"","s":"踝关节交互图谱：骨骼、韧带与运动轴","pr":"写一个单文件 HTML + Three.js 页面《Interactive 3D Ankle Atlas》：踝关节交互图谱：骨骼、韧带与运动轴。\n要求：几何全部程序化生成，不加载外部模型或贴图；关键部件可点选并弹出说明；配一块半透明控制面板放 2–3 个实时可调参数；深色背景、克制配色；手机上也要能用。"},{"c":"Website","t":"Knicks Tip-In 3D Replay","a":"brian flynn","p":"https://x.com/Flynnjamm/status/2096663293901578438","d":"","s":"一次补篮被重建成可从任意看台座位观看的 3D 回放","pr":"写一个单文件 HTML + Three.js 页面《Knicks Tip-In 3D Replay》：一次补篮被重建成可从任意看台座位观看的 3D 回放。\n要求：几何全部程序化生成，不加载外部模型或贴图；关键部件可点选并弹出说明；配一块半透明控制面板放 2–3 个实时可调参数；深色背景、克制配色；手机上也要能用。"},{"c":"Website","t":"Singapore Street in Three.js","a":"sui","p":"https://x.com/birdabo/status/2096156461365960837","d":"","s":"以手机取景框呈现的新加坡街景","pr":"写一个单文件 HTML + Three.js 页面《Singapore Street in Three.js》：以手机取景框呈现的新加坡街景。\n要求：几何全部程序化生成，不加载外部模型或贴图；关键部件可点选并弹出说明；配一块半透明控制面板放 2–3 个实时可调参数；深色背景、克制配色；手机上也要能用。"},{"c":"Website","t":"macOS 27 Simulator","a":"Max Weinbach","p":"https://x.com/mweinbach/status/2095596867081916653","d":"https://macos-27-simulator.mweinbach.chatgpt.site/","s":"浏览器里的 macOS 桌面模拟，含访达与应用界面","pr":"写一个单文件 HTML + Three.js 页面《macOS 27 Simulator》：浏览器里的 macOS 桌面模拟，含访达与应用界面。\n要求：几何全部程序化生成，不加载外部模型或贴图；关键部件可点选并弹出说明；配一块半透明控制面板放 2–3 个实时可调参数；深色背景、克制配色；手机上也要能用。"},{"c":"Website","t":"Procedural Train Assemblies","a":"Tom Krcha","p":"https://x.com/tomkrcha/status/2096082580554777041","d":"","s":"代码生成的列车：车轮动画与爆炸装配视图","pr":"写一个单文件 HTML + Three.js 页面《Procedural Train Assemblies》：代码生成的列车：车轮动画与爆炸装配视图。\n要求：几何全部程序化生成，不加载外部模型或贴图；关键部件可点选并弹出说明；配一块半透明控制面板放 2–3 个实时可调参数；深色背景、克制配色；手机上也要能用。"},{"c":"Website","t":"Gameboy-Style Portfolio","a":"Angel","p":"https://x.com/Angaisb_/status/2095964361105789424","d":"","s":"做成掌机复古界面的作品集网站","pr":"写一个单文件 HTML + Three.js 页面《Gameboy-Style Portfolio》：做成掌机复古界面的作品集网站。\n要求：几何全部程序化生成，不加载外部模型或贴图；关键部件可点选并弹出说明；配一块半透明控制面板放 2–3 个实时可调参数；深色背景、克制配色；手机上也要能用。"},{"c":"Website","t":"3D Product Mockup Studio","a":"Josh Millgate","p":"https://x.com/joshmillgate/status/2095619319690400253","d":"","s":"一条 prompt 生成的三维产品样机工具","pr":"写一个单文件 HTML + Three.js 页面《3D Product Mockup Studio》：一条 prompt 生成的三维产品样机工具。\n要求：几何全部程序化生成，不加载外部模型或贴图；关键部件可点选并弹出说明；配一块半透明控制面板放 2–3 个实时可调参数；深色背景、克制配色；手机上也要能用。"},{"c":"Website","t":"Ozempic Mechanism Visualization","a":"Andrew Aiginin","p":"https://x.com/andrewaiginin/status/2096998783351664993","d":"","s":"解释司美格鲁肽作用机制的交互细胞模型","pr":"写一个单文件 HTML + Three.js 页面《Ozempic Mechanism Visualization》：解释司美格鲁肽作用机制的交互细胞模型。\n要求：几何全部程序化生成，不加载外部模型或贴图；关键部件可点选并弹出说明；配一块半透明控制面板放 2–3 个实时可调参数；深色背景、克制配色；手机上也要能用。"},{"c":"Website","t":"Seoul 3D Atlas","a":"synabreu","p":"https://x.com/synabreu/status/2096557555086725159","d":"https://seoul-3d-atlas.synabreu.chatgpt.site/","s":"微缩首尔：地标飞行与昼夜光照","pr":"写一个单文件 HTML + Three.js 页面《Seoul 3D Atlas》：微缩首尔：地标飞行与昼夜光照。\n要求：几何全部程序化生成，不加载外部模型或贴图；关键部件可点选并弹出说明；配一块半透明控制面板放 2–3 个实时可调参数；深色背景、克制配色；手机上也要能用。"},{"c":"Website","t":"Glass-Drying Physics Simulation","a":"Barron Roth","p":"https://x.com/iamBarronRoth/status/2096407730030530762","d":"","s":"对比正放与倒扣玻璃杯水痕行为的物理模拟","pr":"写一个单文件 HTML + Three.js 页面《Glass-Drying Physics Simulation》：对比正放与倒扣玻璃杯水痕行为的物理模拟。\n要求：几何全部程序化生成，不加载外部模型或贴图；关键部件可点选并弹出说明；配一块半透明控制面板放 2–3 个实时可调参数；深色背景、克制配色；手机上也要能用。"},{"c":"Website","t":"VEYRA Interactive Car","a":"Amir Mušić","p":"https://x.com/AmirMushich/status/2098464881498370090","d":"","s":"电动车交互研究：剖切动画与外观调节","pr":"写一个单文件 HTML + Three.js 页面《VEYRA Interactive Car》：电动车交互研究：剖切动画与外观调节。\n要求：几何全部程序化生成，不加载外部模型或贴图；关键部件可点选并弹出说明；配一块半透明控制面板放 2–3 个实时可调参数；深色背景、克制配色；手机上也要能用。"},{"c":"Website","t":"Hangzhou in Three.js","a":"SuSu 酥酥","p":"https://x.com/NFT_Chen/status/2096143589151756638","d":"","s":"微缩杭州：地标、镜头导航与昼夜光照","pr":"写一个单文件 HTML + Three.js 页面《Hangzhou in Three.js》：微缩杭州：地标、镜头导航与昼夜光照。\n要求：几何全部程序化生成，不加载外部模型或贴图；关键部件可点选并弹出说明；配一块半透明控制面板放 2–3 个实时可调参数；深色背景、克制配色；手机上也要能用。"},{"c":"Website","t":"Birthday Rarity Explorer","a":"Adrianna Lakatos","p":"https://x.com/adriannalakatos/status/2098671802574840117","d":"https://birthdaytraffic.com/","s":"用 8500 万条记录估算你生日有多罕见","pr":"写一个单文件 HTML + Three.js 页面《Birthday Rarity Explorer》：用 8500 万条记录估算你生日有多罕见。\n要求：几何全部程序化生成，不加载外部模型或贴图；关键部件可点选并弹出说明；配一块半透明控制面板放 2–3 个实时可调参数；深色背景、克制配色；手机上也要能用。"},{"c":"Website","t":"Antibody Developability Explorer","a":"Andrew Aiginin","p":"https://x.com/andrewaiginin/status/2098078245350518884","d":"","s":"抗体可开发性预测与交互解释的基准页","pr":"写一个单文件 HTML + Three.js 页面《Antibody Developability Explorer》：抗体可开发性预测与交互解释的基准页。\n要求：几何全部程序化生成，不加载外部模型或贴图；关键部件可点选并弹出说明；配一块半透明控制面板放 2–3 个实时可调参数；深色背景、克制配色；手机上也要能用。"},{"c":"Website","t":"Varun Lohade Portfolio","a":"Varun","p":"https://x.com/orseliyas/status/2097307376143773730","d":"https://varunlohade.com/","s":"手绘风景配滚动作品展示的个人站","pr":"写一个单文件 HTML + Three.js 页面《Varun Lohade Portfolio》：手绘风景配滚动作品展示的个人站。\n要求：几何全部程序化生成，不加载外部模型或贴图；关键部件可点选并弹出说明；配一块半透明控制面板放 2–3 个实时可调参数；深色背景、克制配色；手机上也要能用。"},{"c":"Website","t":"Texas Jet Plant Simulation","a":"Konstantin Saifoulline","p":"https://x.com/konstantinsaifo/status/2096122429319852319","d":"","s":"德州飞机制造厂的实时 Three.js 模拟","pr":"写一个单文件 HTML + Three.js 页面《Texas Jet Plant Simulation》：德州飞机制造厂的实时 Three.js 模拟。\n要求：几何全部程序化生成，不加载外部模型或贴图；关键部件可点选并弹出说明；配一块半透明控制面板放 2–3 个实时可调参数；深色背景、克制配色；手机上也要能用。"},{"c":"Website","t":"Interactive Model Railroad","a":"Probably Nick","p":"https://x.com/nickfromlater/status/2097355845524726084","d":"https://alder-valley-rail-atelier.nickfromlater.chatgpt.site/","s":"童年的模型铁路做成可交互的浏览器体验","pr":"写一个单文件 HTML + Three.js 页面《Interactive Model Railroad》：童年的模型铁路做成可交互的浏览器体验。\n要求：几何全部程序化生成，不加载外部模型或贴图；关键部件可点选并弹出说明；配一块半透明控制面板放 2–3 个实时可调参数；深色背景、克制配色；手机上也要能用。"},{"c":"Website","t":"Brandenburg Piano","a":"Derya Unutmaz","p":"https://x.com/DeryaTR_/status/2096090915790069857","d":"https://brandenburg-piano.vercel.app/","s":"内置巴赫勃兰登堡协奏曲演奏的虚拟钢琴","pr":"写一个单文件 HTML + Three.js 页面《Brandenburg Piano》：内置巴赫勃兰登堡协奏曲演奏的虚拟钢琴。\n要求：几何全部程序化生成，不加载外部模型或贴图；关键部件可点选并弹出说明；配一块半透明控制面板放 2–3 个实时可调参数；深色背景、克制配色；手机上也要能用。"},{"c":"Website","t":"Studio Photo-to-3D Reconstruction","a":"Roberto Nickson","p":"https://x.com/rpnickson/status/2097488440489116111","d":"https://studio-in-bricks.rpn24.chatgpt.site/interior","s":"九张工作室照片重建成可浏览的 3D 空间","pr":"写一个单文件 HTML + Three.js 页面《Studio Photo-to-3D Reconstruction》：九张工作室照片重建成可浏览的 3D 空间。\n要求：几何全部程序化生成，不加载外部模型或贴图；关键部件可点选并弹出说明；配一块半透明控制面板放 2–3 个实时可调参数；深色背景、克制配色；手机上也要能用。"},{"c":"Website","t":"Earth History Timeline","a":"Aksh","p":"https://x.com/akshdeeps_001/status/2096776530005488028","d":"https://earth.ethanplus.ai/","s":"用交互地球讲地球史与人类文明的时间轴","pr":"写一个单文件 HTML + Three.js 页面《Earth History Timeline》：用交互地球讲地球史与人类文明的时间轴。\n要求：几何全部程序化生成，不加载外部模型或贴图；关键部件可点选并弹出说明；配一块半透明控制面板放 2–3 个实时可调参数；深色背景、克制配色；手机上也要能用。"},{"c":"Website","t":"Three.js Interface Studies","a":"Meng To","p":"https://x.com/MengTo/status/2096510126244999366","d":"","s":"液态玻璃控件与程序化物体组成的动效界面研究","pr":"写一个单文件 HTML + Three.js 页面《Three.js Interface Studies》：液态玻璃控件与程序化物体组成的动效界面研究。\n要求：几何全部程序化生成，不加载外部模型或贴图；关键部件可点选并弹出说明；配一块半透明控制面板放 2–3 个实时可调参数；深色背景、克制配色；手机上也要能用。"},{"c":"Website","t":"Moonlit Forge Studio","a":"歸藏 guizang.ai","p":"https://x.com/op7418/status/2096205141187956887","d":"https://moonlit-forge-studio.op7418.chatgpt.site","s":"发光微缩建筑撑起来的氛围感 3D 工作室站","pr":"写一个单文件 HTML + Three.js 页面《Moonlit Forge Studio》：发光微缩建筑撑起来的氛围感 3D 工作室站。\n要求：几何全部程序化生成，不加载外部模型或贴图；关键部件可点选并弹出说明；配一块半透明控制面板放 2–3 个实时可调参数；深色背景、克制配色；手机上也要能用。"},{"c":"Website","t":"ABYSSAL: The Living Deep","a":"Ethan Mollick","p":"https://x.com/emollick/status/2095673885605630429","d":"https://abyssal-living-deep.netlify.app/","s":"带海洋生物与可调天气的程序化海底世界","pr":"写一个单文件 HTML + Three.js 页面《ABYSSAL: The Living Deep》：带海洋生物与可调天气的程序化海底世界。\n要求：几何全部程序化生成，不加载外部模型或贴图；关键部件可点选并弹出说明；配一块半透明控制面板放 2–3 个实时可调参数；深色背景、克制配色；手机上也要能用。"},{"c":"Website","t":"Clouds in Motion","a":"Shin Megami Boson","p":"https://x.com/shinboson/status/2096568055413231902","d":"https://clouds-in-motion.pages.dev","s":"浏览器里的实时云层渲染","pr":"写一个单文件 HTML + Three.js 页面《Clouds in Motion》：浏览器里的实时云层渲染。\n要求：几何全部程序化生成，不加载外部模型或贴图；关键部件可点选并弹出说明；配一块半透明控制面板放 2–3 个实时可调参数；深色背景、克制配色；手机上也要能用。"},{"c":"Website","t":"Navier–Stokes Visual Essay","a":"ashe","p":"https://x.com/ashebytes/status/2097493817549038078","d":"https://ashe.ai/explainers/navier-stokes/","s":"用茶杯漩涡讲纳维–斯托克斯方程的交互式视觉论文","pr":"写一个单文件 HTML + Three.js 页面《Navier–Stokes Visual Essay》：用茶杯漩涡讲纳维–斯托克斯方程的交互式视觉论文。\n要求：几何全部程序化生成，不加载外部模型或贴图；关键部件可点选并弹出说明；配一块半透明控制面板放 2–3 个实时可调参数；深色背景、克制配色；手机上也要能用。"},{"c":"Website","t":"Cursor-Tracking Studio Footer","a":"Viktor Oddy","p":"https://x.com/viktoroddy/status/2097358381518565778","d":"https://oobi.viktoroddy.chatgpt.site/","s":"页脚里的软萌 3D 角色，视线跟着光标走","pr":"写一个单文件 HTML + Three.js 页面《Cursor-Tracking Studio Footer》：页脚里的软萌 3D 角色，视线跟着光标走。\n要求：几何全部程序化生成，不加载外部模型或贴图；关键部件可点选并弹出说明；配一块半透明控制面板放 2–3 个实时可调参数；深色背景、克制配色；手机上也要能用。"},{"c":"Website","t":"Nine-Cylinder Radial Engine","a":"Techartist","p":"https://x.com/techartist_/status/2096577974242033738","d":"","s":"讲星型发动机原理的浏览器交互模型","pr":"写一个单文件 HTML + Three.js 页面《Nine-Cylinder Radial Engine》：讲星型发动机原理的浏览器交互模型。\n要求：几何全部程序化生成，不加载外部模型或贴图；关键部件可点选并弹出说明；配一块半透明控制面板放 2–3 个实时可调参数；深色背景、克制配色；手机上也要能用。"},{"c":"Website","t":"Shared Notes with Astra","a":"cooker","p":"https://x.com/skulladult/status/2096764060121673931","d":"","s":"共享笔记页：Astra 跟着你写并在画布上回应","pr":"写一个单文件 HTML + Three.js 页面《Shared Notes with Astra》：共享笔记页：Astra 跟着你写并在画布上回应。\n要求：几何全部程序化生成，不加载外部模型或贴图；关键部件可点选并弹出说明；配一块半透明控制面板放 2–3 个实时可调参数；深色背景、克制配色；手机上也要能用。"},{"c":"Website","t":"Voxel Ship in a Bottle","a":"Derya Unutmaz","p":"https://x.com/DeryaTR_/status/2095699049722581065","d":"","s":"瓶中船的 Three.js 场景：海浪、海鸥与珊瑚礁","pr":"写一个单文件 HTML + Three.js 页面《Voxel Ship in a Bottle》：瓶中船的 Three.js 场景：海浪、海鸥与珊瑚礁。\n要求：几何全部程序化生成，不加载外部模型或贴图；关键部件可点选并弹出说明；配一块半透明控制面板放 2–3 个实时可调参数；深色背景、克制配色；手机上也要能用。"},{"c":"Website","t":"Microduck Assembly Lab","a":"yishan","p":"https://x.com/tspy/status/2096238855519453662","d":"https://microduck-assembly-lab.yishan-lin.chatgpt.site/","s":"70 个可选部件的 3D 装配观察器","pr":"写一个单文件 HTML + Three.js 页面《Microduck Assembly Lab》：70 个可选部件的 3D 装配观察器。\n要求：几何全部程序化生成，不加载外部模型或贴图；关键部件可点选并弹出说明；配一块半透明控制面板放 2–3 个实时可调参数；深色背景、克制配色；手机上也要能用。"},{"c":"Website","t":"Evolution Hand-Tracking Experience","a":"Higgsfield AI","p":"https://x.com/higgsfield_ai/status/2097442296203759946","d":"","s":"用手势划过四十亿年进化史的交互界面","pr":"写一个单文件 HTML + Three.js 页面《Evolution Hand-Tracking Experience》：用手势划过四十亿年进化史的交互界面。\n要求：几何全部程序化生成，不加载外部模型或贴图；关键部件可点选并弹出说明；配一块半透明控制面板放 2–3 个实时可调参数；深色背景、克制配色；手机上也要能用。"},{"c":"Website","t":"Boeing 777 Landing Sim","a":"Lumina","p":"https://x.com/LuminaBench/status/2096946420234207459","d":"","s":"波音 777-300ER 的降落模拟录像","pr":"写一个单文件 HTML + Three.js 页面《Boeing 777 Landing Sim》：波音 777-300ER 的降落模拟录像。\n要求：几何全部程序化生成，不加载外部模型或贴图；关键部件可点选并弹出说明；配一块半透明控制面板放 2–3 个实时可调参数；深色背景、克制配色；手机上也要能用。"},{"c":"Website","t":"Directional Sticker Peel","a":"johnnn","p":"https://x.com/johnnnavent/status/2096983463760904311","d":"","s":"拖哪边就从哪边揭起的 3D 贴纸交互","pr":"写一个单文件 HTML + Three.js 页面《Directional Sticker Peel》：拖哪边就从哪边揭起的 3D 贴纸交互。\n要求：几何全部程序化生成，不加载外部模型或贴图；关键部件可点选并弹出说明；配一块半透明控制面板放 2–3 个实时可调参数；深色背景、克制配色；手机上也要能用。"},{"c":"Website","t":"Fort Worth Stockyards Map","a":"DFW Strategy","p":"https://x.com/dfwstrategy/status/2097346335712137483","d":"","s":"把牲畜围场做成可探索的风格化 3D 旅游地图","pr":"写一个单文件 HTML + Three.js 页面《Fort Worth Stockyards Map》：把牲畜围场做成可探索的风格化 3D 旅游地图。\n要求：几何全部程序化生成，不加载外部模型或贴图；关键部件可点选并弹出说明；配一块半透明控制面板放 2–3 个实时可调参数；深色背景、克制配色；手机上也要能用。"},{"c":"Website","t":"Facial-Tracking Avatar App","a":"しとちゃ","p":"https://x.com/nemumusitocha/status/2097430181095125251","d":"","s":"把 iFacialMocap 的追踪映射到虚拟形象表情","pr":"写一个单文件 HTML + Three.js 页面《Facial-Tracking Avatar App》：把 iFacialMocap 的追踪映射到虚拟形象表情。\n要求：几何全部程序化生成，不加载外部模型或贴图；关键部件可点选并弹出说明；配一块半透明控制面板放 2–3 个实时可调参数；深色背景、克制配色；手机上也要能用。"},{"c":"Website","t":"Interactive iPhone History","a":"bluedev","p":"https://x.com/blueemi99/status/2096917792737911131","d":"https://iphone-archive.vercel.app","s":"iPhone 编年史网站，各时代界面与键盘都能按","pr":"写一个单文件 HTML + Three.js 页面《Interactive iPhone History》：iPhone 编年史网站，各时代界面与键盘都能按。\n要求：几何全部程序化生成，不加载外部模型或贴图；关键部件可点选并弹出说明；配一块半透明控制面板放 2–3 个实时可调参数；深色背景、克制配色；手机上也要能用。"},{"c":"Website","t":"360° Panorama Video Workshop","a":"KANA","p":"https://x.com/KanaWorks_AI/status/2097518459596972066","d":"","s":"预览合成角色并导出 360° 视频的自制工具","pr":"写一个单文件 HTML + Three.js 页面《360° Panorama Video Workshop》：预览合成角色并导出 360° 视频的自制工具。\n要求：几何全部程序化生成，不加载外部模型或贴图；关键部件可点选并弹出说明；配一块半透明控制面板放 2–3 个实时可调参数；深色背景、克制配色；手机上也要能用。"},{"c":"Website","t":"Orbital Core Showcase","a":"ruofeng","p":"https://x.com/oneruofeng/status/2096551010089263181","d":"https://orbital-core-showcase.wangruofeng007.workers.dev","s":"Blender 建模的双环能量核心，可旋转缩放","pr":"写一个单文件 HTML + Three.js 页面《Orbital Core Showcase》：Blender 建模的双环能量核心，可旋转缩放。\n要求：几何全部程序化生成，不加载外部模型或贴图；关键部件可点选并弹出说明；配一块半透明控制面板放 2–3 个实时可调参数；深色背景、克制配色；手机上也要能用。"},{"c":"Website","t":"Adonis Restaurant Demo","a":"Elie","p":"https://x.com/ElieAsaade/status/2096946103350608154","d":"","s":"微缩餐厅漫游，还能和店员对话","pr":"写一个单文件 HTML + Three.js 页面《Adonis Restaurant Demo》：微缩餐厅漫游，还能和店员对话。\n要求：几何全部程序化生成，不加载外部模型或贴图；关键部件可点选并弹出说明；配一块半透明控制面板放 2–3 个实时可调参数；深色背景、克制配色；手机上也要能用。"},{"c":"Website","t":"Asteria Spaceship Explorer","a":"Weng Siong","p":"https://x.com/wengsiong22/status/2096941914906144784","d":"https://asteria.wengsiong22.workers.dev/","s":"太阳系探索器：飞船外观与观景舱","pr":"写一个单文件 HTML + Three.js 页面《Asteria Spaceship Explorer》：太阳系探索器：飞船外观与观景舱。\n要求：几何全部程序化生成，不加载外部模型或贴图；关键部件可点选并弹出说明；配一块半透明控制面板放 2–3 个实时可调参数；深色背景、克制配色；手机上也要能用。"},{"c":"Website","t":"Equal Earth Map","a":"stevwang.dev","p":"https://x.com/stevwangdev/status/2096983019294974011","d":"https://your-equal-earth.pages.dev/","s":"讲等积地球投影与展平取舍的地图站","pr":"写一个单文件 HTML + Three.js 页面《Equal Earth Map》：讲等积地球投影与展平取舍的地图站。\n要求：几何全部程序化生成，不加载外部模型或贴图；关键部件可点选并弹出说明；配一块半透明控制面板放 2–3 个实时可调参数；深色背景、克制配色；手机上也要能用。"},{"c":"Website","t":"Astra-Rigged Three.js Character","a":"Simonas","p":"https://x.com/SimonasLTU1/status/2097561634076016774","d":"","s":"生成的角色模型被绑骨并做成 Three.js 动画场景","pr":"写一个单文件 HTML + Three.js 页面《Astra-Rigged Three.js Character》：生成的角色模型被绑骨并做成 Three.js 动画场景。\n要求：几何全部程序化生成，不加载外部模型或贴图；关键部件可点选并弹出说明；配一块半透明控制面板放 2–3 个实时可调参数；深色背景、克制配色；手机上也要能用。"},{"c":"Website","t":"Virtual Bookshelf","a":"Senthil Arivudainambi","p":"https://x.com/sent0hil/status/2097564767984697757","d":"https://sent-hil.com/2026/09/08/my-virtual-bookshelf-built-with-astra.html","s":"把个人书单做成可视化的虚拟书架","pr":"写一个单文件 HTML + Three.js 页面《Virtual Bookshelf》：把个人书单做成可视化的虚拟书架。\n要求：几何全部程序化生成，不加载外部模型或贴图；关键部件可点选并弹出说明；配一块半透明控制面板放 2–3 个实时可调参数；深色背景、克制配色；手机上也要能用。"},{"c":"Website","t":"RB19 Engineering Explorer","a":"—","p":"","d":"https://rb19-engineering-lab.moraxc.chatgpt.site/","s":"RB19 赛车的部件视图与模拟遥测","pr":"写一个单文件 HTML + Three.js 页面《RB19 Engineering Explorer》：RB19 赛车的部件视图与模拟遥测。\n要求：几何全部程序化生成，不加载外部模型或贴图；关键部件可点选并弹出说明；配一块半透明控制面板放 2–3 个实时可调参数；深色背景、克制配色；手机上也要能用。"},{"c":"Website","t":"Houniao Model Comparison","a":"—","p":"","d":"https://houniao-model-battle-20260721.netlify.app/","s":"AI 模型对比网站","pr":"写一个单文件 HTML + Three.js 页面《Houniao Model Comparison》：AI 模型对比网站。\n要求：几何全部程序化生成，不加载外部模型或贴图；关键部件可点选并弹出说明；配一块半透明控制面板放 2–3 个实时可调参数；深色背景、克制配色；手机上也要能用。"},{"c":"Video","t":"A Listing Becomes a Film","a":"Yunfan Ye","p":"https://x.com/realYunfanYe/status/2095612137582526615","d":"","s":"房源照片变成 3D 房子再变成宣传片","pr":"把《A Listing Becomes a Film》这条视频流程从头串起来：房源照片变成 3D 房子再变成宣传片。\n要求：先给分镜表（镜头、时长、画面描述），再生成或整理素材，然后拼接、调色、配乐，最后输出 1080p 成片。"},{"c":"Video","t":"Eleven-Minute Higgsfield Video","a":"Adil Alimzhanov","p":"https://x.com/adilinthewild/status/2096501790774817240","d":"","s":"在一个对话里协调 Higgsfield 生成与剪辑","pr":"把《Eleven-Minute Higgsfield Video》这条视频流程从头串起来：在一个对话里协调 Higgsfield 生成与剪辑。\n要求：先给分镜表（镜头、时长、画面描述），再生成或整理素材，然后拼接、调色、配乐，最后输出 1080p 成片。"},{"c":"Video","t":"Final Cut Edit Preparation","a":"Ben Davis","p":"https://x.com/davis7/status/2095742249275699415","d":"","s":"Astra 在 Final Cut 里整理素材并调色","pr":"把《Final Cut Edit Preparation》这条视频流程从头串起来：Astra 在 Final Cut 里整理素材并调色。\n要求：先给分镜表（镜头、时长、画面描述），再生成或整理素材，然后拼接、调色、配乐，最后输出 1080p 成片。"},{"c":"Video","t":"T Cell Educational Video","a":"Derya Unutmaz","p":"https://x.com/DeryaTR_/status/2095659170661904804","d":"","s":"用 Remotion 与图像生成做的 T 细胞科普视频","pr":"把《T Cell Educational Video》这条视频流程从头串起来：用 Remotion 与图像生成做的 T 细胞科普视频。\n要求：先给分镜表（镜头、时长、画面描述），再生成或整理素材，然后拼接、调色、配乐，最后输出 1080p 成片。"},{"c":"Art","t":"Surreal Landscape Drawing","a":"Duncan Trussell","p":"https://x.com/duncantrussell/status/2095974897826517309","d":"","s":"Astra 画出的超现实风景","pr":"画《Surreal Landscape Drawing》：Astra 画出的超现实风景。\n要求：先写清楚构图、光线与色调，再落笔；给两版不同笔触风格供挑选。"},{"c":"Art","t":"Artist's Workspace Recreation","a":"Pietro Schirano","p":"https://x.com/skirano/status/2095819265262316764","d":"","s":"把画家的工作台复刻成细节丰富的手绘","pr":"画《Artist's Workspace Recreation》：把画家的工作台复刻成细节丰富的手绘。\n要求：先写清楚构图、光线与色调，再落笔；给两版不同笔触风格供挑选。"}];
+const COPIED = {
+  'ABYSSAL: The Living Deep': 'abyssal',
+  'Interactive V8 Engine': 'v8-engine',
+  'Seoul 3D Atlas': 'seoul-atlas',
+  'Walk Through Van Gogh': 'van-gogh-town',
+  'Orbital Core Showcase': 'orbital-core',
+  'Brandenburg Piano': 'brandenburg-piano'
+};
+const CATS = ['全部', ...Array.from(new Set(CASES.map(c => c.c)))];
+let cat = '全部', q = '';
+
+const grid = document.getElementById('grid');
+const chips = document.getElementById('chips');
+const countEl = document.getElementById('count');
+const emptyEl = document.getElementById('empty');
+document.getElementById('total').textContent = CASES.length;
+
+CATS.forEach(name => {
+  const b = document.createElement('button');
+  b.textContent = name === '全部' ? `全部 ${CASES.length}` : `${name} ${CASES.filter(c => c.c === name).length}`;
+  b.dataset.cat = name;
+  if (name === '全部') b.classList.add('on');
+  b.onclick = () => {
+    cat = name;
+    [...chips.children].forEach(x => x.classList.toggle('on', x.dataset.cat === name));
+    render();
+  };
+  chips.appendChild(b);
+});
+
+document.getElementById('q').addEventListener('input', e => { q = e.target.value.trim().toLowerCase(); render(); });
+
+function render() {
+  const list = CASES.filter(c => {
+    if (cat !== '全部' && c.c !== cat) return false;
+    if (!q) return true;
+    return (c.t + ' ' + c.a + ' ' + c.s + ' ' + c.c).toLowerCase().includes(q);
+  });
+  countEl.textContent = `${list.length} / ${CASES.length} 件`;
+  emptyEl.hidden = list.length > 0;
+  grid.innerHTML = list.map(c => {
+    const slug = COPIED[c.t];
+    return `<article class="card${slug ? ' copied' : ''}">
+      <div class="top">
+        <span class="cat">${c.c}</span>
+        ${slug ? `<a class="mine" href="../works/${slug}/index.html" target="_blank" rel="noopener">已临摹 ↗</a>` : ''}
+      </div>
+      <h3>${esc(c.t)}</h3>
+      <div class="by">${c.a && c.a !== '—' ? esc(c.a) : '作者未标注'}</div>
+      <p>${esc(c.s)}</p>
+      <div class="links">
+        ${c.p ? `<a href="${c.p}" target="_blank" rel="noopener">原帖 ↗</a>` : ''}
+        ${c.d ? `<a class="live" href="${c.d}" target="_blank" rel="noopener">打开作品 ↗</a>` : ''}
+      </div>
+      <details class="promptbox">
+        <summary>复刻 prompt</summary>
+        <div class="pbody">
+          <button class="pcopy" data-i="${CASES.indexOf(c)}">复制</button>
+          <pre>${esc(c.pr)}</pre>
+        </div>
+      </details>
+    </article>`;
+  }).join('');
+}
+function esc(s) { return String(s).replace(/[&<>"]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[m])); }
+
+// 复制 prompt
+grid.addEventListener('click', e => {
+  const btn = e.target.closest('.pcopy');
+  if (!btn) return;
+  navigator.clipboard?.writeText(CASES[+btn.dataset.i].pr).then(() => {
+    btn.textContent = '已复制';
+    setTimeout(() => { btn.textContent = '复制'; }, 1600);
+  }).catch(() => { btn.textContent = '复制失败'; });
+});
+
+render();
+</script>
+</body>
+</html>

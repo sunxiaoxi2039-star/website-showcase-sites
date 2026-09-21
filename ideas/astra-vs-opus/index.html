@@ -1,0 +1,610 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Astra 作品 × Opus 临摹</title>
+<meta name="description" content="GPT-6 Astra 发布周里散落在 X 上的 6 件作品，用 Claude Opus 5 各自重写一遍，逐条对照原作与临摹。">
+<style>
+  :root {
+    --bg: #07080b;
+    --panel: #0e1016;
+    --ink: #f2f4f7;
+    --dim: rgba(242, 244, 247, .6);
+    --faint: rgba(242, 244, 247, .38);
+    --line: rgba(242, 244, 247, .13);
+    --astra: #6ee7a5;     /* 原作一侧 */
+    --opus: #7cd7ff;      /* 临摹一侧 */
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "Inter", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    line-height: 1.7;
+  }
+  a { color: inherit; }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
+
+  /* ---------- 顶部 ---------- */
+  header.hero {
+    position: relative;
+    padding: 96px 0 60px;
+    background:
+      radial-gradient(80% 120% at 12% -10%, rgba(110, 231, 165, .12) 0%, transparent 55%),
+      radial-gradient(70% 110% at 88% -20%, rgba(124, 215, 255, .14) 0%, transparent 60%);
+    border-bottom: 1px solid var(--line);
+  }
+  .kicker { font-size: 11px; letter-spacing: .34em; text-transform: uppercase; color: var(--faint); }
+  .kicker b { color: var(--astra); font-weight: 600; }
+  .kicker i { font-style: normal; color: var(--opus); font-weight: 600; }
+  h1 {
+    margin: 20px 0 0;
+    font-size: clamp(30px, 5.4vw, 55px);
+    line-height: 1.12;
+    font-weight: 600;
+    letter-spacing: -.02em;
+  }
+  h1 em { font-style: normal; color: var(--faint); font-weight: 300; }
+  .lede { margin: 22px 0 0; max-width: 720px; font-size: 15.5px; color: var(--dim); }
+  .stats { display: flex; flex-wrap: wrap; gap: 34px; margin-top: 38px; }
+  .stats div span { display: block; font-size: 10.5px; letter-spacing: .2em; text-transform: uppercase; color: var(--faint); }
+  .stats div b { font-size: 24px; font-weight: 600; letter-spacing: -.01em; }
+
+  /* ---------- 说明块 ---------- */
+  .note {
+    margin: 40px 0 0; padding: 20px 22px;
+    border: 1px solid var(--line); border-left: 2px solid var(--astra); border-radius: 0 12px 12px 0;
+    background: rgba(110, 231, 165, .04);
+    font-size: 13.5px; color: var(--dim);
+  }
+  .note b { color: var(--ink); font-weight: 600; }
+  .note p { margin: 0 0 8px; }
+  .note p:last-child { margin-bottom: 0; }
+
+  /* ---------- 作品对照 ---------- */
+  section { padding: 74px 0 0; }
+  .sechead { display: flex; align-items: baseline; gap: 14px; margin-bottom: 8px; }
+  .sechead h2 { margin: 0; font-size: 22px; font-weight: 600; letter-spacing: -.01em; }
+  .sechead span { font-size: 11px; letter-spacing: .22em; text-transform: uppercase; color: var(--faint); }
+  .secsub { margin: 0 0 34px; font-size: 13.5px; color: var(--dim); max-width: 680px; }
+
+  .pair {
+    display: grid;
+    grid-template-columns: 340px 1fr;
+    gap: 0;
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    overflow: hidden;
+    background: var(--panel);
+    margin-bottom: 26px;
+  }
+  .origin { padding: 26px 24px; border-right: 1px solid var(--line); background: rgba(110, 231, 165, .035); }
+  .copy   { padding: 0; display: flex; flex-direction: column; }
+
+  .side { font-size: 10px; letter-spacing: .24em; text-transform: uppercase; font-weight: 600; }
+  .side.a { color: var(--astra); }
+  .side.o { color: var(--opus); }
+
+  .origin h3 { margin: 12px 0 2px; font-size: 19px; font-weight: 600; letter-spacing: -.01em; }
+  .origin .en { font-size: 11.5px; letter-spacing: .1em; color: var(--faint); }
+  .origin p { margin: 14px 0 0; font-size: 13px; color: var(--dim); }
+  .origin .by { margin-top: 16px; font-size: 12.5px; color: var(--dim); }
+  .origin .by b { color: var(--ink); font-weight: 600; }
+  .links { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+  .links a {
+    padding: 6px 12px; border: 1px solid var(--line); border-radius: 999px;
+    font-size: 11.5px; text-decoration: none; color: var(--dim); transition: all .18s; white-space: nowrap;
+  }
+  .links a:hover { color: var(--ink); border-color: rgba(110, 231, 165, .55); background: rgba(110, 231, 165, .08); }
+
+  .shot { position: relative; aspect-ratio: 16 / 10; background: #05070a; overflow: hidden; }
+  .shot img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .5s, opacity .3s; }
+  .shot:hover img { transform: scale(1.02); }
+  .shot iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; background: #05070a; }
+  .shotbar {
+    position: absolute; left: 0; right: 0; bottom: 0; display: flex; gap: 8px; padding: 12px 14px;
+    background: linear-gradient(0deg, rgba(4, 6, 10, .85), transparent);
+  }
+  .shotbar button, .shotbar a {
+    padding: 7px 14px; border: 1px solid var(--line); border-radius: 999px;
+    background: rgba(8, 12, 18, .7); backdrop-filter: blur(8px);
+    color: var(--dim); font: inherit; font-size: 12px; cursor: pointer; text-decoration: none;
+    transition: all .18s;
+  }
+  .shotbar button:hover, .shotbar a:hover { color: #04121a; background: var(--opus); border-color: var(--opus); font-weight: 600; }
+
+  .detail { padding: 22px 24px 24px; }
+  .detail h4 { margin: 0 0 4px; font-size: 16px; font-weight: 600; }
+  .detail .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; margin-top: 16px; }
+  .detail h5 { margin: 0 0 8px; font-size: 10.5px; letter-spacing: .18em; text-transform: uppercase; color: var(--faint); }
+  .detail ul { margin: 0; padding-left: 17px; font-size: 13px; color: var(--dim); }
+  .detail li { margin-bottom: 5px; }
+  .tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 16px; }
+  .tags span { padding: 4px 9px; border: 1px solid var(--line); border-radius: 6px; font-size: 11px; color: var(--faint); }
+
+  /* ---------- 生成 prompt ---------- */
+  .promptbox {
+    margin-top: 16px; border: 1px solid rgba(124, 215, 255, .22); border-radius: 12px;
+    background: rgba(124, 215, 255, .045);
+  }
+  .promptbox summary {
+    list-style: none; cursor: pointer; padding: 11px 15px;
+    display: flex; align-items: center; gap: 10px;
+    font-size: 12px; font-weight: 600; color: var(--opus);
+  }
+  .promptbox summary::-webkit-details-marker { display: none; }
+  .promptbox summary::before { content: '▸'; display: inline-block; transition: transform .2s; }
+  .promptbox[open] summary::before { transform: rotate(90deg); }
+  .promptbox summary em { font-style: normal; font-weight: 400; font-size: 11px; color: var(--faint); margin-left: auto; margin-right: 64px; }
+  .promptbox:not([open]) summary em { margin-right: 0; }
+  .pbody { position: relative; padding: 0 15px 14px; }
+  .pbody pre {
+    margin: 0; white-space: pre-wrap; word-break: break-word;
+    font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+    font-size: 12px; line-height: 1.8; color: var(--dim);
+  }
+  .pcopy {
+    position: absolute; top: -34px; right: 13px; padding: 4px 12px;
+    border: 1px solid var(--line); border-radius: 999px; background: rgba(8, 12, 18, .8);
+    color: var(--dim); font: inherit; font-size: 11px; cursor: pointer; transition: all .16s;
+  }
+  .pcopy:hover { color: #04121a; background: var(--opus); border-color: var(--opus); font-weight: 600; }
+
+  /* ---------- 对照表 ---------- */
+  .tablewrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 14px; }
+  table { border-collapse: collapse; width: 100%; min-width: 760px; font-size: 13px; }
+  th, td { padding: 13px 16px; text-align: left; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { font-size: 10.5px; letter-spacing: .16em; text-transform: uppercase; color: var(--faint); font-weight: 600; white-space: nowrap; }
+  tr:last-child td { border-bottom: 0; }
+  td b { font-weight: 600; }
+  td.dim { color: var(--dim); }
+  .score { display: inline-flex; align-items: center; gap: 8px; font-variant-numeric: tabular-nums; }
+  .score i { display: block; width: 52px; height: 4px; border-radius: 3px; background: rgba(255,255,255,.12); overflow: hidden; }
+  .score i b { display: block; height: 100%; background: linear-gradient(90deg, var(--astra), var(--opus)); }
+
+  /* ---------- 结语 / 来源 ---------- */
+  .takeaways { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+  .takeaways div { padding: 22px; border: 1px solid var(--line); border-radius: 14px; background: var(--panel); }
+  .takeaways h4 { margin: 0 0 8px; font-size: 14.5px; font-weight: 600; }
+  .takeaways p { margin: 0; font-size: 13px; color: var(--dim); }
+
+  .sources { margin-top: 22px; font-size: 13px; color: var(--dim); }
+  .sources li { margin-bottom: 7px; }
+  .sources a { color: var(--opus); text-decoration: none; border-bottom: 1px solid rgba(124, 215, 255, .3); }
+  .sources a:hover { border-color: var(--opus); }
+
+  footer { margin-top: 80px; padding: 34px 0 60px; border-top: 1px solid var(--line); font-size: 12.5px; color: var(--faint); }
+  footer a { color: var(--dim); }
+
+  @media (max-width: 900px) {
+    .pair { grid-template-columns: 1fr; }
+    .origin { border-right: 0; border-bottom: 1px solid var(--line); }
+    .detail .cols { grid-template-columns: 1fr; gap: 14px; }
+    .takeaways { grid-template-columns: 1fr; }
+    header.hero { padding: 64px 0 44px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="kicker"><b>GPT-6 ASTRA</b> &nbsp;×&nbsp; <i>CLAUDE OPUS 5</i></div>
+    <h1>全 X 网搜来的 Astra 作品集，<br><em>我照着临摹了一遍</em></h1>
+    <p class="lede">
+      2026 年 9 月 3 日 GPT-6 Astra 发布之后的一周，X 上涌出一批「一句话生成一个能跑的 3D 网页」的作品：解剖图、发动机、深海、城市、名画。
+      这里从公开作品里挑了 6 件，用 Claude Opus 5 各自重写一遍 —— 左边是原作的出处与作者，右边是临摹版本，可以直接点开跑。
+    </p>
+    <div class="stats">
+      <div><span>临摹作品</span><b>6 件</b></div>
+      <div><span>案例索引</span><b><a href="./cases/index.html" style="color:var(--opus);text-decoration:none;border-bottom:1px solid rgba(124,215,255,.4)">128 件 ↗</a></b></div>
+      <div><span>技术栈</span><b>three.js 单文件</b></div>
+      <div><span>采集 / 完成</span><b>2026-09-14</b></div>
+    </div>
+
+    <div class="note">
+      <p><b>先说清楚：这是「按描述重写」，不是 1:1 像素复刻。</b></p>
+      <p>做这批临摹时，运行环境的出口网络屏蔽了 x.com 与各 demo 域名，我没法逐帧对着原作改。每件临摹依据的是原帖文字描述与社区整理（<a href="https://github.com/magiccreator-ai/awesome-gpt-6-astra" target="_blank" rel="noopener">awesome-gpt-6-astra</a>）里的作品说明，代码全部重写。</p>
+      <p>所以每张卡片都带着原作链接：<b>请点开原作自己对照</b>，下面的「自评还原度」只是我对自己实现完成度的判断，不是对原作的评分。</p>
+    </div>
+  </div>
+</header>
+
+<section>
+  <div class="wrap">
+    <div class="sechead"><h2>六件对照</h2><span>side by side</span></div>
+    <p class="secsub">每一栏左边是原作信息，右边是临摹的实时页面 —— 点「内嵌预览」可以直接在本页跑起来，点「全屏打开」进独立页面。</p>
+    <div id="pairs"></div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="sechead"><h2>完整案例集</h2><span>the whole index</span></div>
+    <p class="secsub">上面临摹的 6 件只是其中一小撮。发布周公开出来的作品被社区整理成了一份长名单，我把它也搬进站里做成可筛选、可搜索的索引。</p>
+    <a href="./cases/index.html" style="display:block;padding:26px 28px;border:1px solid var(--line);border-radius:16px;background:linear-gradient(135deg,rgba(110,231,165,.07),rgba(124,215,255,.05));text-decoration:none">
+      <div style="display:flex;flex-wrap:wrap;gap:20px;align-items:center;justify-content:space-between">
+        <div>
+          <div style="font-size:10px;letter-spacing:.24em;text-transform:uppercase;color:var(--astra);font-weight:600">Astra 案例集</div>
+          <div style="margin-top:8px;font-size:21px;font-weight:600">128 件发布周作品的索引 →</div>
+          <div style="margin-top:6px;font-size:13px;color:var(--dim);max-width:620px">
+            游戏 48 · 网页应用 51 · Blender/3D 23 · 视频 4 · 绘画 2；每条带作者、原帖与可玩链接，52 件有现成的 live demo。
+            另附一栏「OpenAI 官方公开演示」（转述自公开报道 —— 本环境访问不到 openai.com）。
+          </div>
+        </div>
+        <div style="font-size:44px;font-weight:300;color:var(--opus)">128</div>
+      </div>
+    </a>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="sechead"><h2>逐项对照表</h2><span>what matches, what doesn't</span></div>
+    <p class="secsub">原作的核心卖点 vs 我的实现路线，以及差在哪里。还原度是对「功能与观感完成度」的自评。</p>
+    <div class="tablewrap">
+      <table>
+        <thead>
+          <tr><th>作品</th><th>原作的核心卖点</th><th>我的实现路线</th><th>自评还原度</th><th>主要差距</th></tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="sechead"><h2>临摹下来的三点观察</h2><span>takeaways</span></div>
+    <p class="secsub">把六件作品从头写一遍之后，比较明显的几个感受。</p>
+    <div class="takeaways">
+      <div>
+        <h4>难的不是渲染，是编排</h4>
+        <p>这批作品真正的设计工作，是把一个题材拆成两三个可操作的开关：深度、冲程、昼夜、时间轴。几何和着色器都是熟活，而「给观众什么把手」决定了它是 demo 还是玩具。</p>
+      </div>
+      <div>
+        <h4>程序化几何足够撑场</h4>
+        <p>六件临摹没有用任何外部模型或贴图，全部是代码里长出来的盒子、锥体和噪声。观感的差别主要来自配色、雾和动效节奏，而不是资产精度。</p>
+      </div>
+      <div>
+        <h4>差距集中在「打磨」</h4>
+        <p>和原作最可能拉开的地方是后期与手感：辉光、景深、真实建模、镜头调度。临摹版靠平面着色与克制的调色去补，但那层「被反复调过」的质感确实要靠时间堆。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="sechead"><h2>来源</h2><span>sources</span></div>
+    <ul class="sources">
+      <li><a href="https://github.com/magiccreator-ai/awesome-gpt-6-astra" target="_blank" rel="noopener">magiccreator-ai/awesome-gpt-6-astra</a> —— 本站六件原作的标题、作者、原帖与 demo 链接均来自这份社区整理。</li>
+      <li><a href="https://openai.com/index/gpt-6-astra/" target="_blank" rel="noopener">OpenAI · GPT-6 Astra 发布说明</a>（2026-09-03）</li>
+      <li><a href="https://github.com/emollick/abyssal-living-deep" target="_blank" rel="noopener">emollick/abyssal-living-deep</a> —— ABYSSAL 原项目仓库；它的海面部分最初由 <a href="https://x.com/TokenGremlin/status/2095727540480414191" target="_blank" rel="noopener">@TokenGremlin 用 Opus 5</a> 写成，Astra 在其下补出了整片深海。</li>
+      <li>各原帖链接见上方每张卡片的「原作」按钮。</li>
+    </ul>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    仓库：<code>website-showcase-sites / ideas/astra-vs-opus</code> · 临摹代码全部为重写，原作版权归各原作者所有，本站仅作学习对照用途。
+    <br>three.js r128 已随站打包，无需构建，任何静态服务器（含 GitHub Pages）都能直接跑。
+  </div>
+</footer>
+
+<script>
+const WORKS = [
+  {
+    slug: 'abyssal',
+    zh: '深渊：活着的深海',
+    en: 'ABYSSAL: The Living Deep',
+    author: '@emollick',
+    post: 'https://x.com/emollick/status/2095673885605630429',
+    demo: 'https://abyssal-living-deep.netlify.app',
+    repo: 'https://github.com/emollick/abyssal-living-deep',
+    originDesc: '把一个开源的「海面风暴生成器」交给 Astra，让它补出海面之下的世界：一路潜到 1400 米，礁盘、海藻林、大陆坡、热液区连成一整片按种子生成的生态。',
+    copyTitle: '一次 1400 米的下潜',
+    did: [
+      '按种子生成的世界：礁盘 → 海藻林 → 大陆坡 → 深渊热液区，换种子整片海重长',
+      '深度驱动的雾、光与配色，五个分区各自的色温；浅水区做了垂直夸张让礁区可逛',
+      '鱼群沿环形巡游、蝠鲼扇动胸鳍、热液喷口脉动、海藻在顶点着色器里随洋流摆'
+    ],
+    gap: [
+      '原作有真实的物种分层（鮟鱇、管虫、章鱼各归各的深度），我只做了体型与配色的分层',
+      '没有做水下体积光与焦散，靠加性光柱近似'
+    ],
+    prompt: `写一个单文件 HTML + Three.js 的程序化海洋，从海面一路下潜到 1400 米。
+
+地形用径向函数生成：中心是一块珊瑚礁盘，向外经大陆坡降到海沟；相机沿着贴着斜坡的螺旋路线自动下潜，也能用滚轮 / W S 手动控制深度，拖拽环视。
+
+按深度分五个区（表层水柱 / 阳光珊瑚礁 / 海藻林 / 大陆坡 / 深渊热液区），每区有自己的雾色、雾密度与光强，切换时在屏幕中间淡入区名。浅水区做垂直夸张，让礁区可逛、深渊又真的深。
+
+内容：成片生长的珊瑚（鹿角、脑珊瑚、管海绵三种程序化形态）；在顶点着色器里随洋流摆动的海藻；绕圈巡游的鱼群和扇动胸鳍的蝠鲼；深处脉动的热液喷口与管虫；贯穿全深度的海雪与深水生物荧光粒子；海面下方可见的阳光光柱。
+
+面板：种子输入框（换种子整片海重新生成）、洋流强度、生物密度、自动下潜开关；右下角实时显示深度（米）。全部平面着色的低多边形几何，不用任何外部模型或贴图。`,
+    tags: ['程序化地形', '顶点着色器摆动', '种子可复现', '加性粒子'],
+    row: {
+      sell: '一个连续可下潜、按种子生成的整片海洋生态',
+      mine: '径向地形函数 + 深度分区雾光 + 沿斜坡的螺旋下潜路线',
+      score: 72,
+      gap: '物种细分与体积光'
+    }
+  },
+  {
+    slug: 'v8-engine',
+    zh: 'V8 四冲程剖面',
+    en: 'Interactive V8 Engine',
+    author: '@DilumSanjaya',
+    post: 'https://x.com/DilumSanjaya/status/2096280244663775423',
+    demo: '',
+    originDesc: '一句「做一个高度精细的 V8 发动机可视化」，Astra 直接给出完整的四冲程演示：进气、压缩、做功、排气可实时切换，曲轴、凸轮轴、点火顺序、气门正时与缸压都能查。',
+    copyTitle: '按真实几何跑的四冲程',
+    did: [
+      '曲柄连杆按公式解算：s = r·cosψ + √(L² − r²sin²ψ)，十字平面曲轴四个曲拐相位 0/90/270/180',
+      '点火顺序 1-8-4-3-6-5-7-2，每缸相位差 90°，面板实时高亮正在做功的那一缸',
+      '气门升程曲线、缸压曲线、火花塞点火闪光、可切换的剖切缸体与冲程配色'
+    ],
+    gap: [
+      '原作的机械细节（摇臂、气门弹簧、正时链）建模精度高得多，我这边是盒子与圆柱拼的示意',
+      '没有做进排气歧管与冷却水道的走向'
+    ],
+    prompt: `写一个单文件 HTML + Three.js 的交互式 V8 发动机剖面，机构要按真实运动学跑。
+
+几何与运动：十字平面曲轴，四个曲拐相位 0/90/270/180；两列缸夹角 90°；活塞位移用 s = r·cosψ + √(L² − r²·sin²ψ) 解算，连杆每帧在曲拐销与活塞销之间重新定向；凸轮轴半速旋转。
+
+四冲程用 720° 相位循环，点火顺序 1-8-4-3-6-5-7-2（每缸相差 90°）。按相位算气门升程（排气门 140–380°、进气门 340–580°）驱动两支气门；做功初段在燃烧室点一团衰减的火焰，火花塞在上止点闪一下。
+
+UI：转速滑杆 0–6500 rpm、单步慢放、剖切缸体（缸体/缸盖/摇臂罩变半透明）、按冲程给活塞配色；右侧面板显示点火顺序（高亮正在做功的缸）与八条缸压条；点任意缸锁定观察，顶部显示该缸当前冲程；右下角显示曲轴转角。`,
+    tags: ['运动学解算', '四冲程时序', '剖切视图', '实时仪表'],
+    row: {
+      sell: '把复杂机械拆成可操作的 3D 课堂',
+      mine: '曲柄连杆运动学 + 720° 循环相位 + DOM 仪表联动',
+      score: 78,
+      gap: '零件建模精度'
+    }
+  },
+  {
+    slug: 'seoul-atlas',
+    zh: '首尔立体地图',
+    en: 'Seoul 3D Atlas',
+    author: '@synabreu',
+    post: 'https://x.com/synabreu/status/2096557555086725159',
+    demo: 'https://seoul-3d-atlas.synabreu.chatgpt.site/',
+    originDesc: '微缩版首尔：地标飞行穿越，加上从白天到夜晚的光照变化。',
+    copyTitle: '微缩首尔与五处地标',
+    did: [
+      '汉江沿曲线铺开、三座桥、六个城区按密度长出上千栋楼，楼身窗格是运行时生成的贴图',
+      'N 首尔塔、乐天世界塔、景福宫、东大门 DDP、63 大厦五处地标，点击或用下方胶囊按钮飞过去',
+      '一条时间轴从正午推到凌晨：天色、日照角度、窗灯、桥灯、江面反射一起变'
+    ],
+    gap: [
+      '地标是按印象做的示意体块，不是实测比例；城市肌理也不对应真实路网',
+      '没有做地面街道与车流'
+    ],
+    prompt: `写一个单文件 HTML + Three.js 的微缩首尔立体地图。
+
+城市：汉江用 Catmull-Rom 曲线铺一条带状水面横穿画面，配三座桥（桥塔 + 一串桥灯）；六个城区按密度程序化生成上千栋楼，楼身窗格用 Canvas 现画成贴图当 emissiveMap，只有夜里才亮；高楼顶上加闪烁的航空灯。
+
+手工做五处地标：南山 + N 首尔塔、乐天世界塔（四面收束的锥体）、景福宫（两重屋檐的正殿 + 院墙 + 光化门）、东大门 DDP（没有直边的银色壳体）、63 大厦。下方胶囊按钮和场景里的地标本体都能点，镜头补间飞过去，右侧卡片显示中英文名、高度、建成年份和一句介绍。
+
+一条时间滑杆从正午推到凌晨两点：天色、日照角度与颜色、窗灯、桥灯、航空灯、江面反射一起联动。再加一个自动巡游模式，每 7 秒换一处地标。`,
+    tags: ['程序化城市', 'Canvas 贴图窗灯', '相机补间', '昼夜循环'],
+    row: {
+      sell: '微缩城市 + 地标飞行 + 昼夜切换',
+      mine: '密度分区生成楼群 + 五处手工地标 + 时间轴驱动全场光照',
+      score: 68,
+      gap: '真实地形与路网'
+    }
+  },
+  {
+    slug: 'van-gogh-town',
+    zh: '可以走进去的梵高小镇',
+    en: 'Walk Through Van Gogh',
+    author: '@petergostev',
+    post: 'https://x.com/petergostev/status/2095776685807346105',
+    demo: 'https://van-goghs-town.surge.sh/',
+    originDesc: '把六幅画重新想象成一座可以走进去的、带笔触感的小镇。',
+    copyTitle: '把四幅画拼成一座镇子',
+    did: [
+      '星夜的天穹：两次域扭曲的噪声卷成旋涡笔触，分格的星点与月亮各自带厚颜料似的光晕',
+      '黄房子、夜间露天咖啡座、奥维尔教堂、罗纳河的星夜四处场景，走近会亮出对应画作的标签',
+      '一万八千根笔触草与麦浪（InstancedMesh），柏树随风，昼夜滑杆可以把夜色推回白天'
+    ],
+    gap: [
+      '原作是六幅画，我只搭了四处；且没有做真正的笔触后期（我用的是叠加纹理与顶点色）',
+      '建筑是体块化的，没有画里那种扭曲透视'
+    ],
+    prompt: `写一个单文件 HTML + Three.js 的可步行梵高小镇，第一人称 W A S D 移动 + 拖拽环视。
+
+天空是重点：在天穹的片元着色器里做两次域扭曲的 fbm 噪声，卷成《星月夜》那种旋涡笔触；星星用分格取点画成带厚颜料光晕的亮斑，再加一轮月亮。
+
+地面铺一万根以上实例化的小色块当笔触草与麦浪（InstancedMesh，逐实例随机颜色、大小与倾角）。
+
+四处场景对应四幅画：黄房子（芥末黄墙体 + 蓝绿百叶窗）、夜间的露天咖啡座（暖黄雨棚下一盏灯把广场照亮，配桌椅与鹅卵石地面）、奥维尔的教堂（蓝紫色塔楼与尖顶）、罗纳河上的星夜（河面几条金色倒影）。走近任意一处，底部淡入该画的中文名、原题与年份。柏树随风轻摆。
+
+面板：夜色滑杆（能把夜推回白天）、笔触涌动速度、自动漫游与加速。最后叠一层极淡的斜向条纹当画布纹理。`,
+    tags: ['旋涡天空 shader', 'InstancedMesh 笔触', '第一人称漫游', '昼夜滑杆'],
+    row: {
+      sell: '六幅画长成一座可步行的小镇',
+      mine: '噪声旋涡天穹 + 四处地标建筑 + 实例化笔触植被',
+      score: 63,
+      gap: '画面的笔触后期与画作数量'
+    }
+  },
+  {
+    slug: 'orbital-core',
+    zh: '轨道核心',
+    en: 'Orbital Core Showcase',
+    author: '@oneruofeng',
+    post: 'https://x.com/oneruofeng/status/2096551010089263181',
+    demo: 'https://orbital-core-showcase.wangruofeng007.workers.dev',
+    originDesc: '在 Blender 里建出的双环能量核心，放进网页里可以自由旋转和推近观察。',
+    copyTitle: '双环能量核心产品页',
+    did: [
+      '菲涅尔辉光壳 + 等离子丝 + 呼吸式的核心脉动，能量滑杆同时驱动亮度、灯光与粒子',
+      '两组反向自转的环与十二枚约束模块，悬停高亮并弹出模块名称',
+      '爆炸视图把模块沿半径推开、两环上下分离，产品页式的左栏文案与参数表'
+    ],
+    gap: [
+      '原作的核心是 Blender 建模导入，材质与倒角精度不是程序化几何能追平的',
+      '没有做真正的辉光后期（Bloom），靠加性壳体近似'
+    ],
+    prompt: `写一个单文件 HTML + Three.js 的「双环能量核心」产品展示页，纯程序化几何，不导入任何模型。
+
+中心是一颗平面着色的多面体内核，外面套两层菲涅尔辉光壳（用 BackSide 渲染，所以法线点乘要取 abs，才能得到边缘亮、正中透的效果）；核心里绕着几条抖动的等离子丝，整体按呼吸节奏脉动。
+
+两组环反向自转，环内侧嵌一圈发光条，每组环上均布六枚白色约束模块；鼠标悬停时模块高亮并弹出名称与规格（例如「约束线圈 A · 超导磁笼 4.2 K」）。再撒一千多颗加性混合的火花粒子绕着核心转。
+
+左栏走产品页排版：kicker、大标题、一段说明、四项参数（输出功率 / 环转速 / 模块数 / 冷却剂），其中功率与转速跟着滑杆实时变。控制台：能量输出、环转速、爆炸视图（模块沿半径推开、两环上下分离）、自动旋转。相机用手写的轨道控制：拖拽转、滚轮推近。`,
+    tags: ['菲涅尔 shader', '加性粒子', '爆炸视图', '产品页排版'],
+    row: {
+      sell: 'Blender 精度的模型放进网页里自由观察',
+      mine: '纯程序化几何 + 菲涅尔辉光壳 + 手写轨道相机',
+      score: 70,
+      gap: '建模精度与 Bloom 后期'
+    }
+  },
+  {
+    slug: 'brandenburg-piano',
+    zh: '勃兰登堡键盘',
+    en: 'Brandenburg Piano',
+    author: '@DeryaTR_',
+    post: 'https://x.com/DeryaTR_/status/2096090915790069857',
+    demo: 'https://brandenburg-piano.vercel.app/',
+    originDesc: '一架虚拟钢琴，内置巴赫《勃兰登堡协奏曲》的演奏。',
+    copyTitle: '会自己弹巴赫式织体的键盘',
+    did: [
+      'WebAudio 合成的羽管键琴音色（锯齿波 + 包络滤波 + 延迟混响），明亮度可调',
+      '照 BWV 1048 第一乐章的写法生成乐句：右手连绵十六分音符的分解和弦压在行走低音上，八小节和声循环',
+      'Synthesia 式的音符河流从上方落到琴键上，落点触发按键下沉与光晕；也可以自己点键盘弹'
+    ],
+    gap: [
+      '原作内置的是真实的协奏曲演奏，我这边是按织体生成的巴赫风格段落，<b>不是原谱转录</b>',
+      '音色是合成器近似，没有采样钢琴的层次'
+    ],
+    prompt: `写一个单文件 HTML：Three.js 画一架 E2–C6 的 3D 键盘（白键黑键、木质琴身、红色呢条），用 WebAudio 合成羽管键琴音色。
+
+音色：锯齿波 + 三角波泛音 → 带包络的低通滤波 → 快衰减振幅包络，另接一路延迟反馈当房间感；明亮度做成可调滑杆。
+
+内置乐句按巴赫《勃兰登堡协奏曲第三号》第一乐章的织体生成：八小节和声循环 G–D/F#–Em–Bm–C–G/B–Am7–D7，右手在和弦音上跑连绵的十六分音符（几套音型轮换），左手每拍一个行走低音。用前瞻调度器提前约 2.2 秒排程。
+
+视觉：琴键上方生成 Synthesia 式的音符条从高处落下，落到琴键的瞬间触发按键下沉、键面发光与一圈扩散的光晕；右上角显示当前和弦与小节数。
+
+交互：速度滑杆 52–184 BPM、延音开关、暂停；用户也能点琴键或用电脑键盘自己弹。首次进入用一个覆盖层接一次点击再启动 AudioContext。`,
+    tags: ['WebAudio 合成', '前瞻调度器', '音符河流', '巴洛克织体生成'],
+    row: {
+      sell: '虚拟键盘 + 内置巴赫演奏',
+      mine: 'WebAudio 羽管键琴音色 + 按织体规则生成的 G 大调乐句',
+      score: 65,
+      gap: '原谱转录与采样音色'
+    }
+  }
+];
+
+const pairs = document.getElementById('pairs');
+const tbody = document.getElementById('tbody');
+
+WORKS.forEach((w, i) => {
+  const el = document.createElement('article');
+  el.className = 'pair';
+  el.innerHTML = `
+    <div class="origin">
+      <div class="side a">Astra · 原作</div>
+      <h3>${w.zh}</h3>
+      <div class="en">${w.en}</div>
+      <p>${w.originDesc}</p>
+      <div class="by">作者 <b>${w.author}</b></div>
+      <div class="links">
+        <a href="${w.post}" target="_blank" rel="noopener">原帖 ↗</a>
+        ${w.demo ? `<a href="${w.demo}" target="_blank" rel="noopener">原作 demo ↗</a>` : ''}
+        ${w.repo ? `<a href="${w.repo}" target="_blank" rel="noopener">仓库 ↗</a>` : ''}
+      </div>
+    </div>
+    <div class="copy">
+      <div class="shot" data-slug="${w.slug}">
+        <img src="./assets/covers/${w.slug}.jpg" alt="${w.zh} 临摹截图" loading="lazy">
+        <div class="shotbar">
+          <button data-embed="${w.slug}">内嵌预览</button>
+          <a href="./works/${w.slug}/index.html" target="_blank" rel="noopener">全屏打开 ↗</a>
+        </div>
+      </div>
+      <div class="detail">
+        <div class="side o">Opus · 临摹</div>
+        <h4>${w.copyTitle}</h4>
+        <div class="cols">
+          <div>
+            <h5>做到了什么</h5>
+            <ul>${w.did.map(d => `<li>${d}</li>`).join('')}</ul>
+          </div>
+          <div>
+            <h5>差在哪</h5>
+            <ul>${w.gap.map(d => `<li>${d}</li>`).join('')}</ul>
+          </div>
+        </div>
+        <div class="tags">${w.tags.map(t => `<span>${t}</span>`).join('')}</div>
+        <details class="promptbox">
+          <summary>生成这件临摹用的 prompt<em>点开查看 · 可一键复制</em></summary>
+          <div class="pbody">
+            <button class="pcopy" data-copy="${i}">复制</button>
+            <pre>${esc(w.prompt)}</pre>
+          </div>
+        </details>
+      </div>
+    </div>`;
+  pairs.appendChild(el);
+
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td><b>${w.zh}</b><br><span class="dim" style="font-size:11.5px">${w.author}</span></td>
+    <td class="dim">${w.row.sell}</td>
+    <td class="dim">${w.row.mine}</td>
+    <td><span class="score">${w.row.score}%<i><b style="width:${w.row.score}%"></b></i></span></td>
+    <td class="dim">${w.row.gap}</td>`;
+  tbody.appendChild(tr);
+});
+
+function esc(s) {
+  return String(s).replace(/[&<>"]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[m]));
+}
+
+// 复制 prompt
+pairs.addEventListener('click', e => {
+  const btn = e.target.closest('.pcopy');
+  if (!btn) return;
+  const text = WORKS[+btn.dataset.copy].prompt;
+  navigator.clipboard?.writeText(text).then(() => {
+    btn.textContent = '已复制';
+    setTimeout(() => { btn.textContent = '复制'; }, 1600);
+  }).catch(() => { btn.textContent = '复制失败'; });
+});
+
+// 内嵌预览：点了才加载 iframe，避免一进页面就跑六个 3D 场景
+pairs.addEventListener('click', e => {
+  const btn = e.target.closest('[data-embed]');
+  if (!btn) return;
+  const slug = btn.dataset.embed;
+  const shot = btn.closest('.shot');
+  if (shot.dataset.live === '1') {
+    shot.querySelector('iframe').remove();
+    shot.querySelector('img').style.opacity = '1';
+    shot.dataset.live = '0';
+    btn.textContent = '内嵌预览';
+    return;
+  }
+  const frame = document.createElement('iframe');
+  frame.src = `./works/${slug}/index.html`;
+  frame.loading = 'lazy';
+  frame.setAttribute('title', slug);
+  shot.insertBefore(frame, shot.querySelector('.shotbar'));
+  shot.querySelector('img').style.opacity = '0';
+  shot.dataset.live = '1';
+  btn.textContent = '收起预览';
+});
+</script>
+</body>
+</html>

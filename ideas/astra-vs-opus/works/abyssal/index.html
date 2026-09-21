@@ -1,0 +1,718 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>深渊：活着的深海 · Opus 临摹</title>
+<meta name="description" content="对 @emollick 用 GPT-6 Astra 生成的 ABYSSAL: The Living Deep 的临摹重写：一个可下潜 1400 米的程序化海洋。">
+<link rel="stylesheet" href="../../assets/work.css">
+<style>
+  body { background: #021019; }
+  .biome {
+    position: fixed; z-index: 20; left: 50%; top: 64px; transform: translateX(-50%);
+    text-align: center; letter-spacing: .34em; text-transform: uppercase;
+    font-size: 11px; color: rgba(160, 226, 255, .78); text-shadow: 0 0 18px rgba(0, 0, 0, .8);
+    transition: opacity .5s; pointer-events: none;
+  }
+  .biome b { display: block; margin-top: 6px; font-size: 17px; letter-spacing: .12em; color: #dff3ff; text-transform: none; }
+  .depthbar {
+    position: fixed; z-index: 20; right: 30px; top: 96px; bottom: 118px; width: 2px;
+    background: linear-gradient(180deg, rgba(124, 215, 255, .55), rgba(124, 215, 255, .05));
+  }
+  .depthbar i {
+    position: absolute; left: -4px; width: 10px; height: 10px; margin-top: -5px;
+    border-radius: 50%; background: #7cd7ff; box-shadow: 0 0 14px #7cd7ff;
+  }
+  @media (max-width: 720px) { .depthbar { display: none; } }
+</style>
+</head>
+<body>
+
+<div class="loading" id="loading">正在播种海洋 · SEEDING THE OCEAN</div>
+
+<div class="topbar">
+  <a href="../../index.html">← 对照总览</a>
+  <div class="ttl">深渊：活着的深海<span>OPUS 临摹</span></div>
+  <div class="spacer"></div>
+  <a href="https://x.com/emollick/status/2095673885605630429" target="_blank" rel="noopener">原作 @emollick ↗</a>
+</div>
+
+<div class="biome" id="biome">DEPTH ZONE<b>表层水柱</b></div>
+<div class="depthbar"><i id="marker"></i></div>
+
+<div class="panel">
+  <h2>世界参数</h2>
+  <label>种子 SEED</label>
+  <input type="text" id="seed" value="abyssal-01" spellcheck="false">
+  <label>洋流强度 <b id="curv">0.45</b></label>
+  <input type="range" id="cur" min="0" max="1" step="0.01" value="0.45">
+  <label>生物密度 <b id="lifev">0.70</b></label>
+  <input type="range" id="life" min="0.1" max="1" step="0.01" value="0.7">
+  <div class="btnrow">
+    <button class="btn" id="regen">重新生成世界</button>
+    <button class="btn on" id="auto">自动下潜</button>
+  </div>
+</div>
+
+<div class="readout">
+  <div class="big" id="depth">0</div>
+  <div class="sub">meters below surface</div>
+</div>
+
+<div class="hint" id="hint">拖拽环视 · 滚轮或 W/S 控制深度</div>
+
+<script src="../../assets/vendor/three.min.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  // ---------- 基础 ----------
+  var MAX_DEPTH = 140;            // 场景单位，1 单位 = 10 米 → 1400 米
+  var renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 1.8));
+  renderer.setSize(innerWidth, innerHeight);
+  // 保持线性输出：场景里混用了内置材质与自定义 shader，统一色彩空间才不会互相打架
+  document.body.appendChild(renderer.domElement);
+
+  var scene = new THREE.Scene();
+  scene.fog = new THREE.FogExp2(0x0b5878, 0.012);
+  scene.background = new THREE.Color(0x0b5878);
+
+  var camera = new THREE.PerspectiveCamera(62, innerWidth / innerHeight, 0.1, 900);
+  var sun = new THREE.DirectionalLight(0xdff6ff, 1.0);
+  sun.position.set(30, 120, 20);
+  scene.add(sun);
+  var hemi = new THREE.HemisphereLight(0x9fe4ff, 0x06202e, 0.5);
+  scene.add(hemi);
+  var lantern = new THREE.PointLight(0xa8e8ff, 0.0, 38, 2);
+  scene.add(lantern);
+
+  // ---------- 伪随机（可复现的种子世界） ----------
+  function hashSeed(str) {
+    var h = 2166136261;
+    for (var i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); }
+    return h >>> 0;
+  }
+  var rngState = 1;
+  function srand(s) { rngState = s || 1; }
+  function rnd() {
+    rngState |= 0; rngState = rngState + 0x6D2B79F5 | 0;
+    var t = Math.imul(rngState ^ rngState >>> 15, 1 | rngState);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  }
+  function rr(a, b) { return a + (b - a) * rnd(); }
+  function pick(arr) { return arr[(rnd() * arr.length) | 0]; }
+
+  // ---------- 深度分区（单位：米） ----------
+  // 世界的垂直尺度是分段的：浅水区做了垂直夸张，礁盘 0–60 m 占 30 个场景单位，
+  // 之后的 60–1400 m 压缩进剩下的 110 个单位，这样礁区可逛、深渊又真的很深。
+  function metersAt(d) { return d <= 30 ? d * 2 : 60 + (d - 30) * 12.182; }
+  function depthAtMeters(m) { return m <= 60 ? m / 2 : 30 + (m - 60) / 12.182; }
+
+  var ZONES = [
+    { to: 20,   name: '表层水柱',   fog: 0x1d87ad, dens: 0.0105, light: 1.05 },
+    { to: 60,   name: '阳光珊瑚礁', fog: 0x11708f, dens: 0.0125, light: 0.85 },
+    { to: 180,  name: '海藻林',     fog: 0x0a5872, dens: 0.0155, light: 0.5 },
+    { to: 650,  name: '大陆坡',     fog: 0x05364c, dens: 0.019,  light: 0.2 },
+    { to: 1e9,  name: '深渊热液区', fog: 0x01121d, dens: 0.026,  light: 0.04 }
+  ];
+  function zoneAt(m) { for (var i = 0; i < ZONES.length; i++) if (m < ZONES[i].to) return ZONES[i]; }
+
+  // ---------- 地形：中央礁盘 → 陆坡 → 海沟 ----------
+  function terrainHeight(x, z) {
+    var r = Math.sqrt(x * x + z * z);
+    var t = THREE.MathUtils.smoothstep(r, 34, 118);         // 礁盘到海沟的过渡
+    var base = -28 - 108 * t;
+    var ripple = Math.sin(x * 0.16) * Math.cos(z * 0.13) * (1.4 + 5 * t)
+               + Math.sin(x * 0.045 + z * 0.06) * (2 + 9 * t)
+               + Math.sin(x * 0.52 + Math.cos(z * 0.31) * 2.0) * (0.9 - 0.6 * t)
+               + Math.cos(z * 0.61 + x * 0.12) * (0.7 - 0.5 * t);
+    return base + ripple;
+  }
+
+  // 给定深度，求出「刚好贴着海床斜坡」的水平半径 —— 相机与深水生物都沿着它走
+  function radiusAtDepth(d) {
+    var lo = 20, hi = 168;
+    for (var i = 0; i < 22; i++) {
+      var mid = (lo + hi) / 2;
+      if (terrainHeight(mid, 0) > -(d + 7)) lo = mid; else hi = mid;
+    }
+    return Math.max(26, (lo + hi) / 2);
+  }
+
+  // 统一使用平面着色材质：r128 的 Lambert 不支持 flatShading，这里用 Phong
+  function facet(color, opts) {
+    var p = Object.assign({ color: color, flatShading: true, shininess: 4, specular: 0x111418 }, opts || {});
+    return new THREE.MeshPhongMaterial(p);
+  }
+
+  var world = new THREE.Group();
+  scene.add(world);
+
+  var swayMat = null;   // 海藻用的共享材质（需要逐帧更新 uniform）
+  var lifeGroups = [];  // 鱼群
+  var glowPoints = [];  // 发光粒子
+  var vents = [];
+
+  function clearWorld() {
+    for (var i = world.children.length - 1; i >= 0; i--) {
+      var o = world.children[i];
+      o.traverse(function (c) {
+        if (c.geometry) c.geometry.dispose();
+        if (c.material) { if (Array.isArray(c.material)) c.material.forEach(function (m) { m.dispose(); }); else c.material.dispose(); }
+      });
+      world.remove(o);
+    }
+    lifeGroups.length = 0; glowPoints.length = 0; vents.length = 0;
+  }
+
+  // 海床
+  function buildSeabed() {
+    var g = new THREE.PlaneGeometry(340, 340, 110, 110);
+    g.rotateX(-Math.PI / 2);
+    var p = g.attributes.position;
+    var col = [];
+    var c1 = new THREE.Color(0x9c8f72), c2 = new THREE.Color(0x25414d), c3 = new THREE.Color(0x08151d);
+    for (var i = 0; i < p.count; i++) {
+      var x = p.getX(i), z = p.getZ(i);
+      var y = terrainHeight(x, z);
+      p.setY(i, y);
+      var t = THREE.MathUtils.clamp((-y - 28) / 110, 0, 1);
+      var c = t < 0.5 ? c1.clone().lerp(c2, t * 2) : c2.clone().lerp(c3, (t - 0.5) * 2);
+      col.push(c.r, c.g, c.b);
+    }
+    g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
+    g.computeVertexNormals();
+    var m = facet(0xffffff, { vertexColors: true });
+    world.add(new THREE.Mesh(g, m));
+  }
+
+  // 珊瑚：鹿角珊瑚 / 脑珊瑚 / 管状海绵
+  function coralCluster(x, z) {
+    var g = new THREE.Group();
+    var palette = [0xff7a6b, 0xffb84d, 0xe0648f, 0x7be0c8, 0xc79bff];
+    var kind = (rnd() * 3) | 0;
+    var color = pick(palette);
+    var mat = facet(color);
+    if (kind === 0) {                                  // 鹿角
+      for (var i = 0; i < 9; i++) {
+        var h = rr(1.2, 3.4);
+        var b = new THREE.Mesh(new THREE.ConeGeometry(rr(0.12, 0.3), h, 5), mat);
+        b.position.set(rr(-1.1, 1.1), h / 2, rr(-1.1, 1.1));
+        b.rotation.z = rr(-0.5, 0.5); b.rotation.x = rr(-0.5, 0.5);
+        g.add(b);
+      }
+    } else if (kind === 1) {                           // 脑珊瑚
+      var s = new THREE.Mesh(new THREE.SphereGeometry(rr(1, 2.1), 9, 7), mat);
+      s.scale.y = rr(0.5, 0.75); s.position.y = 0.6;
+      g.add(s);
+    } else {                                           // 管海绵
+      for (var j = 0; j < 5; j++) {
+        var hh = rr(1.4, 3.2);
+        var t = new THREE.Mesh(new THREE.CylinderGeometry(rr(0.25, 0.5), rr(0.2, 0.35), hh, 7, 1, true), mat);
+        t.position.set(rr(-0.9, 0.9), hh / 2, rr(-0.9, 0.9));
+        t.rotation.z = rr(-0.25, 0.25);
+        g.add(t);
+      }
+      mat.side = THREE.DoubleSide;
+    }
+    g.position.set(x, terrainHeight(x, z), z);
+    g.rotation.y = rr(0, 6.28);
+    var k = rr(0.6, 1.5); g.scale.setScalar(k);
+    return g;
+  }
+
+  // 海藻：顶点着色器里随洋流摆动
+  var KELP_VS = [
+    'uniform float uTime; uniform float uCurrent;',
+    'varying vec3 vColor; varying float vFog;',
+    'attribute vec3 color; attribute float aH;',
+    'void main() {',
+    '  vColor = color;',
+    '  vec3 p = position;',
+    '  float h = clamp(aH, 0.0, 1.0);',
+    '  vec4 wp = modelMatrix * vec4(p, 1.0);',
+    '  float phase = wp.x * 0.12 + wp.z * 0.1 + uTime * 0.9;',
+    '  wp.x += sin(phase) * h * h * (1.2 + 3.4 * uCurrent);',
+    '  wp.z += cos(phase * 0.77) * h * h * (0.9 + 2.6 * uCurrent);',
+    '  vec4 mv = viewMatrix * wp;',
+    '  vFog = -mv.z;',
+    '  gl_Position = projectionMatrix * mv;',
+    '}'
+  ].join('\n');
+  var KELP_FS = [
+    'uniform vec3 uFog; uniform float uDensity; uniform float uLight;',
+    'varying vec3 vColor; varying float vFog;',
+    'void main() {',
+    '  float f = 1.0 - exp(-uDensity * uDensity * vFog * vFog);',
+    '  vec3 c = vColor * (0.35 + 0.9 * uLight);',
+    '  gl_FragColor = vec4(mix(c, uFog, clamp(f, 0.0, 1.0)), 1.0);',
+    '}'
+  ].join('\n');
+
+  function buildKelp(count) {
+    var geos = [];
+    var colors = [0x2f7d4f, 0x3f8f43, 0x6a9a33, 0x2a6b57];
+    for (var i = 0; i < count; i++) {
+      var a = rr(0, 6.283), r = rr(20, 46);
+      var x = Math.cos(a) * r, z = Math.sin(a) * r;
+      var y = terrainHeight(x, z);
+      var h = rr(6, 13);
+      var g = new THREE.PlaneGeometry(rr(0.5, 1.1), h, 1, 8);
+      g.translate(0, h / 2, 0);
+      var c = new THREE.Color(pick(colors));
+      var arr = [], hs = [];
+      for (var v = 0; v < g.attributes.position.count; v++) {
+        arr.push(c.r, c.g, c.b);
+        hs.push(g.attributes.position.getY(v) / h);   // 0=根部 1=梢部，供顶点着色器摆动
+      }
+      g.setAttribute('color', new THREE.Float32BufferAttribute(arr, 3));
+      g.setAttribute('aH', new THREE.Float32BufferAttribute(hs, 1));
+      g.rotateY(rr(0, 3.14));
+      g.translate(x, y, z);
+      geos.push(g);
+    }
+    var merged = mergeGeometries(geos);
+    swayMat = new THREE.ShaderMaterial({
+      vertexShader: KELP_VS, fragmentShader: KELP_FS, side: THREE.DoubleSide,
+      uniforms: {
+        uTime: { value: 0 }, uCurrent: { value: 0.45 },
+        uFog: { value: new THREE.Color(0x0a5872) }, uDensity: { value: 0.015 }, uLight: { value: 0.6 }
+      }
+    });
+    world.add(new THREE.Mesh(merged, swayMat));
+  }
+
+  // r128 没有内置 BufferGeometryUtils（未单独引入），这里做一个最小合并
+  function mergeGeometries(geos) {
+    var posCount = 0, idxCount = 0;
+    geos.forEach(function (g) { posCount += g.attributes.position.count; idxCount += g.index ? g.index.count : 0; });
+    var pos = new Float32Array(posCount * 3), col = new Float32Array(posCount * 3);
+    var hgt = new Float32Array(posCount);
+    var idx = new Uint32Array(idxCount);
+    var po = 0, io = 0, base = 0;
+    geos.forEach(function (g) {
+      pos.set(g.attributes.position.array, po * 3);
+      col.set(g.attributes.color.array, po * 3);
+      hgt.set(g.attributes.aH.array, po);
+      var gi = g.index.array;
+      for (var i = 0; i < gi.length; i++) idx[io + i] = gi[i] + base;
+      base += g.attributes.position.count; po += g.attributes.position.count; io += gi.length;
+      g.dispose();
+    });
+    var out = new THREE.BufferGeometry();
+    out.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    out.setAttribute('color', new THREE.BufferAttribute(col, 3));
+    out.setAttribute('aH', new THREE.BufferAttribute(hgt, 1));
+    out.setIndex(new THREE.BufferAttribute(idx, 1));
+    return out;
+  }
+
+  // 鱼群：一个 group 里若干锥体，沿着环形巡游
+  function buildSchool(opts) {
+    var g = new THREE.Group();
+    var mat = facet(opts.color);
+    var n = opts.count, s = opts.size;
+    for (var i = 0; i < n; i++) {
+      // 身体：压扁拉长的球；尾鳍与背鳍：压成薄片的锥 —— 侧面、俯视都能读成一条鱼
+      var body = new THREE.Mesh(new THREE.SphereGeometry(s, 7, 5), mat);
+      body.scale.set(0.5, 0.72, 1.6);
+      var tail = new THREE.Mesh(new THREE.ConeGeometry(s * 0.85, s * 1.5, 3), mat);
+      tail.rotation.x = -Math.PI / 2;
+      tail.position.z = -s * 2.0;
+      tail.scale.set(0.16, 1, 1);
+      var dorsal = new THREE.Mesh(new THREE.ConeGeometry(s * 0.55, s * 0.9, 3), mat);
+      dorsal.position.y = s * 0.6;
+      dorsal.scale.set(0.14, 1, 1.5);
+      var fish = new THREE.Group();
+      fish.add(body); fish.add(tail); fish.add(dorsal);
+      fish.position.set(rr(-opts.spread, opts.spread), rr(-opts.spread * .4, opts.spread * .4), rr(-opts.spread, opts.spread));
+      fish.userData.off = rnd() * 6.28;
+      g.add(fish);
+    }
+    g.userData = { r: opts.radius, y: opts.y, speed: opts.speed, phase: rnd() * 6.28, wob: opts.wob || 1 };
+    world.add(g);
+    lifeGroups.push(g);
+    return g;
+  }
+
+  // 巨型生物（鲸 / 蝠鲼）：简单但有辨识度的剪影
+  function buildGiant(y, color, scale, speed, radius) {
+    var g = new THREE.Group();
+    var mat = facet(color);
+    var body = new THREE.Mesh(new THREE.SphereGeometry(1, 10, 8), mat);
+    body.scale.set(1.1, 0.85, 3.4);
+    g.add(body);
+    var winL = new THREE.Mesh(new THREE.ConeGeometry(1.0, 3.6, 3), mat);
+    winL.rotation.z = Math.PI / 2; winL.rotation.y = 0.25; winL.position.set(-2.0, 0, 0.2); winL.scale.set(1, 1, 0.18);
+    var winR = winL.clone(); winR.rotation.z = -Math.PI / 2; winR.rotation.y = -0.25; winR.position.x = 2.0;
+    g.add(winL); g.add(winR);
+    var tail = new THREE.Mesh(new THREE.ConeGeometry(0.9, 2.2, 3), mat);
+    tail.rotation.x = Math.PI / 2; tail.position.z = -4.0; tail.scale.set(1, 1, 0.3);
+    g.add(tail);
+    g.scale.setScalar(scale);
+    g.userData = { r: radius, y: y, speed: speed, phase: rnd() * 6.28, giant: true, fins: [winL, winR] };
+    world.add(g);
+    lifeGroups.push(g);
+    return g;
+  }
+
+  // 发光粒子（生物荧光 / 海雪）
+  var GLOW_VS = [
+    'attribute float aSize; attribute float aPhase; attribute vec3 aColor;',
+    'uniform float uTime; uniform float uPixelRatio;',
+    'varying vec3 vColor; varying float vTw; varying float vFog;',
+    'void main() {',
+    '  vColor = aColor;',
+    '  vTw = 0.45 + 0.55 * sin(uTime * 1.7 + aPhase * 6.28);',
+    '  vec3 p = position;',
+    '  p.x += sin(uTime * 0.25 + aPhase * 9.0) * 1.6;',
+    '  p.y += sin(uTime * 0.17 + aPhase * 5.0) * 1.1;',
+    '  vec4 mv = modelViewMatrix * vec4(p, 1.0);',
+    '  vFog = -mv.z;',
+    '  gl_PointSize = aSize * uPixelRatio * (150.0 / max(-mv.z, 1.0));',
+    '  gl_Position = projectionMatrix * mv;',
+    '}'
+  ].join('\n');
+  var GLOW_FS = [
+    'varying vec3 vColor; varying float vTw; varying float vFog;',
+    'void main() {',
+    '  vec2 d = gl_PointCoord - 0.5;',
+    '  float a = smoothstep(0.5, 0.0, length(d));',
+    '  float far = exp(-0.0022 * vFog * vFog);',
+    '  gl_FragColor = vec4(vColor * vTw, a * a * vTw * far);',
+    '}'
+  ].join('\n');
+
+  function buildGlow(count, yMin, yMax, colors, sizeRange) {
+    var pos = [], size = [], phase = [], col = [];
+    for (var i = 0; i < count; i++) {
+      var py = rr(yMin, yMax);
+      var a = rr(0, 6.283), r = rr(6, Math.max(30, radiusAtDepth(-py) * 1.15));
+      pos.push(Math.cos(a) * r, py, Math.sin(a) * r);
+      size.push(rr(sizeRange[0], sizeRange[1]));
+      phase.push(rnd());
+      var c = new THREE.Color(pick(colors));
+      col.push(c.r, c.g, c.b);
+    }
+    var g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+    g.setAttribute('aSize', new THREE.Float32BufferAttribute(size, 1));
+    g.setAttribute('aPhase', new THREE.Float32BufferAttribute(phase, 1));
+    g.setAttribute('aColor', new THREE.Float32BufferAttribute(col, 3));
+    var m = new THREE.ShaderMaterial({
+      vertexShader: GLOW_VS, fragmentShader: GLOW_FS,
+      transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+      uniforms: { uTime: { value: 0 }, uPixelRatio: { value: Math.min(devicePixelRatio, 1.8) } }
+    });
+    var pts = new THREE.Points(g, m);
+    world.add(pts);
+    glowPoints.push(m);
+    return pts;
+  }
+
+  // 热液喷口
+  function buildVent(x, z) {
+    var y = terrainHeight(x, z);
+    var g = new THREE.Group();
+    var rock = facet(0x2a2320);
+    var h = rr(5, 11);
+    var chimney = new THREE.Mesh(new THREE.CylinderGeometry(rr(0.5, 0.9), rr(1.4, 2.2), h, 6), rock);
+    chimney.position.y = h / 2;
+    g.add(chimney);
+    var glowMat = new THREE.MeshBasicMaterial({ color: 0xff6a2a, transparent: true, opacity: 0.85 });
+    var mouth = new THREE.Mesh(new THREE.SphereGeometry(0.8, 8, 6), glowMat);
+    mouth.position.y = h; g.add(mouth);
+    var vl = new THREE.PointLight(0xff7433, 2.4, 26, 2);
+    vl.position.y = h + 1; g.add(vl);
+    // 管虫
+    var worm = facet(0xe24a5a);
+    for (var i = 0; i < 14; i++) {
+      var wh = rr(0.5, 1.6);
+      var w = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.13, wh, 4), worm);
+      w.position.set(rr(-2.6, 2.6), wh / 2, rr(-2.6, 2.6));
+      w.rotation.z = rr(-0.3, 0.3);
+      g.add(w);
+    }
+    g.position.set(x, y, z);
+    world.add(g);
+    vents.push({ mesh: mouth, light: vl, phase: rnd() * 6.28 });
+    return g;
+  }
+
+  // 海面
+  var surface = null;
+  function buildSurface() {
+    var g = new THREE.PlaneGeometry(340, 340, 40, 40);
+    g.rotateX(Math.PI / 2);
+    var m = new THREE.MeshBasicMaterial({ color: 0xbdf0ff, transparent: true, opacity: 0.32, side: THREE.DoubleSide, wireframe: false });
+    surface = new THREE.Mesh(g, m);
+    surface.position.y = 1.2;
+    world.add(surface);
+    surface.userData.base = g.attributes.position.array.slice();
+  }
+
+  // 阳光光柱：贴近海面的加性平面，越深越淡
+  var shafts = new THREE.Group();
+  (function buildShafts() {
+    var mat = new THREE.ShaderMaterial({
+      vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+      fragmentShader: [
+        'uniform float uOpacity; varying vec2 vUv;',
+        'void main(){',
+        '  float edge = smoothstep(0.0, 0.22, vUv.x) * smoothstep(1.0, 0.78, vUv.x);',
+        '  float fall = pow(vUv.y, 1.6);',
+        '  gl_FragColor = vec4(0.74, 0.93, 1.0, edge * fall * uOpacity);',
+        '}'
+      ].join('\n'),
+      transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
+      uniforms: { uOpacity: { value: 0.22 } }
+    });
+    shafts.userData.mat = mat;
+    for (var i = 0; i < 11; i++) {
+      var h = 52 + (i % 4) * 16, w = 2.4 + (i % 3) * 1.8;
+      var g = new THREE.PlaneGeometry(w, h);
+      g.translate(0, -h / 2, 0);
+      var m = new THREE.Mesh(g, mat);
+      var a = i / 11 * 6.283, rad = 12 + (i * 7) % 46;
+      m.position.set(Math.cos(a) * rad, 0.6, Math.sin(a) * rad);
+      m.rotation.y = a + 0.6;
+      m.rotation.z = (i % 2 ? 1 : -1) * 0.06;
+      shafts.add(m);
+    }
+    scene.add(shafts);
+  })();
+
+  var lifeDensity = 0.7;
+
+  function generate(seedStr) {
+    srand(hashSeed(seedStr));
+    clearWorld();
+    buildSeabed();
+    buildSurface();
+
+    var d = lifeDensity;
+    // 珊瑚成片地长：先撒几个「礁区中心」，再在每个中心周围聚一丛。
+    // 前 4 丛按下潜路线的视线方向摆，保证一开始就能看见礁区。
+    var patches = ((5 * d) | 0) + 8;
+    for (var pI = 0; pI < patches; pI++) {
+      var pa, pr;
+      if (pI < 4) {
+        var pd = 4 + pI * 7;                       // 对应的下潜深度（场景单位）
+        pa = pd * 0.021 + 0.62 + rr(-0.28, 0.28);  // 与相机视线同向
+        pr = 22 + rr(-5, 5);
+      } else {
+        pa = rr(0, 6.283); pr = rr(6, 36);
+      }
+      var cx = Math.cos(pa) * pr, cz = Math.sin(pa) * pr;
+      var n = ((14 * d) | 0) + 5;
+      for (var i = 0; i < n; i++) {
+        var ox = cx + rr(-7, 7), oz = cz + rr(-7, 7);
+        if (Math.hypot(ox, oz) > 40) continue;
+        world.add(coralCluster(ox, oz));
+      }
+    }
+    buildKelp((70 * d + 20) | 0);
+
+    // 热液喷口沿着下潜路线摆放：相机螺旋到那个深度时，正好能看见它们
+    for (var v = 0; v < 6; v++) {
+      var vd = 92 + v * 9;                       // 深度（场景单位）
+      var va = vd * 0.021 + rr(0.25, 0.95);      // 与相机同一条螺旋线，稍微偏前
+      var vr = radiusAtDepth(vd) * rr(0.78, 0.9);
+      buildVent(Math.cos(va) * vr, Math.sin(va) * vr);
+    }
+
+    // 礁区鱼群（浅水里贴着礁盘绕圈）
+    buildSchool({ count: ((26 * d) | 0) + 10, size: 0.6, spread: 3.2, radius: 21, y: -14, speed: 0.20, color: 0xffd45e });
+    buildSchool({ count: ((22 * d) | 0) + 8,  size: 0.5,  spread: 2.6, radius: 28, y: -20, speed: -0.16, color: 0x5ad2ff });
+    buildSchool({ count: ((18 * d) | 0) + 6,  size: 0.72, spread: 3.8, radius: 25, y: -25, speed: 0.13, color: 0x8affc0 });
+    buildSchool({ count: 3, size: 1.9, spread: 6, radius: 33, y: -30, speed: -0.1, color: 0x6f7f8c });   // 礁鲨
+    // 深水鱼群：半径跟着斜坡走，保证下潜时一定会遇上
+    buildSchool({ count: ((20 * d) | 0) + 8, size: 0.62, spread: 4.4, radius: radiusAtDepth(46) * 0.9, y: -46, speed: 0.12, color: 0xc0d8e8 });
+    buildSchool({ count: 12, size: 0.8, spread: 5.5, radius: radiusAtDepth(74) * 0.9, y: -74, speed: -0.09, color: 0x9fb3c4 });
+    buildSchool({ count: 9, size: 0.95, spread: 6, radius: radiusAtDepth(112) * 0.92, y: -112, speed: 0.07, color: 0x6b5f8f });
+    // 巨型生物
+    buildGiant(-38, 0x3b4a57, 1.5, 0.055, radiusAtDepth(38) * 0.82);   // 蝠鲼
+    buildGiant(-88, 0x24313c, 2.6, 0.035, radiusAtDepth(88) * 0.86);   // 深海巨影
+
+    // 粒子：海雪贯穿全深度，生物荧光只在深处
+    buildGlow((900 * d) | 0 + 300, -MAX_DEPTH, 2, [0xdfeaf2, 0xbcd4e2], [1.2, 3.0]);
+    buildGlow((520 * d) | 0 + 200, -MAX_DEPTH, -52, [0x66f0ff, 0x7cffd0, 0xb07cff, 0xffd36e], [2.0, 5.5]);
+  }
+
+  // ---------- 相机：沿深度螺旋下潜 ----------
+  var depth = 0, targetDepth = 0, azim = 0, pitch = -0.06, autoDive = true;
+  var lookAt = new THREE.Vector3();
+  function updateCamera(dt) {
+    if (autoDive) targetDepth = Math.min(MAX_DEPTH, targetDepth + dt * 2.6);
+    depth += (targetDepth - depth) * Math.min(1, dt * 1.6);
+    var r = radiusAtDepth(depth);                 // 始终贴着斜坡外侧下潜
+    var a = azim + depth * 0.021;
+    camera.position.set(Math.cos(a) * r, 2.2 - depth, Math.sin(a) * r);
+    var ahead = a + 0.62;                         // 沿切线方向朝前、并略微朝内俯视坡面
+    var r2 = radiusAtDepth(depth + 7) * 0.84;
+    lookAt.set(Math.cos(ahead) * r2, 2.2 - depth - 4.5 + pitch * 46, Math.sin(ahead) * r2);
+    camera.lookAt(lookAt);
+    lantern.position.copy(camera.position);
+  }
+
+  // ---------- 交互 ----------
+  var dragging = false, lastX = 0, lastY = 0;
+  renderer.domElement.addEventListener('pointerdown', function (e) { dragging = true; lastX = e.clientX; lastY = e.clientY; });
+  addEventListener('pointerup', function () { dragging = false; });
+  addEventListener('pointermove', function (e) {
+    if (!dragging) return;
+    azim -= (e.clientX - lastX) * 0.005;
+    pitch = THREE.MathUtils.clamp(pitch - (e.clientY - lastY) * 0.002, -0.55, 0.45);
+    lastX = e.clientX; lastY = e.clientY;
+  });
+  renderer.domElement.addEventListener('wheel', function (e) {
+    e.preventDefault();
+    setAuto(false);
+    targetDepth = THREE.MathUtils.clamp(targetDepth + e.deltaY * 0.035, 0, MAX_DEPTH);
+  }, { passive: false });
+
+  var keys = {};
+  addEventListener('keydown', function (e) { keys[e.key.toLowerCase()] = true; if (['w', 's'].indexOf(e.key.toLowerCase()) >= 0) setAuto(false); });
+  addEventListener('keyup', function (e) { keys[e.key.toLowerCase()] = false; });
+
+  function setAuto(on) {
+    autoDive = on;
+    document.getElementById('auto').classList.toggle('on', on);
+  }
+  document.getElementById('auto').onclick = function () { setAuto(!autoDive); };
+  document.getElementById('regen').onclick = function () {
+    generate(document.getElementById('seed').value || 'abyssal');
+    targetDepth = 0; depth = 0;
+  };
+  document.getElementById('seed').addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') document.getElementById('regen').click();
+  });
+  var curEl = document.getElementById('cur');
+  curEl.oninput = function () { document.getElementById('curv').textContent = (+curEl.value).toFixed(2); };
+  var lifeEl = document.getElementById('life');
+  lifeEl.oninput = function () {
+    lifeDensity = +lifeEl.value;
+    document.getElementById('lifev').textContent = lifeDensity.toFixed(2);
+  };
+  lifeEl.onchange = function () { document.getElementById('regen').click(); };
+
+  addEventListener('resize', function () {
+    camera.aspect = innerWidth / innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(innerWidth, innerHeight);
+  });
+
+  // ---------- 主循环 ----------
+  var clock = new THREE.Clock();
+  var fogColor = new THREE.Color(0x1d87ad), fogTarget = new THREE.Color(0x1d87ad);
+  var curZone = null;
+  var biomeEl = document.getElementById('biome');
+  var depthEl = document.getElementById('depth');
+  var markerEl = document.getElementById('marker');
+  var hintEl = document.getElementById('hint');
+
+  function tick() {
+    requestAnimationFrame(tick);
+    var dt = Math.min(clock.getDelta(), 0.05);
+    var t = clock.elapsedTime;
+    var current = +curEl.value;
+
+    if (keys['w'] || keys['arrowup']) targetDepth = Math.max(0, targetDepth - dt * 26);
+    if (keys['s'] || keys['arrowdown']) targetDepth = Math.min(MAX_DEPTH, targetDepth + dt * 26);
+
+    updateCamera(dt);
+
+    // 深度 → 雾 / 光
+    var meters = metersAt(depth);
+    var z = zoneAt(meters);
+    fogTarget.setHex(z.fog);
+    fogColor.lerp(fogTarget, Math.min(1, dt * 2.4));
+    scene.fog.color.copy(fogColor);
+    scene.background.copy(fogColor);
+    scene.fog.density += (z.dens - scene.fog.density) * Math.min(1, dt * 1.2);
+    sun.intensity += (z.light - sun.intensity) * Math.min(1, dt * 1.2);
+    hemi.intensity = 0.06 + 0.42 * z.light;
+    lantern.intensity = THREE.MathUtils.clamp((meters - 500) / 500, 0, 1) * 2.2;
+
+    if (z !== curZone) {
+      curZone = z;
+      biomeEl.innerHTML = 'DEPTH ZONE<b>' + z.name + '</b>';
+      biomeEl.style.opacity = 0; requestAnimationFrame(function () { biomeEl.style.opacity = 1; });
+    }
+    depthEl.textContent = Math.round(meters);
+    markerEl.style.top = (depth / MAX_DEPTH * 100) + '%';
+    if (meters > 150) hintEl.style.opacity = 0;
+
+    // 海藻 / 粒子
+    if (swayMat) {
+      swayMat.uniforms.uTime.value = t;
+      swayMat.uniforms.uCurrent.value = current;
+      swayMat.uniforms.uFog.value.copy(fogColor);
+      swayMat.uniforms.uDensity.value = scene.fog.density;
+      swayMat.uniforms.uLight.value = sun.intensity;
+    }
+    for (var i = 0; i < glowPoints.length; i++) glowPoints[i].uniforms.uTime.value = t;
+
+    // 阳光光柱：只在浅水可见，随时间缓慢摆动
+    shafts.rotation.y = t * 0.02;
+    shafts.userData.mat.uniforms.uOpacity.value = THREE.MathUtils.clamp(0.3 - depth * 0.0085, 0, 0.3) * (0.75 + 0.25 * Math.sin(t * 0.7));
+
+    // 鱼群巡游
+    for (var s = 0; s < lifeGroups.length; s++) {
+      var g = lifeGroups[s], u = g.userData;
+      var ang = u.phase + t * u.speed * (0.6 + current);
+      g.position.set(Math.cos(ang) * u.r, u.y + Math.sin(t * 0.3 + u.phase) * 1.6, Math.sin(ang) * u.r);
+      g.rotation.y = -ang + Math.PI / 2;
+      if (u.giant) {
+        u.fins[0].rotation.x = Math.sin(t * 1.1 + u.phase) * 0.35;
+        u.fins[1].rotation.x = -Math.sin(t * 1.1 + u.phase) * 0.35;
+      } else {
+        for (var f = 0; f < g.children.length; f++) {
+          var fish = g.children[f];
+          fish.rotation.y = Math.sin(t * 6 + fish.userData.off) * 0.22;
+          fish.position.y += Math.sin(t * 2 + fish.userData.off) * 0.004;
+        }
+      }
+    }
+
+    // 热液脉动
+    for (var v = 0; v < vents.length; v++) {
+      var pulse = 0.6 + 0.4 * Math.sin(t * 1.6 + vents[v].phase);
+      vents[v].mesh.material.opacity = 0.5 + 0.45 * pulse;
+      vents[v].light.intensity = 1.6 + 1.6 * pulse;
+    }
+
+    // 海面波动
+    if (surface) {
+      var pa = surface.geometry.attributes.position, base = surface.userData.base;
+      for (var k = 0; k < pa.count; k++) {
+        var bx = base[k * 3], bz = base[k * 3 + 2];
+        pa.array[k * 3 + 1] = Math.sin(bx * 0.08 + t * 1.1) * 0.6 * (0.4 + current) +
+                              Math.cos(bz * 0.06 + t * 0.8) * 0.5 * (0.4 + current);
+      }
+      pa.needsUpdate = true;
+      surface.material.opacity = THREE.MathUtils.clamp(0.4 - depth * 0.01, 0, 0.4);
+    }
+
+    renderer.render(scene, camera);
+  }
+
+  // 支持 ?depth=900&seed=xxx 直接落到某个深度（封面截图与外链都用得上）
+  var q = new URLSearchParams(location.search);
+  var seedEl = document.getElementById('seed');
+  if (q.get('seed')) seedEl.value = q.get('seed');
+  if (q.get('depth')) {
+    depth = targetDepth = THREE.MathUtils.clamp(depthAtMeters(+q.get('depth')), 0, MAX_DEPTH);
+    setAuto(false);
+  }
+  if (q.get('azim')) azim = +q.get('azim');
+
+  generate(seedEl.value || 'abyssal-01');
+  tick();
+  setTimeout(function () { document.getElementById('loading').classList.add('gone'); }, 500);
+})();
+</script>
+</body>
+</html>
