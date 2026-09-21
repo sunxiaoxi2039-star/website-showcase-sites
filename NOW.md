@@ -1,5 +1,5 @@
 # 网站灵感合集 当前状态
-> 最后更新　2026-09-21　Callen
+> 最后更新　2026-09-21　ZCode
 
 ## 已实现与验证
 
@@ -35,3 +35,11 @@
 ## 2026-09-21 公开上线验收
 
 SELENE 及统一画廊全部已 push，并通过 GitHub Pages 部署。子站发布版本 7548860；画廊发布版本 827b326。正式入口 https://sunxiaoxi2039-star.github.io/website-gallery/ 。从首页进入月面车、车辆持续行驶、地球纹理 200、三个 Prompt 显示与完整复制、手机无横向溢出均验证通过，无页面运行错误。Kimimotion 链接已改到有效 Kimi 站。没有新建独立仓库，私有源码及 Blender 快照未公开。
+
+## 2026-09-21 Astra 对照站两 PR 并入（ZCode）
+
+- 按小茜指令合并两仓 PR#1（分支 claude/astra-portfolio-website-917idn，Claude 的 Astra×Opus 临摹站）。两 PR 均与 main 冲突：本仓撞首页列表，画廊撞 EXHIBITIONS 同一插入位。
+- 本仓：入口五条全保留（Motion / Moonlit Forge / Habitat / SELENE / Astra），PR 分支解冲突 merge 提交 `ba4a7d1`，合并提交 `fa203f3`。
+- 画廊：以 main 最新渲染（Callen 的 prompt-box 系统）为底收入 8 条 Astra 展览，每条补 `promptLabel`；PR 自带的旧渲染（pwrap/exhibit-row）弃用以免倒退覆盖。PR 分支 merge 提交 `24ba266`，合并提交 `5968800`，画廊现为 14 条展览。
+- 验证：两 PR GitHub 状态 MERGED；线上画廊 14 条、Astra 封面与入口加载正常。过程与截图见 `log/2026-09-21.md`。
+- 小茜预期为 11 条，实际 14 条 = main 侧 6 条（她在 PR 开出后又收入 Habitat、SELENE、四季小屋）+ Astra 8 条，已当面说明。

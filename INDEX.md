@@ -1,6 +1,6 @@
 # 网站灵感合集 索引
 
-- [当前状态](NOW.md) · [项目边界](PROJECT.md) · [收藏日志](log/2026-09-19.md)
+- [当前状态](NOW.md) · [项目边界](PROJECT.md) · [收藏日志](log/2026-09-21.md)
 - [本地合集入口](index.html)
 
 ## Moonlit Forge · 四季小屋
@@ -26,3 +26,10 @@
 - [Habitat 家居空间](ideas/habitat/index.html)：已公开。
 - [统一画廊](../website-gallery/index.html)。
 - 私有本地源快照：`sources/moonlit-forge/` 与 `ideas/*/source/`，Git 忽略，不公开。
+
+## Astra 作品 × Opus 临摹（2026-09-21 并入）
+
+- [线上入口](https://sunxiaoxi2039-star.github.io/website-showcase-sites/ideas/astra-vs-opus/)
+- [128 件案例集](https://sunxiaoxi2039-star.github.io/website-showcase-sites/ideas/astra-vs-opus/cases/)
+- 本仓路径：`ideas/astra-vs-opus/`（PR#1 合并 `fa203f3` 收入；画廊侧 8 条展览随 `5968800` 上线）。
+- 内容：GPT-6 Astra 发布周 6 件作品的 Opus 临摹对照站 + 128 件作品索引，每件挂生成 prompt。
