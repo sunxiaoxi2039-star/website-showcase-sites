@@ -1,0 +1,25 @@
+Seoul 3D Atlas（Opus 5.5 独立逆向版）数据来源与许可
+=====================================================
+
+本目录中的数据文件均由离线脚本从公开数据生成（坐标投影、简化、量化与栅格化）。
+
+1. 建筑、道路、水系、土地利用、行政区界
+   来源：Overture Maps Foundation, release 2026-08-19.0
+         (s3://overturemaps-us-west-2/release/2026-08-19.0/)
+   其中大量要素源自 OpenStreetMap。
+   © OpenStreetMap contributors，依 Open Database License (ODbL) 1.0 提供。
+   Overture Maps 数据依 ODbL / CDLA-Permissive-2.0 等各主题许可提供，详见 https://docs.overturemaps.org/attribution/
+
+   - buildings.bin：每栋建筑 14 字节（x,z 量化坐标、宽、深、高、基底高程、朝向、类型）。
+     建筑体块为足迹的最小外接旋转矩形（面积校正），缺失高度按面积、形状与所在用地估算，仅供示意。
+   - meta.json：主干道（高速/快速/主/次干道）折线、桥梁/隧道标记，25 个自治区边界与首尔市界。
+   - ground.jpg / night.jpg / water.png / mask.png：由土地覆盖、用地、道路与建筑足迹栅格化生成的底图、夜间灯光图与掩码。
+
+2. 地形
+   来源：AWS Terrain Tiles（Terrarium 编码，zoom 12），由 Mapzen/Linux Foundation 维护，
+   其中韩国区域主要来自 SRTM / 各国开放高程数据。详见 https://github.com/tilezen/joerd/blob/master/docs/attribution.md
+   - terrain.bin：728×626 网格，int16，单位 0.1 m。
+
+3. 地标模型均为程序化的示意性重建，不代表测绘精度。
+
+4. three.js r170（MIT License），见 vendor/three/LICENSE。

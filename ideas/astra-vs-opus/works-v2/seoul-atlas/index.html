@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>首尔 3D 地图集</title>
+<meta name="description" content="一座用真实开放地理数据搭起来的首尔微缩沙盘：40 万栋建筑、真实地形与汉江，地标飞越巡游与连续的昼夜光照。">
+<link rel="stylesheet" href="css/style.css">
+<script type="importmap">
+{ "imports": {
+  "three": "./vendor/three/three.module.min.js",
+  "three/addons/": "./vendor/three/addons/"
+} }
+</script>
+</head>
+<body>
+<header id="topbar">
+  <a class="tb-left" href="../../compare/index.html">← 三方对照</a>
+  <div class="tb-mid"><span class="tb-title">首尔 3D 地图集</span><span class="tb-tag">Opus 5.5 · 独立逆向</span></div>
+  <a class="tb-right" href="https://x.com/synabreu/status/2096557555086725159" target="_blank" rel="noopener">原作 @synabreu ↗</a>
+</header>
+
+<main id="stage">
+  <canvas id="c" aria-label="首尔三维微缩地图"></canvas>
+  <div id="labels" aria-hidden="true"></div>
+
+  <!-- 品牌与统计 -->
+  <section id="brand" class="glass">
+    <div class="br-kicker">SEOUL · 서울 · 3D ATLAS</div>
+    <h1>首尔微缩地图集</h1>
+    <div class="br-stats" id="stats">— 载入中 —</div>
+    <div class="br-attr">数据 © OpenStreetMap 贡献者 · Overture Maps · AWS Terrain</div>
+  </section>
+
+  <!-- 地标列表 -->
+  <nav id="places" class="glass sheet" aria-label="地标">
+    <div class="sheet-head"><span>地标 · 22 处</span><button class="sheet-x" data-close="places" aria-label="关闭">×</button></div>
+    <ol id="placeList"></ol>
+  </nav>
+
+  <!-- 右上：时间 / 季节 / 天气 / 图层 -->
+  <section id="controls" class="glass sheet" aria-label="环境控制">
+    <div class="sheet-head"><span>环境</span><button class="sheet-x" data-close="controls" aria-label="关闭">×</button></div>
+    <div class="clock">
+      <div class="clock-face"><span id="clockIcon">☀</span><span id="clockTime">17:40</span></div>
+      <div class="clock-phase" id="clockPhase">黄昏</div>
+      <button id="timePlay" class="chip small" title="让时间流动">▶ 流动</button>
+    </div>
+    <input id="timeSlider" type="range" min="0" max="24" step="0.02" value="17.25" aria-label="一天中的时间">
+    <div class="ticks"><span>0</span><span>6</span><span>12</span><span>18</span><span>24</span></div>
+    <div class="seg" id="timePresets">
+      <button data-t="6.3">清晨</button><button data-t="12.2">正午</button><button data-t="18.35">黄昏</button><button data-t="21.3">夜晚</button>
+    </div>
+    <div class="row-label">季节</div>
+    <div class="seg" id="seasonSeg"><button data-v="spring">春</button><button data-v="summer">夏</button><button data-v="autumn" class="on">秋</button><button data-v="winter">冬</button></div>
+    <div class="row-label">天气</div>
+    <div class="seg" id="weatherSeg"><button data-v="clear" class="on">晴</button><button data-v="rain">雨</button><button data-v="snow">雪</button></div>
+    <div class="row-label">图层</div>
+    <div class="toggles" id="layerToggles">
+      <label><input type="checkbox" data-layer="districts" checked><span>区界</span></label>
+      <label><input type="checkbox" data-layer="labels" checked><span>地名</span></label>
+      <label><input type="checkbox" data-layer="traffic" checked><span>车流</span></label>
+      <label><input type="checkbox" data-layer="trees" checked><span>树木</span></label>
+      <label><input type="checkbox" data-layer="buildings" checked><span>建筑</span></label>
+      <label><input type="checkbox" data-layer="tilt" checked><span>移轴</span></label>
+    </div>
+  </section>
+
+  <!-- 小地图 -->
+  <section id="minimap" class="glass" aria-label="小地图">
+    <canvas id="mm" width="220" height="190"></canvas>
+    <div class="mm-cap"><span id="mmDistrict">首尔特别市</span><span id="mmCoord">37.57°N 126.98°E</span></div>
+  </section>
+
+  <!-- 底部：巡游与导航 -->
+  <section id="dock">
+    <button id="btnPlaces" class="dock-btn mobile-only" aria-label="地标">◎<small>地标</small></button>
+    <button id="btnHome" class="dock-btn" title="全景 (H)" aria-label="全景">⌂<small>全景</small></button>
+    <button id="btnTour" class="dock-main" title="自动巡游 (T)"><span id="tourIcon">▶</span><span id="tourText">地标飞越巡游</span></button>
+    <button id="btnCompass" class="dock-btn" title="正北朝上" aria-label="指北"><span id="needle">➤</span><small>指北</small></button>
+    <button id="btnControls" class="dock-btn mobile-only" aria-label="环境">☼<small>环境</small></button>
+  </section>
+  <div id="tourBar"><div id="tourProg"></div></div>
+
+  <!-- 地标卡片 -->
+  <article id="card" class="glass" hidden>
+    <button class="card-x" id="cardX" aria-label="关闭">×</button>
+    <div class="card-top"><span class="chip cat" id="cardCat">地标</span><span class="card-step" id="cardStep"></span></div>
+    <h2 id="cardTitle">—</h2>
+    <div class="card-sub" id="cardSub">—</div>
+    <p id="cardDesc"></p>
+    <dl id="cardFacts"></dl>
+    <div class="card-foot"><span id="cardCoord"></span><span class="card-nav"><button id="cardPrev" aria-label="上一站">‹</button><button id="cardNext" aria-label="下一站">›</button></span></div>
+  </article>
+
+  <div id="tip" hidden></div>
+  <div id="hint">拖动旋转 · 右键/双指平移 · 滚轮/捏合缩放 · 点击地名飞过去</div>
+
+  <div id="loader">
+    <div class="ld-inner">
+      <div class="ld-kicker">SEOUL 3D ATLAS</div>
+      <div class="ld-title">首尔微缩地图集</div>
+      <div class="ld-bar"><i id="ldBar"></i></div>
+      <div class="ld-msg" id="ldMsg">准备沙盘…</div>
+    </div>
+  </div>
+  <noscript><div class="nojs">需要启用 JavaScript 与 WebGL 才能浏览这座微缩首尔。</div></noscript>
+</main>
+<script type="module" src="js/main.js"></script>
+</body>
+</html>
