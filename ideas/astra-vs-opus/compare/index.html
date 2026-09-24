@@ -1,0 +1,322 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Astra × Opus 三方对照</title>
+<meta name="description" content="同一件作品三个版本并排：GPT-6 Astra 原作、Opus 5 第一版临摹、Opus 5.5 隔离记忆后的独立逆向。">
+<style>
+  :root {
+    --bg: #07080b; --panel: #0e1016; --panel2: #12151c; --ink: #f2f4f7;
+    --dim: rgba(242,244,247,.62); --faint: rgba(242,244,247,.38); --line: rgba(242,244,247,.13);
+    --astra: #6ee7a5;   /* 原作 */
+    --o5: #7cd7ff;      /* Opus 5 */
+    --o55: #c3a6ff;     /* Opus 5.5 */
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink); line-height: 1.7;
+    font-family: "Inter", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: inherit; }
+  .wrap { max-width: 1440px; margin: 0 auto; padding: 0 24px; }
+
+  header.hero {
+    padding: 44px 0 30px; border-bottom: 1px solid var(--line);
+    background:
+      radial-gradient(60% 120% at 8% -30%, rgba(110,231,165,.12), transparent 60%),
+      radial-gradient(60% 120% at 50% -30%, rgba(124,215,255,.10), transparent 60%),
+      radial-gradient(60% 120% at 92% -30%, rgba(195,166,255,.14), transparent 60%);
+  }
+  .back { font-size: 12.5px; color: var(--dim); text-decoration: none; }
+  .back:hover { color: var(--ink); }
+  h1 { margin: 16px 0 0; font-size: clamp(26px, 4.2vw, 44px); font-weight: 600; letter-spacing: -.02em; line-height: 1.15; }
+  h1 .a { color: var(--astra); } h1 .b { color: var(--o5); } h1 .c { color: var(--o55); }
+  .lede { margin: 14px 0 0; max-width: 820px; font-size: 14.5px; color: var(--dim); }
+
+  .method { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 24px; }
+  .method div { padding: 14px 16px; border: 1px solid var(--line); border-radius: 12px; background: var(--panel); font-size: 12.5px; color: var(--dim); }
+  .method b:first-child { display: block; margin-bottom: 4px; font-size: 13px; }
+  .method b { color: var(--ink); font-weight: 600; }
+  .method .a b:first-child { color: var(--astra); } .method .b b:first-child { color: var(--o5); } .method .c b:first-child { color: var(--o55); }
+
+  /* 作品切换 */
+  .tabs { position: sticky; top: 0; z-index: 10; background: rgba(7,8,11,.9); backdrop-filter: blur(14px); border-bottom: 1px solid var(--line); }
+  .tabs .wrap { display: flex; gap: 6px; overflow-x: auto; padding-block: 12px; scrollbar-width: none; }
+  .tabs button {
+    flex: none; padding: 8px 15px; border: 1px solid var(--line); border-radius: 999px; background: transparent;
+    color: var(--dim); font: inherit; font-size: 12.5px; cursor: pointer; white-space: nowrap; transition: all .16s;
+  }
+  .tabs button:hover { color: var(--ink); border-color: rgba(242,244,247,.4); }
+  .tabs button.on { background: var(--ink); color: #07080b; border-color: var(--ink); font-weight: 600; }
+
+  .work { padding: 30px 0 10px; }
+  .work-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 14px 22px; }
+  .work-head h2 { margin: 0; font-size: 24px; font-weight: 600; }
+  .work-head .en { font-size: 12px; letter-spacing: .12em; color: var(--faint); text-transform: uppercase; }
+  .work-head .spacer { flex: 1; }
+  .bigbtn {
+    padding: 10px 18px; border-radius: 999px; border: 0; cursor: pointer; font: inherit; font-size: 13px; font-weight: 600;
+    color: #0a0612; background: linear-gradient(90deg, var(--astra), var(--o5), var(--o55));
+  }
+  .bigbtn:hover { filter: brightness(1.08); }
+
+  /* 三栏 */
+  .tri { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin-top: 18px; }
+  .pane { border: 1px solid var(--line); border-radius: 16px; overflow: hidden; background: var(--panel); display: flex; flex-direction: column; }
+  .pane.a { border-top: 2px solid var(--astra); } .pane.b { border-top: 2px solid var(--o5); } .pane.c { border-top: 2px solid var(--o55); }
+  .ph { padding: 12px 15px 10px; display: flex; align-items: center; gap: 10px; }
+  .ph .who { font-size: 10.5px; letter-spacing: .2em; text-transform: uppercase; font-weight: 700; }
+  .pane.a .who { color: var(--astra); } .pane.b .who { color: var(--o5); } .pane.c .who { color: var(--o55); }
+  .ph .sub { font-size: 11.5px; color: var(--faint); }
+  .ph a.open { margin-left: auto; font-size: 11.5px; color: var(--dim); text-decoration: none; white-space: nowrap; }
+  .ph a.open:hover { color: var(--ink); }
+  .stage { position: relative; aspect-ratio: 16 / 10; background: #04060a; }
+  .stage img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .stage iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; background: #04060a; }
+  .stage .load {
+    position: absolute; left: 12px; bottom: 12px; padding: 7px 13px; border-radius: 999px;
+    border: 1px solid rgba(242,244,247,.25); background: rgba(6,8,12,.72); backdrop-filter: blur(8px);
+    color: var(--ink); font: inherit; font-size: 12px; cursor: pointer;
+  }
+  .stage .load:hover { background: var(--ink); color: #07080b; }
+  .stage .blank {
+    position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: center; gap: 10px;
+    padding: 22px 24px; background: radial-gradient(120% 90% at 20% 10%, rgba(110,231,165,.10), transparent 60%), #06080c;
+  }
+  .blank q { font-size: 15px; line-height: 1.7; color: var(--ink); quotes: "「" "」"; }
+  .blank small { font-size: 12px; color: var(--faint); }
+  .pd { padding: 13px 15px 15px; font-size: 12.5px; color: var(--dim); border-top: 1px solid var(--line); }
+  .pd b { color: var(--ink); font-weight: 600; }
+
+  .caveat { margin-top: 14px; padding: 12px 16px; border: 1px solid rgba(245,196,107,.28); border-left: 2px solid #f5c46b;
+    border-radius: 0 12px 12px 0; background: rgba(245,196,107,.05); font-size: 12.5px; color: var(--dim); line-height: 1.75; }
+  .caveat b { color: #f5c46b; margin-right: 10px; font-weight: 600; }
+
+  /* 5.5 心得 */
+  .notes { margin-top: 18px; display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr); gap: 14px; }
+  .card { border: 1px solid var(--line); border-radius: 16px; background: var(--panel); overflow: hidden; }
+  .card > h3 { margin: 0; padding: 14px 18px; font-size: 13px; letter-spacing: .06em; border-bottom: 1px solid var(--line); display: flex; align-items: center; gap: 10px; }
+  .card > h3 .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--o55); box-shadow: 0 0 10px var(--o55); }
+  .card > h3 button { margin-left: auto; padding: 4px 11px; border: 1px solid var(--line); border-radius: 999px; background: transparent; color: var(--dim); font: inherit; font-size: 11px; cursor: pointer; }
+  .card > h3 button:hover { background: var(--o55); color: #120a24; border-color: var(--o55); font-weight: 600; }
+  .md { padding: 6px 20px 18px; font-size: 13.5px; color: rgba(242,244,247,.8); max-height: 640px; overflow: auto; }
+  .md h1, .md h2, .md h3 { color: var(--ink); line-height: 1.35; }
+  .md h1 { font-size: 18px; margin: 16px 0 8px; } .md h2 { font-size: 15.5px; margin: 20px 0 8px; } .md h3 { font-size: 14px; margin: 16px 0 6px; }
+  .md p { margin: 8px 0; } .md ul, .md ol { padding-left: 20px; margin: 8px 0; } .md li { margin: 3px 0; }
+  .md code { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12px; padding: 1px 5px; border-radius: 4px; background: rgba(255,255,255,.07); }
+  .md pre { padding: 12px 14px; border-radius: 10px; background: rgba(0,0,0,.35); overflow-x: auto; }
+  .md pre code { background: none; padding: 0; }
+  .md table { border-collapse: collapse; font-size: 12.5px; display: block; overflow-x: auto; }
+  .md th, .md td { border: 1px solid var(--line); padding: 6px 9px; text-align: left; }
+  .md blockquote { margin: 8px 0; padding: 4px 14px; border-left: 2px solid var(--o55); color: var(--dim); }
+  .md.prompt { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12px; white-space: pre-wrap; line-height: 1.8; }
+  .pending { padding: 22px 20px; color: var(--faint); font-size: 13px; }
+
+  /* 三窗同开：全屏 */
+  .theater { position: fixed; inset: 0; z-index: 50; background: #030406; display: grid; grid-template-rows: auto 1fr; }
+  .theater[hidden] { display: none; }
+  .theater .bar { display: flex; align-items: center; gap: 14px; padding: 10px 16px; border-bottom: 1px solid var(--line); font-size: 13px; }
+  .theater .bar b { font-weight: 600; }
+  .theater .bar button { margin-left: auto; padding: 6px 14px; border: 1px solid var(--line); border-radius: 999px; background: transparent; color: var(--ink); font: inherit; font-size: 12px; cursor: pointer; }
+  .theater .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); min-height: 0; }
+  .theater .col { position: relative; display: grid; grid-template-rows: auto 1fr; border-right: 1px solid var(--line); min-width: 0; }
+  .theater .col:last-child { border-right: 0; }
+  .theater .col .lab { padding: 7px 12px; font-size: 11px; letter-spacing: .16em; text-transform: uppercase; font-weight: 700; border-bottom: 1px solid var(--line); display: flex; gap: 10px; }
+  .theater .col .lab a { margin-left: auto; letter-spacing: 0; text-transform: none; font-weight: 400; color: var(--dim); text-decoration: none; }
+  .theater .col.a .lab { color: var(--astra); } .theater .col.b .lab { color: var(--o5); } .theater .col.c .lab { color: var(--o55); }
+  .theater iframe { width: 100%; height: 100%; border: 0; background: #04060a; }
+  .theater .blank { position: relative; height: 100%; }
+
+  footer { margin-top: 60px; padding: 28px 0 54px; border-top: 1px solid var(--line); font-size: 12.5px; color: var(--faint); }
+
+  @media (max-width: 1080px) {
+    .tri { grid-template-columns: 1fr; }
+    .notes { grid-template-columns: 1fr; }
+    .method { grid-template-columns: 1fr; }
+    .theater .grid3 { grid-template-columns: 1fr; grid-template-rows: repeat(3, 1fr); }
+    .theater .col { border-right: 0; border-bottom: 1px solid var(--line); }
+  }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <a class="back" href="../index.html">← 回到对照总览</a>
+    <h1><span class="a">Astra 原作</span> × <span class="b">Opus 5</span> × <span class="c">Opus 5.5</span><br>三方对照</h1>
+    <p class="lede">同一件作品的三个版本并排摆：左边是 GPT-6 Astra 的原作，中间是 Opus 5 第一次按描述写的临摹，右边是换到 Opus 5.5 后<b>隔离记忆重新逆向</b>的版本。点「三窗同开」可以把三个版本全屏并排同时跑。</p>
+    <div class="method">
+      <div class="a"><b>Astra 原作</b>作者用 GPT-6 Astra 生成、发在 X 上的作品。能嵌就直接嵌原站；原站禁止被嵌入或没有公开 demo 的，给原帖链接和原话。</div>
+      <div class="b"><b>Opus 5 · 第一版</b>在同一段对话里，依据原帖文字描述写成。受限于当时的条件：three.js r128、不做后期、没有真实乐谱。</div>
+      <div class="c"><b>Opus 5.5 · 独立逆向</b>每件作品派一个全新上下文的子代理：<b>看不到第一版的代码、prompt、截图和对话</b>，只拿到原作的公开资料，技术栈自选，最后交一篇心得。</div>
+    </div>
+  </div>
+</header>
+
+<nav class="tabs"><div class="wrap" id="tabs"></div></nav>
+
+<main class="wrap" id="main"></main>
+
+<div class="theater" id="theater" hidden>
+  <div class="bar"><b id="thTitle"></b><span style="color:var(--faint)">三窗同开 · Esc 关闭</span><button id="thClose">关闭</button></div>
+  <div class="grid3" id="thGrid"></div>
+</div>
+
+<footer>
+  <div class="wrap">
+    原作版权归各原作者所有，本页仅作学习对照。原作窗口能否显示取决于原站是否允许被嵌入；制作环境访问不到这些站点，未能逐个测试——如果某个窗口空白，用右上角的「新窗口打开」。
+  </div>
+</footer>
+
+<script>
+const WORKS = [
+  { slug: 'abyssal', zh: '深渊：活着的深海', en: 'ABYSSAL: The Living Deep', author: '@emollick',
+    post: 'https://x.com/emollick/status/2095673885605630429',
+    demo: 'https://abyssal-living-deep.netlify.app/?site=reef&seed=713&light=day&surface=1',
+    quote: '把一个开源的海面风暴生成器交给 Astra，让它补出海面之下的整个世界：一路潜到 1400 米，珊瑚礁、海藻林、大陆坡、海沟，全部由一个种子长出来。' },
+  { slug: 'v8-engine', zh: 'V8 四冲程剖面', en: 'Interactive V8 Engine', author: '@DilumSanjaya',
+    post: 'https://x.com/DilumSanjaya/status/2096280244663775423', demo: '',
+    quote: 'Asked GPT-6 Astra to create a highly detailed, interactive visualization of a V8 engine.' },
+  { slug: 'seoul-atlas', zh: '首尔立体地图', en: 'Seoul 3D Atlas', author: '@synabreu',
+    post: 'https://x.com/synabreu/status/2096557555086725159',
+    demo: 'https://seoul-3d-atlas.synabreu.chatgpt.site/',
+    quote: '微缩首尔：地标飞越镜头，加上从白天到夜晚的光照变化。' },
+  { slug: 'van-gogh-town', zh: '可以走进去的梵高小镇', en: 'Walk Through Van Gogh', author: '@petergostev',
+    post: 'https://x.com/petergostev/status/2095776685807346105',
+    demo: 'https://van-goghs-town.surge.sh/',
+    quote: '六幅画被重新想象成一座可以步行穿行、带笔触感的 Three.js 小镇。' },
+  { slug: 'orbital-core', zh: '轨道核心', en: 'Orbital Core Showcase', author: '@oneruofeng',
+    post: 'https://x.com/oneruofeng/status/2096551010089263181',
+    demo: 'https://orbital-core-showcase.wangruofeng007.workers.dev',
+    quote: '在 Blender 里建模的双环能量核心，放进网页里可以旋转和推近观察。' },
+  { slug: 'brandenburg-piano', zh: '勃兰登堡键盘', en: 'Brandenburg Piano', author: '@DeryaTR_',
+    post: 'https://x.com/DeryaTR_/status/2096090915790069857',
+    demo: 'https://brandenburg-piano.vercel.app/',
+    quote: '一架虚拟钢琴，内置巴赫《勃兰登堡协奏曲》的演奏。' }
+];
+
+// 构建时注入：每件作品的 5.5 心得与 prompt（已渲染成 HTML）
+const V2 = {"abyssal": {}, "v8-engine": {}, "seoul-atlas": {}, "van-gogh-town": {}, "orbital-core": {"notes": "<h1>轨道能量核心 · 独立逆向笔记<\/h1>\n<h2>我对原作的理解（它的核心卖点是什么）<\/h2>\n<p>Orbital Core Showcase 其实是一件工作流演示，只是穿着产品页的外衣：GPT-6 Astra 自己在 Blender 里建了一个「能量核心」模型，导出 GLB，写好 Three.js 查看器，再部署到 Cloudflare Workers。观众记住的是三件事：<\/p>\n<ol>\n<li><strong>一件像样的「物件」<\/strong>：一颗发光的球，两道互相垂直的环，一个金属底座。东西不复杂，但它是从 Blender 出来的，有资产感。<\/li>\n<li><strong>产品展示页的排版<\/strong>：深蓝夜色、细网格、胶片颗粒，左边一行很大的衬线标题「能量不被容纳。」，右边一张参数表（状态 / 核心频率 / 轨道偏移），左下三个模式按钮（轨道 / 脉冲 / 静止），整体是编辑部杂志的调子。<\/li>\n<li><strong>可以把玩<\/strong>：拖拽旋转、滚轮缩放，模型自己慢慢转，切到「脉冲」会跳动。<\/li>\n<\/ol>\n<p>所以要还原的不只是模型，而是「一个被认真做出来的实物，放在一个安静、克制的展示台上」这种感觉。<\/p>\n<h2>逆向推断：从有限资料里推出了哪些关键机制，依据是什么<\/h2>\n<p>资料来源（原帖和 workers.dev demo 在这个环境里都打不开）：<\/p>\n<ul>\n<li>社区整理的 awesome-gpt-6-astra README（raw.githubusercontent.com 可访问）写着：「Blender, Three.js, GLB」「modeling an energy core, two rings and a metal base … rotation, zoom, automatic orbit and pulse controls」，并且给出了<strong>作者公开的代码仓库<\/strong>链接。<\/li>\n<li>作者仓库 <code>wangruofeng/orbital-core-showcase<\/code> 的 README、<code>index.html<\/code>、<code>src/main.js<\/code>、<code>src/style.css<\/code> 和 <code>public/model.glb<\/code> 都能从 raw.githubusercontent.com 拉到。它们是原作本身的公开资料，不是别人的临摹，所以我读了。我还用自己拉下来的 three 在本地把原作跑了一遍，截图作为对照基准（只放在 /tmp，没进输出目录）。<\/li>\n<\/ul>\n<p>从这些资料推出的结论：<\/p>\n<table>\n<thead>\n<tr>\n<th>推断<\/th>\n<th>依据<\/th>\n<\/tr>\n<\/thead>\n<tbody>\n<tr>\n<td>模型只有 4 个节点：<code>Energy_Core<\/code>（r=0.8 的球）、<code>Ring_X<\/code> / <code>Ring_Y<\/code>（主半径约 1.23、管半径 0.075 的圆环，两者用 90° 四元数摆成互相垂直）、<code>Platform<\/code>（r=1.65、高 0.32 的圆柱）<\/td>\n<td>用 Node 解析 GLB 的 JSON chunk：节点、旋转四元数、各 accessor 的 min/max 包围盒<\/td>\n<\/tr>\n<tr>\n<td>材质只有三种：<code>Blue_Emission<\/code>（emissive (0.005,0.22,1)，KHR emissive_strength 4）、<code>Dark_Metal<\/code> / <code>Platform_Metal<\/code>（金属度 0.8、粗糙度 0.25 的深蓝灰）<\/td>\n<td>GLB materials 段<\/td>\n<\/tr>\n<tr>\n<td>查看器里发光材质被整个换成 <code>MeshStandardMaterial(emissive 0x0068ff, 1.85)<\/code>；<strong>没有环境贴图，没有辉光后期<\/strong>；ACES，曝光 1.3；四盏灯（半球光、主光、蓝色 rim 点光、底部 underglow）<\/td>\n<td>main.js<\/td>\n<\/tr>\n<tr>\n<td>「脉冲」＝模型整体按 sin(4.8t) 做 ±4.2% 缩放并加快自转；「静止」＝关掉自动旋转；参数表数字由 sin 驱动<\/td>\n<td>main.js 的 tick()<\/td>\n<\/tr>\n<tr>\n<td><code>SIGNAL / OFF<\/code> 按钮只切换文字，没有任何声音<\/td>\n<td>main.js 的点击处理<\/td>\n<\/tr>\n<tr>\n<td>把原作跑起来以后，核心在 ACES 下被压成一块泛白的浅蓝圆盘，环是没有细节的黑色管子<\/td>\n<td>本地渲染截图<\/td>\n<\/tr>\n<\/tbody>\n<\/table>\n<p>结论是：原作的「Blender 感」主要来自<strong>资产流程<\/strong>，渲染本身相当朴素。这也就是我可以超过它的地方。<\/p>\n<h2>实现思路与关键技术决策（为什么这么选）<\/h2>\n<p><strong>1. 不加载 GLB，而是用 JS 做一个「Blender 修改器栈」。<\/strong> 环境里没有 Blender，而硬表面模型的精髓（倒角、分段、封口、卡箍、凹槽）用程序化扫掠反而能做得更细。我写了 <code>sweepProfile()<\/code>：二维截面绕 Y 轴扫掠，相当于 Blender 的 Spin/Screw。它有三个关键点：\n   - <strong>每条截面边独立成带、独立法线<\/strong>：倒角面不会被平滑掉，会成为一条清晰的高光线。这正是 Blender 里「Bevel + Auto Smooth」那种硬表面观感的来源。\n   - <strong>可指定角度区间并自动封口<\/strong>（<code>ShapeUtils.triangulateShape<\/code>），所以环能切成 12 段 / 10 段、段间留缝。\n   - <strong>按顶点法线自动修正三角形绕序<\/strong>，任何方向的截面都不会出现翻面。<\/p>\n<p><strong>2. 把「两个相交的圆环」改成真正的万向节。<\/strong> 原作的两个环同半径、互相穿插，只能一起转。我让外环（R 1.42）绕竖直轴转（方位 α），内环（R 1.16）用两根阶梯钛销挂在外环 ±X 处绕水平轴翻（俯仰 β），整个万向架再带 0.2 rad 倾角和缓慢进动。两道环一直以不同的节奏交错，运动本身就有机械逻辑。<\/p>\n<p><strong>3. 用「缝里透光」表达能量。<\/strong> 每道环外表面有一条凹槽，槽底是一条连续的 HDR 发光导轨；环体中心还埋了一条发光「脊」，被分段外壳挡住，<strong>只从 22 条切缝里透出来<\/strong>。于是金属是暗的，光是从结构里漏出来的，比把整个环刷成自发光更像实物。<\/p>\n<p><strong>4. 核心是一颗「活」的等离子体，不是一个 emissive 球。<\/strong> 3D simplex 噪声，fbm 做域扭曲生成对流胞，再用 <code>pow(1-|n|, 9)<\/code> 生成亮丝；三段色（深蓝→钴蓝→白热）直接输出 HDR 值。外面两层 BackSide 加法菲涅耳壳做日冕和大气。另加一个测地约束笼（icosphere(1) 的 120 条边做 InstancedMesh 支杆、42 个钛节点、12 颗 LED），让核心有被「约束」的叙事，也让比例和细节密度对得上产品渲染。<\/p>\n<p><strong>5. 材质靠环境光照出来。<\/strong> 我在一个小场景里摆了顶部柔光箱、左侧冷蓝灯条、右侧白灯条、背后地平线蓝光，外加一小块暖色反光板，用 <code>PMREMGenerator.fromScene<\/code> 烘成一张「迷你 HDRI」。所有金属用 <code>MeshPhysicalMaterial<\/code>（metalness 1）；Canvas 画的拉丝贴图做 roughnessMap，UV 的 u 沿圆周，所以基座呈现车削金属的放射状各向异性高光（anisotropy），环上有 clearcoat。钛合金销和卡箍用暖灰金属，外加几颗琥珀色 LED，在一片冷蓝里给出点缀。<\/p>\n<p><strong>6. 后期按「渲染器」而不是「网页特效」来做。<\/strong> HalfFloat + MSAA×4 的 render target，<code>UnrealBloomPass<\/code> 阈值 0.95，只让 HDR 发光体溢光，不让整张图发糊。ACES 输出，最后一道自定义 pass 做边缘轻微色散、暗角和颗粒抖动（顺便压掉暗部渐变的色带）。核心里的点光源投射阴影（立方体阴影贴图），环、笼的影子落在基座上；地面上改用烘焙式的径向接触阴影。<\/p>\n<p><strong>7. 保留原作的版式语言，但每个元素都接上真数据。<\/strong> 参数表里的 α、β 是万向架的真实角度，「场强输出」就是驱动光强的那个 energy 值，下面的小示波器画的是 energy 的历史曲线。<\/p>\n<h2>和「常规做法」相比，我做了哪些不一样的尝试<\/h2>\n<ul>\n<li><strong>拆解视图（第 4 个模式）<\/strong>：万向架回正，外环抬到上方、内环落到下方，两环都转平，笼子放大，核心上浮，相机目标上移，然后浮出 5 个带引线的中文标注（附尺寸规格）。环的标注锚点每帧在 32 个采样点里挑屏幕上最外侧的一个，所以转动时引线始终挂在环的边缘；在手机上会夹紧在视口内。这是产品页里最有「说明书」感的一招。<\/li>\n<li><strong>心跳式脉冲<\/strong>：原作的脉冲是 sin 缩放。我用「咚-哒」双峰包络（1.25 s 周期）驱动能量；每一拍地面扩散一圈冲击波，声音里出一记低频 thump，示波器上能看到双峰。<\/li>\n<li><strong>声音是真的<\/strong>：原作的 <code>SIGNAL / OFF<\/code> 是摆设。这里用 WebAudio 现场合成：两支微失谐的锯齿波过共振低通，加次低频正弦，加高频颤音微光；滤波截止频率和音高随能量、转速实时变化。<\/li>\n<li><strong>开场点火<\/strong>：相机从远处低角度缓入 3.4 秒，核心在前 2 秒内从暗到亮。时间按真实时钟计，慢设备上也一定能播完；用户一拖动就立刻交出控制。<\/li>\n<li><strong>构图<\/strong>：用 <code>camera.setViewOffset<\/code> 平移投影中心，而不是移动模型或目标点。桌面上把物体推向右侧给标题让位，手机上略微下移避开标题；旋转中心依然在模型上。<\/li>\n<li><strong>拿 Blender 的 AgX 做过对比<\/strong>：AgX 是 Blender 4.x 的默认视图变换。在这套单色蓝调里，它会把钴蓝洗成灰雾，最后选了 ACES（<code>?tm=agx<\/code> 可切回去看）。<\/li>\n<li><strong>标题用中文衬线<\/strong>：只从 Noto Serif SC 里取出标题 9 个字所在的 6 个 unicode-range 切片（268 KB），不用把整套几十 MB 的字体搬进来。<\/li>\n<li><strong>自适应分辨率<\/strong>：帧率低于 30 就逐步把 pixelRatio 降到 1。<\/li>\n<\/ul>\n<h2>踩过的坑与修正过程<\/h2>\n<ol>\n<li><strong>一开局就是黑的<\/strong>：点火和相机开场最初跟着被钳制过的 dt 走，无头 swiftshader 每帧要好几秒，结果核心永远停在「点火中」。后来把真实时钟（开场、点火、能量平滑）和模拟时钟（转动）分开。<\/li>\n<li><strong>整张图泛白<\/strong>：第一版用 AgX、曝光 1.55，核心点光强度 28，渲出来几乎是一张白底蓝雾。之后把曝光降到 1.0，点光降到 11，等离子色板整体降档，辉光强度和半径也收了，再改用 ACES。<\/li>\n<li><strong>地平线有一条硬线<\/strong>：地面半径只有 40，雾还没吃透；天穹在地平线上方又加了一条亮带，两者相接的地方出现一条暗缝。最后把地面扩到 160，天穹在地平线处的颜色和雾色完全一致，去掉亮带。<\/li>\n<li><strong>地面阴影很脏<\/strong>：地面接收点光阴影以后，远处出现大片三角形的黑影（卡箍、支杆投出来的）。改成地面不接收阴影，基座下贴一张径向渐变的「烘焙 AO」贴片。<\/li>\n<li><strong>等离子像迪斯科球<\/strong>：噪声频率太高，缩小以后是一颗灰白颗粒球。于是降低域扭曲频率，把亮丝的指数提高到 9。<\/li>\n<li><strong>发射透镜是一块白饼<\/strong>：纯色 Basic 材质加辉光以后成了过曝的平盘。改成菲涅耳透镜 shader：同心阶梯纹缓慢外流，中心亮斑收小。<\/li>\n<li><strong>粒子凑近后变成大光斑<\/strong>：<code>gl_PointSize<\/code> 随 1/z 放大没有上限，加了上限。<\/li>\n<li><strong>一个参数签名写错<\/strong>：环境灯板函数写成 <code>(w, h, rgb, pos)<\/code>，调用时传的却是 <code>([w,h], rgb, pos)<\/code>，第一次运行直接抛「pos is not iterable」。<\/li>\n<li><strong><code>bloom.setSize(w,h)<\/code> 覆盖了 composer 按 DPR 计算的尺寸<\/strong>：高分屏上辉光分辨率会减半，已删除。<\/li>\n<li><strong>手机上的标注被裁掉<\/strong>：左右两侧的标签伸出了 390px 视口，加了夹紧逻辑。<\/li>\n<li><strong>封面上两道环看起来共面<\/strong>：某些 β 角下内环正好转到和外环同一平面，「双环」就不见了。<code>?cover<\/code> 会把万向架冻结在 α=0.35、β=2.55 这个两环明显交叉的姿态。<\/li>\n<\/ol>\n<h2>自评：和原作相比，哪里可能追平或超越，哪里还差<\/h2>\n<p><strong>可能超越的：<\/strong>\n- 模型细节密度：分段机加工环、倒角高光、切缝透光、钛销与卡箍、测地笼、刻度盘微缩字、72 片散热鳍。原作是球、两个圆环、一个圆柱。\n- 光照与材质：有环境反射、各向异性车削金属、HDR 辉光、会投影的核心光源。原作没有环境贴图，也没有辉光，核心泛白。\n- 交互深度：多了拆解视图和标注、心跳脉冲和冲击波、真实合成音效，参数表接的是真实数据，还有键盘快捷键、双击复位和开场点火。\n- 版式：保留了原作的编辑部风格，并补上中文衬线标题和竖屏专门布局。<\/p>\n<p><strong>还差的：<\/strong>\n- <strong>它毕竟不是 Blender 资产<\/strong>。原作最大的叙事是「AI 操作 Blender 建模再导出 GLB」，这一点我在流程上没有复现，只在观感上做了模拟。拿不出 <code>.blend<\/code> 文件，也没有真实的路径追踪 GI、焦散和 AO，这些都是用贴片、辉光和环境图近似出来的。\n- 无头 swiftshader 下只有个位数帧率（点光立方体阴影、MSAA、物理材质都不便宜），我没有在真 GPU 上实测。自适应 DPR 只是兜底，性能余量没有经过验证。\n- 等离子 shader 在极近距离下能看出噪声结构的重复。\n- 这个环境只有文泉驿黑体，截图里的中文正文仍是黑体；标题的衬线是靠自带切片才保证下来的。<\/p>\n<h2>如果重来一次会怎么做<\/h2>\n<ul>\n<li>在 Node 里用同一套 <code>sweepProfile<\/code> 生成真正的 <code>.glb<\/code>（带 KHR_materials_emissive_strength、各向异性扩展），页面只负责加载。这样资产可以回流到 Blender，流程也更贴近原作的故事。<\/li>\n<li>用烘焙的方式做 AO / 光照贴图：离线把核心点光的柔和阴影烘进基座纹理，运行时去掉立方体阴影，性能能省一大截。<\/li>\n<li>从第一版就把「真实时钟 vs 模拟时钟」「曝光预算」定死，免得在泛白和发黑之间来回调。<\/li>\n<li>拆解视图做成可拖动的时间轴（0→1 的滑杆），让用户自己控制拆到几成，而不只是一个开关。<\/li>\n<li>给每个部件加 hover 高亮（描边 pass）和点击聚焦的相机动画。<\/li>\n<\/ul>\n<h2>资料使用与隔离声明<\/h2>\n<ul>\n<li>没有读取 <code>astra-vs-opus/<\/code> 下除本目录以外的任何文件，没有看它的 git 历史，也没有读 <code>website-gallery/<\/code>。<\/li>\n<li>有一次 WebSearch 的结果列表里出现了一条指向「website-showcase-sites 仓库 PR」的链接，搜索工具附带的自动摘要里有一句概括（提到菲涅耳光晕壳、双环、拆解视图之类的词）。<strong>我没有打开那个链接<\/strong>，但那句摘要确实进入了我的上下文。出于透明，在这里说明：拆解视图这个想法，和那句摘要出现的时间是先后挨着的。<\/li>\n<li>原作的公开源码（作者本人仓库）读过，也本地运行过，用于逆向推断；本作品的所有几何、shader、UI 代码都是重新写的，没有使用原作的 GLB 或代码。<\/li>\n<\/ul>\n<h2>模型标识<\/h2>\n<p>claude-opus-5-5<\/p>", "prompt": "# 一次性生成 Prompt：轨道能量核心（Orbital Core）\n\n> 用途：让一个代码模型在一次回复里生成本作品的完整静态站点。\n\n---\n\n请用 **Three.js（r181，ES Module + importmap，本地 `vendor/` 目录，不用 CDN、不用构建工具）** 做一个单页 3D 产品展示网页，主角是一件「双环能量核心」。目标是：看起来像一件在 Blender 里精细建模、用 Cycles/Eevee 渲过的硬表面产品，而不是一个球加两个甜甜圈。界面文字全部用中文。\n\n## 文件结构\n```\nindex.html        入口（importmap: \"three\" → ./vendor/three/three.module.min.js，\"three/addons/\" → ./vendor/three/addons/）\ncss/style.css\njs/model.js       程序化建模：导出 buildOrbitalCore() → { root, parts, uniforms, materials }\njs/main.js        渲染器、环境光照、后期、相机、交互、模式状态机、UI 联动\njs/audio.js       WebAudio 合成的核心嗡鸣\nvendor/           three.module.min.js + three.core.min.js + OrbitControls / EffectComposer / RenderPass / UnrealBloomPass / OutputPass / ShaderPass 及其依赖；字体 woff2\n```\n\n## 模型（全部程序化，不加载外部模型）\n写一个 `sweepProfile(profile, {phi0, phi1, steps, closed, caps})`：把二维截面 `[(r, y)…]` 绕 Y 轴扫掠（等同 Blender 的 Spin/Screw 修改器）。**每条截面边单独生成一条带状面、拥有自己的法线**，这样倒角面会成为清晰的高光线；可选在 phi0/phi1 处用 `ShapeUtils.triangulateShape` 封端；按顶点法线自动修正三角形绕序。UV 的 u 沿圆周方向，便于做「车削金属」拉丝。\n\n1. **等离子核心**：半径 0.5 的球，ShaderMaterial，3D simplex 噪声 + 域扭曲 fbm 生成对流胞，再叠 `pow(1-|noise|, 9)` 的亮丝；深蓝→钴蓝→白热三段色，输出 HDR（>1）供辉光使用；边缘加一点日冕亮边。外面套两层 BackSide 加法混合的菲涅耳光晕球（0.86、1.35）。\n2. **测地约束笼**：`IcosahedronGeometry(0.66, 1)` 去重顶点、提取 120 条边 → InstancedMesh 细圆柱支杆 + 42 个八面体钛合金节点 + 12 个五度顶点上的小 LED。整个笼缓慢自转。\n3. **陀螺架双环（重点）**：外环 R=1.42 竖直、随万向架绕 Y 转（方位 α）；内环 R=1.16 由两根阶梯钛销挂在外环 ±X 处，绕 X 轴翻转（俯仰 β）——是真正能转的万向节，而不是两个相交的圆环。每道环：\n   - 截面是带 0.014 倒角的矩形，外表面开一条凹槽；\n   - 环体切成 12/10 段，段间留 0.03 rad 缝，每段两端封口；\n   - 凹槽里有一条连续的发光导轨，环体中心有一条「脊」发光条，**只从切缝里透出来**，所以每条缝都是一道蓝光；\n   - 在 0°/90°/180°/270° 放加厚的钛合金卡箍，上面各有三颗 LED（两冷一暖琥珀色点缀）。\n   - 万向架整体再倾斜 ~0.2 rad，并带一点缓慢进动。\n4. **悬浮基座**：一条带台阶、倒角、环形凹槽的截面扫掠成整体；凹槽内发光环；中心是菲涅耳纹发射透镜（同心阶梯 shader）；台面上叠一张 Canvas 画的刻度盘（2° 细刻度、10°/30° 长刻度、环形微缩字 `ORBITAL CORE · SPECIMEN 01 …`、4 个三角索引），加法混合，随 α 慢转；侧面 72 片散热鳍（InstancedMesh）；台阶立面 24 条状态灯缝；从透镜到核心有一束带流动条纹的加法光柱。\n5. **地台**：大圆形暗色地面 + 放射渐变的「烘焙 AO」接触阴影贴片 + 一张加法混合的地面特效 shader（基座下的光池、每 1.45 单位一圈的虚线测量环、外圈细刻度、脉冲模式下的扩散冲击波）。\n\n## 材质与光照（「Blender 质感」的关键）\n- 程序化拉丝贴图：Canvas 上画几千条沿 u 方向的随机灰线 → 作为 roughnessMap；环体与基座用 `MeshPhysicalMaterial`，`metalness 1`，环体带 clearcoat，基座开 `anisotropy`，得到车削金属那种放射状高光。\n- 自己搭一个迷你「HDRI 棚」：在一个场景里放暗色渐变天球 + 顶部大柔光箱 + 左侧冷蓝灯条 + 右侧白灯条 + 背后地平线蓝光 + 一小块暖色反光板，用 `PMREMGenerator.fromScene` 烘成 `scene.environment`。\n- 核心内放一盏投射阴影的点光源（强度随能量变化），让环、笼的影子落到基座上；再加一盏冷白主光和一盏蓝色轮廓光。\n- 背景是一个与 FogExp2 同色的天穹 shader，地面在远处无缝溶进去，不能出现地平线硬边。\n- 后期：`EffectComposer`（HalfFloat、MSAA 4x 的 render target）→ `UnrealBloomPass`（强度 ~0.45、半径 0.4、阈值 0.95，只让 HDR 发光体溢光）→ `OutputPass`（ACES）→ 自定义 ShaderPass：边缘轻微色散 + 暗角 + 胶片颗粒抖动（顺便消除暗部色带）。\n\n## 交互与状态机\n- OrbitControls：阻尼、禁平移、限制俯仰不钻到地下；距离按视口宽高比自动计算（竖屏更远），用 `camera.setViewOffset` 在桌面把模型略微推向右侧给标题让位，手机上略微下移。\n- 开场：相机从远处低角度 3.4 秒缓入，核心在 0.35–2 秒间「点火」（按真实时间计，慢设备也能播完）；用户一拖动就立刻交出控制权。双击或按 R 平滑复位。\n- 四个模式（按钮 + 键盘 1–4）：\n  - **轨道**：α、β 慢转，相机自动环绕，核心轻微呼吸；\n  - **脉冲**：转速加快，能量按「咚-哒」双峰心跳包络跳动（1.25 s 周期），每一拍地面扩散一圈冲击波、声音里出一记低频 thump；\n  - **静止**：所有转速阻尼归零，核心待机微光，状态灯变琥珀色；\n  - **拆解**：万向架回正，外环抬到上方、内环落到下方并都转平，笼子放大，核心上浮，相机目标上移；出现 5 个带引线的 HTML 标注（等离子核心 / 测地约束笼 / 外环·方位环 / 内环·俯仰环 / 悬浮基座，附尺寸规格），锚点每帧投影，环类标注自动取屏幕上最外侧的点，标注在手机上夹紧在视口内。\n- 所有速度、能量、拆解进度都用指数阻尼平滑，切换模式没有跳变。\n- 自适应分辨率：帧率低于 30 时逐步把 pixelRatio 降到 1。\n\n## UI（叠在画布上）\n- 最顶部一条 34px 细顶栏：左「← 三方对照」、中「轨道能量核心」+ 小胶囊标签、右「原作 @作者 ↗」。\n- 左上品牌「ORBITAL / OBJECTS」+ 小轨道图标；右上「样本 01 / DUAL-RING CONTAINMENT」。\n- 左侧大标题（衬线体，第二行斜体渐变字）：「两道轨道 / 一颗恒星。」+ 一段短说明。\n- 右侧实时参数表：状态、核心频率（THz）、外环方位 α、内环俯仰 β、场强输出 %，底下是一条画出能量历史的小示波器。\n- 左下四个模式按钮（带小图形符号和键位提示），页脚操作提示 + 声音开关（WebAudio：两支微失谐锯齿波过共振低通 + 次低频正弦 + 高频微光颤音，滤波截止随能量和转速变化）。\n- 背景加 76px 细网格（遮罩渐隐）和 SVG 噪点颗粒。\n- ≤740px：标题移到上方、隐藏说明段，参数表变成三列横条，四个按钮平分一行；390px 宽不能横向溢出。\n- 字体：Instrument Serif（标题）+ IBM Plex Mono（数据），woff2 放 vendor，中文回退到系统宋体/黑体。\n\n## 质量要求\n- 控制台零报错；WebGL 创建失败时显示中文提示。\n- 所有发光色用 HDR 值，靠辉光而不是把漫反射调亮来「发光」。\n- 暗部要深（钴蓝-近黑），不要整体泛白发灰。", "summary": "程序化扫掠的硬表面 + PBR + 辉光后期；两道环做成可独立转动的万向节，四种模式（轨道/脉冲/静止/拆解）+ WebAudio 声音", "caveat": "这一件 5.5 的起跑线比第一版高：它找到了原作者公开的代码仓库，读过原作的 HTML/JS、解析过原作的 GLB 模型（发现原作只有 1 球 2 环 1 底座共 4 个节点、3 种材质），并在本地跑过原作——所以版式明显参照了原作，属于「看过原作的重制 + 升级」；它没有复用原作的代码和模型。另有一处隔离泄漏：某次搜索结果的自动摘要里出现过第一版 PR 的描述（提到拆解视图），它没打开链接，已在心得里自己交代。", "origShot": "原作截图：用作者公开仓库的代码在本地运行后截取"}, "brandenburg-piano": {}};
+
+const V1_URL = s => `../works/${s}/index.html`;
+const V2_URL = s => `../works-v2/${s}/index.html`;
+
+const tabs = document.getElementById('tabs');
+const main = document.getElementById('main');
+
+function esc(s) { return String(s).replace(/[&<>"]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[m])); }
+
+function originBlank(w) {
+  return `<div class="blank">
+    <q>${esc(w.quote)}</q>
+    <small>${w.demo ? '原作 demo 可在新窗口打开；这里点「加载原作」尝试直接嵌入。' : '原作没有公开的在线 demo，只有原帖里的视频。'}</small>
+  </div>`;
+}
+
+function render(slug) {
+  const w = WORKS.find(x => x.slug === slug);
+  const v2 = V2[slug] || {};
+  [...tabs.children].forEach(b => b.classList.toggle('on', b.dataset.slug === slug));
+  main.innerHTML = `
+  <section class="work">
+    <div class="work-head">
+      <h2>${w.zh}</h2><span class="en">${w.en} · 原作 ${w.author}</span>
+      <span class="spacer"></span>
+      <button class="bigbtn" id="theaterBtn">三窗同开 ⧉</button>
+    </div>
+
+    <div class="tri">
+      <article class="pane a">
+        <div class="ph"><span class="who">Astra 原作</span><span class="sub">${w.author}</span>
+          <a class="open" href="${w.demo || w.post}" target="_blank" rel="noopener">新窗口打开 ↗</a></div>
+        <div class="stage" data-src="${w.demo}">${v2.origShot
+            ? `<img src="originals/${w.slug}.jpg" alt="原作截图" loading="lazy">`
+            : originBlank(w)}
+          ${w.demo ? '<button class="load">加载原作</button>' : ''}</div>
+        <div class="pd">${v2.origShot ? esc(v2.origShot) + ' · ' : ''}<a href="${w.post}" target="_blank" rel="noopener">原帖 ↗</a></div>
+      </article>
+
+      <article class="pane b">
+        <div class="ph"><span class="who">Opus 5</span><span class="sub">第一版临摹</span>
+          <a class="open" href="${V1_URL(w.slug)}" target="_blank" rel="noopener">新窗口打开 ↗</a></div>
+        <div class="stage" data-src="${V1_URL(w.slug)}">
+          <img src="../assets/covers/${w.slug}.jpg" alt="Opus 5 版截图" loading="lazy">
+          <button class="load">实时运行</button></div>
+        <div class="pd">同一段对话里按原帖描述写成 · three.js r128 · 程序化几何</div>
+      </article>
+
+      <article class="pane c">
+        <div class="ph"><span class="who">Opus 5.5</span><span class="sub">隔离记忆 · 独立逆向</span>
+          <a class="open" href="${V2_URL(w.slug)}" target="_blank" rel="noopener">新窗口打开 ↗</a></div>
+        <div class="stage" data-src="${V2_URL(w.slug)}">
+          <img src="../works-v2/${w.slug}/cover.jpg" alt="Opus 5.5 版截图" loading="lazy" onerror="this.style.opacity=0">
+          <button class="load">实时运行</button></div>
+        <div class="pd">${v2.summary ? esc(v2.summary) : '全新上下文子代理，只拿到原作公开资料，技术栈自选'}</div>
+      </article>
+    </div>
+
+    ${v2.caveat ? `<div class="caveat"><b>起跑线说明</b>${v2.caveat}</div>` : ''}
+
+    <div class="notes">
+      <div class="card">
+        <h3><span class="dot"></span>Opus 5.5 的思路与心得</h3>
+        ${v2.notes ? `<div class="md">${v2.notes}</div>` : '<div class="pending">心得还没生成。</div>'}
+      </div>
+      <div class="card">
+        <h3><span class="dot"></span>它会怎么写这条 prompt<button data-copy="${w.slug}">复制</button></h3>
+        ${v2.prompt ? `<div class="md prompt">${esc(v2.prompt)}</div>` : '<div class="pending">prompt 还没生成。</div>'}
+      </div>
+    </div>
+  </section>`;
+
+  main.querySelectorAll('.stage .load').forEach(btn => btn.addEventListener('click', () => {
+    const stage = btn.closest('.stage');
+    const f = document.createElement('iframe');
+    f.src = stage.dataset.src;
+    f.allow = 'autoplay; fullscreen';
+    f.title = w.zh;
+    stage.innerHTML = '';
+    stage.appendChild(f);
+  }));
+  main.querySelector('#theaterBtn').addEventListener('click', () => openTheater(w));
+  const cp = main.querySelector('[data-copy]');
+  if (cp) cp.addEventListener('click', () => {
+    if (!v2.prompt) return;
+    navigator.clipboard?.writeText(v2.prompt).then(() => { cp.textContent = '已复制'; setTimeout(() => cp.textContent = '复制', 1500); });
+  });
+  try { history.replaceState(null, '', '#' + slug); } catch (e) {}
+}
+
+// 三窗同开
+const theater = document.getElementById('theater');
+const thGrid = document.getElementById('thGrid');
+function openTheater(w) {
+  document.getElementById('thTitle').textContent = w.zh;
+  thGrid.innerHTML = `
+    <div class="col a"><div class="lab">Astra 原作<a href="${w.demo || w.post}" target="_blank" rel="noopener">新窗口 ↗</a></div>
+      ${w.demo ? `<iframe src="${w.demo}" allow="autoplay; fullscreen" title="原作"></iframe>` : originBlank(w)}</div>
+    <div class="col b"><div class="lab">Opus 5 · 第一版<a href="${V1_URL(w.slug)}" target="_blank" rel="noopener">新窗口 ↗</a></div>
+      <iframe src="${V1_URL(w.slug)}" allow="autoplay; fullscreen" title="Opus 5"></iframe></div>
+    <div class="col c"><div class="lab">Opus 5.5 · 独立逆向<a href="${V2_URL(w.slug)}" target="_blank" rel="noopener">新窗口 ↗</a></div>
+      <iframe src="${V2_URL(w.slug)}" allow="autoplay; fullscreen" title="Opus 5.5"></iframe></div>`;
+  theater.hidden = false;
+  document.body.style.overflow = 'hidden';
+}
+function closeTheater() { theater.hidden = true; thGrid.innerHTML = ''; document.body.style.overflow = ''; }
+document.getElementById('thClose').addEventListener('click', closeTheater);
+addEventListener('keydown', e => { if (e.key === 'Escape' && !theater.hidden) closeTheater(); });
+
+WORKS.forEach(w => {
+  const b = document.createElement('button');
+  b.textContent = w.zh;
+  b.dataset.slug = w.slug;
+  b.onclick = () => render(w.slug);
+  tabs.appendChild(b);
+});
+const start = (location.hash || '').slice(1);
+render(WORKS.some(w => w.slug === start) ? start : WORKS[0].slug);
+</script>
+</body>
+</html>
