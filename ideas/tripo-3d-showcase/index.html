@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>原文 → 成品 · 七条 Tripo 提示词的 Opus 5.5 复刻</title>
+<meta name="description" content="七条 Tripo 3D 提示词，照原文用 Claude Opus 5.5 逐条生成；每章三版对比（原版 / 一次成型 / 精细加工），附新手教程和图生 3D 模型资产。">
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="css/style.css">
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"
+} }
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.13.0/gsap.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.13.0/ScrollTrigger.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/lenis@1.3.11/dist/lenis.min.js" defer></script>
+<script src="js/prompts.js" defer></script>
+<script src="js/chapters.js" defer></script>
+<script src="js/tutorials.js" defer></script>
+<script src="js/assets.js" defer></script>
+<script type="module" src="js/main.js"></script>
+</head>
+<!-- hero 的模型槽位：data-hero-glb 指向带贴图的 GLB（留空时用程序化雕塑），data-hero-yaw 是让它面向镜头的旋转角（度）。
+     v3 放的是第 6 条的奥德修斯（Tripo H3.1 图生 3D），和 results/06-cyclops-island/v3/models/odysseus.glb 同一个文件。 -->
+<body data-base="./" data-md-base="https://github.com/sunxiaoxi2039-star/website-showcase-sites/blob/main/ideas/tripo-3d-showcase/tutorials/" data-hero-glb="media/hero.glb" data-hero-yaw="-115">
+
+<div class="progress" aria-hidden="true"><i id="progress-bar"></i></div>
+
+<header class="topbar">
+  <a class="brand" href="#hero"><span class="brand-mark">原文</span><span class="brand-arrow">→</span><span class="brand-mark">成品</span></a>
+  <nav class="topnav" aria-label="快捷入口"><a href="#learn">新手教程</a><a href="#assets">模型资产</a><a href="#outro">对照表</a></nav>
+</header>
+
+<nav class="rail" id="rail" aria-label="章节"></nav>
+
+<section class="hero" id="hero">
+  <canvas id="hero-canvas" aria-label="开场三维场景：七幅成品挂在展厅里，中央是图生 3D 做的奥德修斯模型"></canvas>
+  <div class="hero-fallback" id="hero-fallback" hidden></div>
+  <div class="hero-shade" aria-hidden="true"></div>
+  <div class="hero-copy" id="hero-copy">
+    <p class="kicker" data-depth="0.4">Tripo 3D 提示词库　×　Claude Opus 5.5</p>
+    <h1 class="hero-title">
+      <span class="line" data-depth="1">七条提示词，</span>
+      <span class="line accent" data-depth="1.6">照原文逐条生成。</span>
+    </h1>
+    <p class="lede" data-depth="0.7">不改一个字，一次成型的原样留下，修过的另存一份。往下滚，镜头会走过展厅里的七幅成品；再往下，每一章都能对照原版、一次成型和精细加工三个版本，看提示词原文，把成品实时跑起来，还有写给新手的逐步教程。</p>
+    <p class="scroll-cue"><span>向下滚动</span><i></i></p>
+  </div>
+  <div class="hero-caption" id="hero-caption" aria-live="polite"><span class="hc-nn"></span><span class="hc-title"></span><span class="hc-en"></span></div>
+  <p class="hero-end" id="hero-end">七个世界，逐章展开 ↓</p>
+</section>
+
+<section class="overview" id="overview">
+  <div class="ov-back" aria-hidden="true">PROMPT → WORLD</div>
+  <div class="ov-grid">
+    <div class="ov-item" data-speed="0.9"><b>7</b><span>条提示词</span><em>4 条作者原话 · 3 条页面整理的 brief（02b 是 v3 新增的一章）</em></div>
+    <div class="ov-item" data-speed="1.15"><b>5<small>/7</small></b><span>一次成型没有报错</span><em>01 打开就报错；03 有两处运行错误；02b 没报错，但整屏发白</em></div>
+    <div class="ov-item" data-speed="0.8"><b>7<small>/7</small></b><span>都按提示词自己的验收要求修过</span><em>每条改 7 到 20 处，改了什么都写在 NOTES 里</em></div>
+    <div class="ov-item" data-speed="1.25"><b>¥33.1</b><span>v3 花在生成模型上的钱</span><em>6 个图生 3D 模型 + 9 张参考图，逐笔记账，上限 ¥150</em></div>
+  </div>
+  <p class="ov-rule">规则：提示词照原文喂给模型；一次成型的结果原样保存为 <code>oneshot/</code>；需要修才能跑或达到提示词要求的，另存为 <code>fixed/</code>；v3 轮又给第 5、6 条做了 <code>v3/</code>（专用参考图、图生 3D 真模型）。生成第 N 条时不参考前面各条的代码，也不看原作者的成品。</p>
+</section>
+
+<section class="learn" id="learn">
+  <div class="learn-head">
+    <p class="eyebrow">写给刚学网页开发的同学</p>
+    <h2>新手教程：这七个页面是怎么一步步做出来的</h2>
+    <p class="learn-lede">每章一份，从「去哪复制提示词」一路写到「怎么确认做好了」：怎么打开终端、怎么在 Claude Code 里运行、怎么用本地服务打开成品、按 F12 看报错、报错是什么意思、真实改了哪几行，做了 v3 的还有参考图、图生 3D、Blender 和压缩。截图全是这个项目自己的。</p>
+  </div>
+  <ol class="learn-list" id="learn-list"></ol>
+</section>
+
+<main id="chapters"></main>
+
+<section class="assets" id="assets">
+  <div class="assets-head">
+    <p class="eyebrow">v3 · 模型资产</p>
+    <h2>第 6 条换上的 6 个真模型</h2>
+    <p class="assets-lede">先用生图模型画一张单主体、干净背景的参考图，再「图生 3D」得到带 PBR 贴图的 GLB，最后减面、压贴图，放进游戏。默认只放转台录像；点「实时查看」才加载可拖动的查看器，和上面各章共用「全页同一时间只跑 1 个」的规则。金额按 <code>costs/ledger.md</code>，Seed3D 查不到公开单价，按每次 ¥6 预记。</p>
+  </div>
+  <div class="asset-grid" id="asset-grid"></div>
+  <p class="assets-foot">礁石（生成卡里标为可选）没有生成，游戏里仍是程序化多面体。模型都是静态的，没有骨骼动作。</p>
+</section>
+
+<section class="outro" id="outro">
+  <h2 class="outro-title"><span>七条对照</span><small>一次成型、修改、v3 和耗时</small></h2>
+  <div class="table-wrap"><table class="summary" id="summary"></table></div>
+  <div class="outro-cols">
+    <div class="pending">
+      <h3>还没做到的</h3>
+      <ul>
+        <li><b>模型没有动作</b>：6 个图生 3D 模型都是静态的，独眼巨人追人、砸地靠整体移动和摆动；要骨骼动画得另做绑定。</li>
+        <li><b>礁石</b>：生成卡里是可选项，这轮没生成，仍是程序化石块。</li>
+        <li><b>Seed3D 的真实单价</b>：火山方舟没查到公开价格，账本按每次 ¥6 预记，等账单出来再核。</li>
+        <li><b>真机体验</b>：所有验收都在无头 Chrome 里做（没有显卡，约 30 帧）；真机帧数、触屏手势、声音都没有实测。</li>
+      </ul>
+    </div>
+    <div class="credits">
+      <h3>出处与说明</h3>
+      <p>提示词归各自作者所有，每章都附原页面链接。成品全部是 Claude Opus 5.5 照原文重新生成的；「原版」一栏只有文字描述和原页面链接，没有下载、截取或嵌入原作者的成品、视频、模型和贴图。</p>
+      <p>「原话 prompt」是作者公开的原文；「整理 brief」是 Tripo 页面根据公开描述整理出来的任务，页面自己注明不是原话。v3 的模型和参考图是本项目用生成模型做的，生成通道和花费逐笔记在账本里。</p>
+      <p class="muted">2026-09-24 更新（v3）</p>
+    </div>
+  </div>
+</section>
+
+<div class="live-hud" id="live-hud" title="同一时间最多只运行 1 个实时场景"><i></i>实时场景 <b id="live-count">0</b>/1</div>
+
+</body>
+</html>

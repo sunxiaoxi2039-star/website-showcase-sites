@@ -1,0 +1,560 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SIGNAL / NOISE — Small creative motion studio</title>
+<link rel="icon" href="data:,">
+<style>
+  :root { --ink: #f3f5ff; --dim: rgba(222, 230, 255, .6); --cyan: #1ee8ff; --pink: #ff3d9a; --red: #ff2a4a; --osd: #3dff5a; --line: rgba(160, 200, 255, .16); }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { background: #04060d; scroll-behavior: auto; }
+  body { color: var(--ink); font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; overflow-x: hidden; -webkit-font-smoothing: antialiased; }
+  canvas#gl { position: fixed; inset: 0; width: 100vw; height: 100vh; display: block; z-index: 0; }
+  .mono { font-family: "SF Mono", Menlo, Consolas, monospace; letter-spacing: .06em; }
+
+  /* the rounded "screen" frame of the reference */
+  .bezel { position: fixed; inset: 14px; border-radius: 30px; border: 1px solid rgba(150, 180, 255, .1); box-shadow: 0 0 0 40px #04060d, inset 0 0 90px rgba(0, 0, 0, .75); pointer-events: none; z-index: 20; }
+
+  header { position: fixed; top: 0; left: 0; right: 0; z-index: 12; display: flex; align-items: center; gap: 44px; padding: 52px 64px 0; pointer-events: none; }
+  header > * { pointer-events: auto; }
+  .logo { display: block; width: 30px; height: 30px; }
+  .logo svg { width: 100%; height: 100%; }
+  .dash { width: 42px; height: 1px; background: var(--ink); opacity: .8; }
+  nav { display: flex; gap: 38px; }
+  nav a { color: var(--dim); font-size: 12px; text-decoration: none; letter-spacing: .2em; text-transform: uppercase; transition: color .3s, text-shadow .3s; }
+  nav a:hover, nav a.on { color: var(--ink); text-shadow: 2px 0 rgba(255, 42, 74, .7), -2px 0 rgba(30, 232, 255, .7); }
+
+  .osd-play { position: fixed; z-index: 12; top: 44px; right: 58px; padding: 7px 14px 6px; border: 2px solid #5b606b; border-radius: 4px; background: linear-gradient(#0b0d10, #030405); box-shadow: inset 0 0 0 2px #000, 0 0 0 1px #20242c; font: 700 22px/1 "SF Mono", Menlo, Consolas, monospace; color: var(--osd); text-shadow: 0 0 8px rgba(61, 255, 90, .6); letter-spacing: .04em; pointer-events: none; }
+  .osd-play .tri { color: #ff3040; text-shadow: 0 0 8px rgba(255, 48, 64, .7); margin: 0 6px; }
+  .osd-tc { position: fixed; z-index: 12; right: 58px; bottom: 46px; font: 600 34px/1 "SF Mono", Menlo, Consolas, monospace; color: #fff; text-shadow: 2px 0 rgba(255, 42, 74, .45), -2px 0 rgba(30, 232, 255, .45); pointer-events: none; font-variant-numeric: tabular-nums; }
+  .scroll-ind { position: fixed; z-index: 12; left: 64px; bottom: 44px; display: flex; align-items: center; gap: 10px; font-size: 10px; color: var(--dim); letter-spacing: .3em; pointer-events: none; }
+  .scroll-ind i { display: block; width: 9px; height: 9px; background: var(--red); box-shadow: 3px 0 0 var(--ink); }
+  .scroll-ind svg { width: 28px; height: 12px; animation: nudge 1.8s ease-in-out infinite; }
+  @keyframes nudge { 50% { transform: translateX(6px); } }
+
+  main { position: relative; z-index: 5; }
+  section { min-height: 100vh; padding: 18vh 64px 14vh; display: flex; flex-direction: column; justify-content: center; }
+  .kicker { font-size: 11px; color: var(--cyan); text-transform: uppercase; letter-spacing: .34em; margin-bottom: 26px; }
+  h1 { font-size: clamp(64px, 9.2vw, 150px); line-height: .9; font-weight: 800; letter-spacing: -.02em; text-transform: uppercase; }
+  .rgb { color: #fff; text-shadow: -4px 0 var(--red), 4px 0 var(--cyan); }
+  h1 .slash { display: block; font-weight: 700; }
+  h2 { font-size: clamp(38px, 5.2vw, 80px); font-weight: 800; letter-spacing: -.02em; line-height: .95; margin-bottom: 44px; text-transform: uppercase; }
+  p.sub { font-size: clamp(17px, 1.6vw, 24px); margin-top: 40px; color: #e9edff; }
+  p.lead { max-width: 32em; font-size: clamp(16px, 1.3vw, 19px); line-height: 1.65; color: var(--dim); }
+  .pill { display: inline-flex; align-items: center; gap: 12px; margin-top: 30px; padding: 12px 26px; border: 2px solid var(--ink); border-radius: 999px; color: var(--ink); background: none; font: 600 12px/1 "Helvetica Neue", Arial, sans-serif; letter-spacing: .24em; text-transform: uppercase; cursor: pointer; width: max-content; transition: background .3s, color .3s, box-shadow .3s; }
+  .pill:hover, .pill:focus-visible { background: var(--ink); color: #04060d; box-shadow: -3px 0 0 var(--red), 3px 0 0 var(--cyan); outline: none; }
+
+  /* reveal transitions: blur + mask + rise */
+  .rv { opacity: 0; transform: translateY(40px); filter: blur(10px); clip-path: inset(0 0 100% 0); transition: opacity .9s cubic-bezier(.2, .7, .1, 1), transform 1.1s cubic-bezier(.2, .7, .1, 1), filter 1s, clip-path 1.1s cubic-bezier(.2, .7, .1, 1); }
+  .in .rv { opacity: 1; transform: none; filter: none; clip-path: inset(-20% -10% -20% -10%); }
+  .in .d1 { transition-delay: .1s; } .in .d2 { transition-delay: .2s; } .in .d3 { transition-delay: .3s; } .in .d4 { transition-delay: .4s; }
+
+  #hero { max-width: 760px; }
+  .wave { position: fixed; left: 14px; bottom: 14px; width: calc(100% - 28px); height: 96px; z-index: 3; pointer-events: none; border-radius: 0 0 30px 30px; }
+
+  #work { align-items: flex-start; }
+  #work .wrap { width: min(620px, 100%); }
+  .card { display: grid; grid-template-columns: 48px 1fr auto; gap: 18px; align-items: baseline; padding: 24px 8px; border-top: 1px solid var(--line); cursor: pointer; transition: padding .45s cubic-bezier(.2, .7, .1, 1), background .45s; }
+  .card:last-child { border-bottom: 1px solid var(--line); }
+  .card .n { color: var(--cyan); font-size: 12px; }
+  .card h3 { font-size: clamp(22px, 2.3vw, 34px); font-weight: 700; letter-spacing: -.01em; text-transform: uppercase; }
+  .card small { display: block; margin-top: 8px; color: var(--dim); font-size: 13px; letter-spacing: .04em; }
+  .card .yr { color: var(--dim); font-size: 12px; }
+  .card:hover, .card:focus-visible { padding-left: 24px; background: linear-gradient(90deg, rgba(30, 232, 255, .1), transparent 75%); outline: none; }
+  .card:hover h3, .card:focus-visible h3 { text-shadow: -3px 0 var(--red), 3px 0 var(--cyan); }
+
+  #studio { align-items: flex-end; text-align: left; }
+  #studio .wrap { width: min(640px, 100%); }
+  #studio .cols { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 30px; margin-top: 48px; }
+  .stat b { display: block; font-size: clamp(38px, 4vw, 60px); font-weight: 800; letter-spacing: -.02em; }
+  .stat span { color: var(--dim); font-size: 12px; line-height: 1.5; letter-spacing: .06em; text-transform: uppercase; }
+
+  #contact { align-items: center; text-align: center; }
+  #contact a.mail { font-size: clamp(26px, 4.4vw, 64px); font-weight: 800; color: var(--ink); text-decoration: none; letter-spacing: -.01em; }
+  #contact a.mail:hover { text-shadow: -4px 0 var(--red), 4px 0 var(--cyan); }
+  #contact .pill { margin: 44px auto 0; }
+  footer { position: relative; z-index: 5; text-align: center; padding: 0 0 130px; color: var(--dim); font-size: 11px; letter-spacing: .2em; }
+
+  /* CRT power-on */
+  #boot { position: fixed; inset: 0; z-index: 30; background: #000; pointer-events: none; display: grid; place-items: center; animation: bootfade .5s .95s forwards; }
+  #boot i { width: 100%; height: 2px; background: #fff; box-shadow: 0 0 30px #9ff; animation: bootline 1s cubic-bezier(.7, 0, .2, 1) forwards; }
+  @keyframes bootline { 0% { transform: scaleX(0); } 45% { transform: scaleX(1); height: 2px; } 100% { transform: scaleX(1); height: 100vh; opacity: 0; } }
+  @keyframes bootfade { to { opacity: 0; visibility: hidden; } }
+
+  @media (max-width: 760px) {
+    .bezel { inset: 6px; border-radius: 18px; }
+    header { padding: 26px 26px 0; gap: 18px; }
+    .dash { display: none; }
+    nav { gap: 16px; }
+    nav a { font-size: 10px; letter-spacing: .12em; }
+    .osd-play { top: 70px; right: 22px; font-size: 14px; padding: 5px 9px 4px; }
+    .osd-tc { right: 24px; bottom: 26px; font-size: 20px; }
+    .scroll-ind { left: 26px; bottom: 28px; }
+    section { padding: 14vh 26px 12vh; }
+    #hero { justify-content: flex-end; padding-bottom: 16vh; }
+    h1 { font-size: clamp(54px, 17vw, 84px); }
+    p.sub { margin-top: 24px; }
+    #studio .cols { grid-template-columns: 1fr; gap: 18px; }
+    .wave { left: 6px; bottom: 6px; width: calc(100% - 12px); height: 64px; border-radius: 0 0 18px 18px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .rv { transition: opacity .4s; transform: none; filter: none; clip-path: none; }
+    #boot { display: none; }
+    .scroll-ind svg { animation: none; }
+  }
+</style>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"
+} }
+</script>
+</head>
+<body>
+<div id="boot"><i></i></div>
+<canvas id="gl" aria-hidden="true"></canvas>
+<canvas class="wave" id="wave" aria-hidden="true"></canvas>
+<div class="bezel" aria-hidden="true"></div>
+
+<header>
+  <a class="logo" href="#hero" aria-label="SIGNAL / NOISE home">
+    <svg viewBox="0 0 32 32" fill="none" stroke="#fff" stroke-width="2.2"><circle cx="16" cy="16" r="13"/><path d="M16 3v13M16 16l-9.5 9M16 16l9.5 9M8 9.5h16"/></svg>
+  </a>
+  <span class="dash"></span>
+  <nav>
+    <a href="#work" data-s="1">Work</a>
+    <a href="#studio" data-s="2">Studio</a>
+    <a href="#contact" data-s="3">Contact</a>
+  </nav>
+</header>
+<div class="osd-play mono" id="osd">PLAY<span class="tri">▶</span>SP</div>
+<div class="osd-tc" id="tc">00:12:47</div>
+<div class="scroll-ind" aria-hidden="true"><i></i><svg viewBox="0 0 28 12" fill="none" stroke="#fff" stroke-width="1.6"><path d="M0 6h26M21 1l5 5-5 5"/></svg></div>
+
+<main>
+  <section id="hero" data-s="0">
+    <h1 class="rgb rv">Signal<span class="slash">/</span>Noise</h1>
+    <p class="sub rv d1">Small creative motion studio.</p>
+    <button class="pill rv d2" id="reel" type="button">Play reel</button>
+  </section>
+
+  <section id="work" data-s="1">
+    <div class="wrap">
+      <p class="kicker mono rv">Ch 02 — Selected tapes</p>
+      <h2 class="rgb rv d1">Work</h2>
+      <div class="list">
+        <div class="card rv d1" tabindex="0" data-pal="0"><span class="n mono">01</span><div><h3>Night Transit</h3><small>Title sequence · particle simulation</small></div><span class="yr mono">2026</span></div>
+        <div class="card rv d2" tabindex="0" data-pal="1"><span class="n mono">02</span><div><h3>Low Tide FM</h3><small>Radio identity · audio-reactive loops</small></div><span class="yr mono">2025</span></div>
+        <div class="card rv d3" tabindex="0" data-pal="2"><span class="n mono">03</span><div><h3>Ghost Channel</h3><small>Music video · analog feedback</small></div><span class="yr mono">2025</span></div>
+        <div class="card rv d4" tabindex="0" data-pal="3"><span class="n mono">04</span><div><h3>Solar Archive</h3><small>Museum installation · WebGL</small></div><span class="yr mono">2024</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="studio" data-s="2">
+    <div class="wrap">
+      <p class="kicker mono rv">Ch 03 — The studio</p>
+      <h2 class="rgb rv d1">Three people,<br>one tape deck</h2>
+      <p class="lead rv d2">We make motion for music, broadcast and the web — real-time particles pushed through old broadcast hardware until the signal starts to break into something new.</p>
+      <div class="cols">
+        <div class="stat rv d2"><b data-count="1.2" data-dec="1" data-suf="M">0</b><span>Frames rendered</span></div>
+        <div class="stat rv d3"><b data-count="48">0</b><span>Clients since 2017</span></div>
+        <div class="stat rv d4"><b data-count="9">0</b><span>VCRs still running</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="contact" data-s="3">
+    <p class="kicker mono rv">Ch 04 — End of tape</p>
+    <h2 class="rgb rv d1">Say hello</h2>
+    <a class="mail rv d2" href="mailto:hello@signal-noise.example">hello@signal-noise.example</a>
+    <button class="pill rv d3" id="rewind" type="button">◀◀ Rewind</button>
+  </section>
+</main>
+<footer class="mono">SIGNAL / NOISE · a fictional studio · built with three.js</footer>
+
+<script type="module">
+import * as THREE from 'three';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const small = () => innerWidth < 760;
+const canvas = document.getElementById('gl');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: 'high-performance' });
+renderer.setPixelRatio(Math.min(devicePixelRatio, small() ? 1.5 : 1.75));
+renderer.setSize(innerWidth, innerHeight);
+renderer.setClearColor(0x05070f, 1);
+renderer.toneMapping = THREE.NeutralToneMapping;
+renderer.toneMappingExposure = 1.0;
+
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(38, innerWidth / innerHeight, 0.1, 100);
+camera.position.set(0, 0, 8);
+
+// ---------- seeded random ----------
+let seed = 7;
+const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+const gauss = () => (rnd() + rnd() + rnd() - 1.5) / 1.5;
+
+// ---------- main particle body: 4 shapes blended by scroll ----------
+const N = small() ? 26000 : 60000;
+const R = 1.75;
+const S0 = new Float32Array(N * 3), S1 = new Float32Array(N * 3), S2 = new Float32Array(N * 3), S3 = new Float32Array(N * 3);
+const RND = new Float32Array(N), SIZE = new Float32Array(N);
+for (let i = 0; i < N; i++) {
+  // 0 · sphere: dense shell with a thin, sparser interior
+  const u = rnd() * 2 - 1, th = rnd() * Math.PI * 2, s = Math.sqrt(1 - u * u);
+  const r = R * (rnd() < 0.86 ? 1 - Math.pow(rnd(), 3) * 0.1 : 0.35 + rnd() * 0.6);
+  S0.set([s * Math.cos(th) * r, u * r, s * Math.sin(th) * r], i * 3);
+  // 1 · torus knot (2,3)
+  const t = rnd() * Math.PI * 2, p = 2, q = 3;
+  const kr = 1.05 + 0.42 * Math.cos(q * t);
+  const cx = kr * Math.cos(p * t), cy = 0.42 * Math.sin(q * t) * 1.6, cz = kr * Math.sin(p * t);
+  const a2 = rnd() * Math.PI * 2, tube = 0.3 * Math.sqrt(rnd());
+  S1.set([cx + Math.cos(a2) * tube, cy + Math.sin(a2) * tube, cz + Math.cos(a2 + 1.3) * tube], i * 3);
+  // 2 · signal field: rippled plane, tilted toward camera
+  const gx = (rnd() * 2 - 1) * 2.7, gz = (rnd() * 2 - 1) * 2.7;
+  const gy = 0.28 * Math.sin(gx * 2.1) * Math.cos(gz * 1.7) + 0.12 * Math.sin(Math.hypot(gx, gz) * 4.0);
+  S2.set([gx, gy, gz], i * 3);
+  // 3 · twin helix
+  const h = rnd() * 2 - 1, strand = rnd() < 0.5 ? 0 : Math.PI, ang = h * Math.PI * 3 + strand;
+  const hr = 0.85 + gauss() * 0.06;
+  S3.set([Math.cos(ang) * hr + gauss() * 0.05, h * 2.1, Math.sin(ang) * hr + gauss() * 0.05], i * 3);
+  RND[i] = rnd();
+  SIZE[i] = 0.55 + Math.pow(rnd(), 3) * 2.2;
+}
+const g = new THREE.BufferGeometry();
+g.setAttribute('position', new THREE.BufferAttribute(S0, 3));
+g.setAttribute('aS1', new THREE.BufferAttribute(S1, 3));
+g.setAttribute('aS2', new THREE.BufferAttribute(S2, 3));
+g.setAttribute('aS3', new THREE.BufferAttribute(S3, 3));
+g.setAttribute('aRnd', new THREE.BufferAttribute(RND, 1));
+g.setAttribute('aSize', new THREE.BufferAttribute(SIZE, 1));
+
+// palettes per project (hover) — a / b / c gradient stops
+const PALS = [
+  [0x19e6ff, 0xff3d9a, 0xff9a4a],
+  [0x7dff9a, 0x19c2ff, 0x6a5bff],
+  [0xff4a4a, 0xff3de0, 0x6ad8ff],
+  [0xffd36a, 0xff6a3d, 0xb04aff],
+];
+const col = (h) => new THREE.Color(h);
+const uniforms = {
+  uTime: { value: 0 }, uW: { value: new THREE.Vector4(1, 0, 0, 0) }, uMouse: { value: new THREE.Vector3(99, 99, 0) },
+  uPix: { value: renderer.getPixelRatio() * (small() ? 22 : 27) }, uBurst: { value: 1 }, uGlitch: { value: 0 },
+  uC1: { value: col(PALS[0][0]) }, uC2: { value: col(PALS[0][1]) }, uC3: { value: col(PALS[0][2]) }, uFade: { value: 1 },
+};
+const bodyMat = new THREE.ShaderMaterial({
+  uniforms, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+  vertexShader: /* glsl */`
+    attribute vec3 aS1; attribute vec3 aS2; attribute vec3 aS3; attribute float aRnd; attribute float aSize;
+    uniform float uTime, uPix, uBurst, uGlitch; uniform vec4 uW; uniform vec3 uMouse; uniform vec3 uC1, uC2, uC3;
+    varying vec3 vCol; varying float vA;
+    void main(){
+      vec3 p = position * uW.x + aS1 * uW.y + aS2 * uW.z + aS3 * uW.w;
+      float t = uTime * .35 + aRnd * 6.2831;
+      p += .035 * vec3(sin(t + p.y * 3.1), cos(t * 1.3 + p.x * 2.7), sin(t * .8 + p.z * 3.3));
+      // opening: particles gather from a wide scatter
+      vec3 scatter = normalize(position + vec3(.001)) * (4.0 + aRnd * 7.0) + vec3(0., 0., aRnd * 3.);
+      p = mix(p, scatter, uBurst * uBurst * (3. - 2. * uBurst));
+      // glitch: horizontal slice displacement
+      float slice = floor((p.y + 3.) * 9.);
+      p.x += uGlitch * (fract(sin(slice * 91.7 + floor(uTime * 24.)) * 4375.5) - .5) * .9;
+      vec4 wp = modelMatrix * vec4(p, 1.);
+      vec3 d = wp.xyz - uMouse; float dl = length(d);
+      float f = smoothstep(1.15, 0., dl);
+      wp.xyz += normalize(d + vec3(1e-4)) * f * .55;
+      vec4 mv = viewMatrix * wp;
+      gl_Position = projectionMatrix * mv;
+      gl_PointSize = aSize * uPix / -mv.z * (1. + f * 1.2);
+      // gradient across the original sphere: cyan top-left -> pink -> orange bottom-right
+      float k = clamp(.5 - position.y * .26 + position.x * .2 + (aRnd - .5) * .18, 0., 1.);
+      vCol = k < .55 ? mix(uC1, uC2, k / .55) : mix(uC2, uC3, (k - .55) / .45);
+      vCol += f * .55;
+      float tw = .6 + .4 * sin(uTime * 1.7 + aRnd * 60.);
+      // front-facing shell dots are brighter, far side dimmer — keeps the sphere readable, not a white blob
+      float facing = .45 + .55 * smoothstep(-1., 1., (modelViewMatrix * vec4(position, 0.)).z / 1.75);
+      vA = tw * mix(1., facing, uW.x) * (.8 + .2 * smoothstep(1.2, 2.2, aSize)) * (1. - .3 * uW.y - .3 * uW.z - .4 * uW.w);
+    }`,
+  fragmentShader: /* glsl */`
+    uniform float uFade; varying vec3 vCol; varying float vA;
+    void main(){
+      float d = length(gl_PointCoord - .5);
+      float a = smoothstep(.5, .12, d) * vA * .8 * uFade;
+      if (a < .004) discard;
+      gl_FragColor = vec4(vCol * a, a);
+    }`,
+});
+const body = new THREE.Points(g, bodyMat);
+const rig = new THREE.Group(); rig.add(body); scene.add(rig);
+
+// ---------- rings (thin, chromatic) ----------
+function ring(radius, n, tilt, hue) {
+  const pos = new Float32Array(n * 3), rr = new Float32Array(n);
+  for (let i = 0; i < n; i++) {
+    const a = rnd() * Math.PI * 2, w = radius + gauss() * 0.02;
+    pos.set([Math.cos(a) * w, gauss() * 0.006, Math.sin(a) * w], i * 3); rr[i] = rnd();
+  }
+  const gg = new THREE.BufferGeometry();
+  gg.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  gg.setAttribute('aRnd', new THREE.BufferAttribute(rr, 1));
+  const m = new THREE.ShaderMaterial({
+    uniforms: { uTime: uniforms.uTime, uPix: uniforms.uPix, uFade: { value: 1 }, uHue: { value: new THREE.Color(hue) } },
+    transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+    vertexShader: `attribute float aRnd; uniform float uPix; varying float vR; void main(){ vR=aRnd; vec4 mv=modelViewMatrix*vec4(position,1.); gl_Position=projectionMatrix*mv; gl_PointSize=(0.8+aRnd*.8)*uPix/-mv.z; }`,
+    fragmentShader: `uniform float uFade,uTime; uniform vec3 uHue; varying float vR; void main(){ float d=length(gl_PointCoord-.5); float a=smoothstep(.5,.1,d)*uFade*(.35+.25*sin(uTime*2.+vR*30.)); gl_FragColor=vec4(uHue*a,a); }`,
+  });
+  const pts = new THREE.Points(gg, m); pts.rotation.set(tilt[0], tilt[1], tilt[2]); return pts;
+}
+const rings = new THREE.Group();
+[[2.55, 0x7fdcff], [2.63, 0xff6ad0], [2.71, 0xb4a0ff]].forEach(([r, h]) => rings.add(ring(r, small() ? 1800 : 3200, [0.26, 0, -0.26], h)));
+rig.add(rings);
+
+// ---------- depth layers: back dust, haze puffs, front dust ----------
+function dust(n, spread, zMin, zMax, size, alpha, tint) {
+  const pos = new Float32Array(n * 3), rr = new Float32Array(n);
+  for (let i = 0; i < n; i++) { pos.set([(rnd() * 2 - 1) * spread, (rnd() * 2 - 1) * spread * 0.6, zMin + rnd() * (zMax - zMin)], i * 3); rr[i] = rnd(); }
+  const gg = new THREE.BufferGeometry();
+  gg.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  gg.setAttribute('aRnd', new THREE.BufferAttribute(rr, 1));
+  const m = new THREE.ShaderMaterial({
+    uniforms: { uTime: uniforms.uTime, uPix: uniforms.uPix, uA: { value: alpha }, uTint: { value: new THREE.Color(tint) }, uSize: { value: size } },
+    transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+    vertexShader: `attribute float aRnd; uniform float uTime,uPix,uSize; varying float vR; void main(){ vR=aRnd; vec3 p=position; p.y+=sin(uTime*.12+aRnd*20.)*.25; p.x+=cos(uTime*.09+aRnd*13.)*.25; vec4 mv=modelViewMatrix*vec4(p,1.); gl_Position=projectionMatrix*mv; gl_PointSize=uSize*(.5+aRnd)*uPix/-mv.z; }`,
+    fragmentShader: `uniform float uA,uTime; uniform vec3 uTint; varying float vR; void main(){ float d=length(gl_PointCoord-.5); float a=smoothstep(.5,0.,d)*uA*(.5+.5*sin(uTime*.8+vR*40.)); gl_FragColor=vec4(uTint*a,a); }`,
+  });
+  return new THREE.Points(gg, m);
+}
+const back = dust(small() ? 900 : 1800, 11, -9, -3, 1.4, 0.55, 0x9fc8ff);
+const front = dust(small() ? 60 : 120, 6, 2.5, 5.5, 5.5, 0.18, 0xbfe8ff);
+scene.add(back, front);
+// haze puffs hugging the sphere (the reference's smoke)
+const haze = (() => {
+  const n = 70, pos = new Float32Array(n * 3), rr = new Float32Array(n);
+  for (let i = 0; i < n; i++) { const a = rnd() * Math.PI * 2, e = gauss() * 0.9, r = 1.9 + rnd() * 0.7; pos.set([Math.cos(a) * r, e * 1.4, Math.sin(a) * r * 0.6 - 0.4], i * 3); rr[i] = rnd(); }
+  const gg = new THREE.BufferGeometry();
+  gg.setAttribute('position', new THREE.BufferAttribute(pos, 3)); gg.setAttribute('aRnd', new THREE.BufferAttribute(rr, 1));
+  const m = new THREE.ShaderMaterial({
+    uniforms: { uTime: uniforms.uTime, uPix: uniforms.uPix, uFade: { value: 1 } },
+    transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+    vertexShader: `attribute float aRnd; uniform float uPix; varying float vR; void main(){ vR=aRnd; vec4 mv=modelViewMatrix*vec4(position,1.); gl_Position=projectionMatrix*mv; gl_PointSize=(40.+aRnd*60.)*uPix/-mv.z; }`,
+    fragmentShader: `uniform float uTime,uFade; varying float vR; float h(vec2 p){return fract(sin(dot(p,vec2(12.9,78.2)))*43758.5);} float n(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(h(i),h(i+vec2(1,0)),f.x),mix(h(i+vec2(0,1)),h(i+1.),f.x),f.y);}
+      void main(){ vec2 c=gl_PointCoord-.5; float d=length(c); float cl=n(c*5.+vR*9.+uTime*.05)*.6+n(c*11.-vR*5.)*.4; float a=smoothstep(.5,.05,d)*cl*.07*uFade; vec3 tint=mix(vec3(.55,.5,.62),vec3(.9,.45,.7),vR); gl_FragColor=vec4(tint*a,a); }`,
+  });
+  return new THREE.Points(gg, m);
+})();
+rig.add(haze);
+
+// ---------- post: bloom + VHS/CRT ----------
+const composer = new EffectComposer(renderer);
+composer.addPass(new RenderPass(scene, camera));
+const bloom = new UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), 0.95, 0.5, 0.3);
+composer.addPass(bloom);
+composer.addPass(new OutputPass());
+const crt = new ShaderPass({
+  uniforms: { tDiffuse: { value: null }, uTime: { value: 0 }, uGlitch: { value: 0 }, uRes: { value: new THREE.Vector2(innerWidth, innerHeight) }, uStr: { value: reduce ? 0.55 : 1 } },
+  vertexShader: `varying vec2 vUv; void main(){ vUv=uv; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.); }`,
+  fragmentShader: /* glsl */`
+    uniform sampler2D tDiffuse; uniform float uTime, uGlitch, uStr; uniform vec2 uRes; varying vec2 vUv;
+    float hash(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+    void main(){
+      vec2 c = vUv * 2. - 1.;
+      c *= 1. + .045 * uStr * dot(c, c);
+      vec2 uv = c * .5 + .5;
+      if (uv.x < 0. || uv.x > 1. || uv.y < 0. || uv.y > 1.) { gl_FragColor = vec4(0., 0., 0., 1.); return; }
+      // rolling tracking band
+      float by = fract(uTime * .045);
+      float band = smoothstep(.045, 0., abs(uv.y - (1. - by))) * uStr;
+      float line = floor(uv.y * uRes.y / 2.);
+      float jit = (hash(vec2(line, floor(uTime * 30.))) - .5);
+      uv.x += jit * (.0025 * band * 4. + uGlitch * .03);
+      uv.x += uGlitch * step(.82, hash(vec2(floor(uv.y * 14.), floor(uTime * 20.)))) * .06;
+      float ca = (.0007 + length(c) * .0016) * uStr + uGlitch * .012;
+      vec3 col;
+      col.r = texture2D(tDiffuse, uv + vec2(ca, 0.)).r;
+      col.g = texture2D(tDiffuse, uv).g;
+      col.b = texture2D(tDiffuse, uv - vec2(ca, 0.)).b;
+      float scan = .86 + .14 * sin(uv.y * uRes.y * 1.5708);
+      col *= mix(1., scan, uStr);
+      col += band * .045 + (hash(uv * uRes + fract(uTime) * 91.) - .5) * .06 * uStr;
+      col *= 1. - .55 * pow(length(c * vec2(.85, 1.)), 2.4);
+      gl_FragColor = vec4(col, 1.);
+    }`,
+});
+composer.addPass(crt);
+
+// ---------- layout per section: where the body sits, which shape ----------
+// [x, y, scale] desktop / mobile
+const SLOTS_D = [[2.05, -0.05, 1.05], [2.3, 0.0, 0.95], [-2.6, 0.1, 0.8], [0, 0.15, 0.9]];
+const SLOTS_M = [[0, 1.35, 0.72], [0, 1.6, 0.62], [0, 1.7, 0.62], [0, 1.25, 0.66]];
+const sections = [...document.querySelectorAll('main section')];
+let prog = 0, progS = 0, lastSec = 0, glitchT = 0;
+function progress() {
+  const y = scrollY + innerHeight * 0.5;
+  for (let i = 0; i < sections.length; i++) {
+    const s = sections[i], top = s.offsetTop, h = s.offsetHeight;
+    if (y < top + h || i === sections.length - 1) return Math.min(sections.length - 1, Math.max(0, i + (y - top - h * 0.5) / h));
+  }
+  return 0;
+}
+
+// ---------- interaction ----------
+const mouse = new THREE.Vector2(9, 9), mouseS = new THREE.Vector2(0, 0), ray = new THREE.Raycaster(), plane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0), hit = new THREE.Vector3();
+let pointerIn = false;
+addEventListener('pointermove', (e) => { mouse.set(e.clientX / innerWidth * 2 - 1, -(e.clientY / innerHeight) * 2 + 1); pointerIn = true; }, { passive: true });
+document.addEventListener('pointerleave', () => { pointerIn = false; });
+addEventListener('touchend', () => { setTimeout(() => { pointerIn = false; }, 600); }, { passive: true });
+
+let palT = 0, palTarget = 0;
+const palCur = PALS[0].map(col);
+function glitch(power = 1) { if (!reduce) glitchT = Math.max(glitchT, 0.35 * power); }
+document.querySelectorAll('.card').forEach((c) => {
+  const on = () => { palTarget = +c.dataset.pal; glitch(0.7); osdFlash('▶▶ FF'); };
+  c.addEventListener('pointerenter', on); c.addEventListener('focus', on);
+  c.addEventListener('pointerleave', () => { palTarget = 0; });
+});
+document.getElementById('rewind').addEventListener('click', () => { osdFlash('◀◀ REW', 1600); glitch(1.4); scrollTo({ top: 0, behavior: reduce ? 'auto' : 'smooth' }); });
+document.getElementById('reel').addEventListener('click', () => { osdFlash('▶ PLAY', 1400); glitch(1.2); uniforms.uBurst.value = 0.55; });
+document.querySelectorAll('nav a, .logo').forEach((a) => a.addEventListener('click', (e) => {
+  const t = document.querySelector(a.getAttribute('href')); if (!t) return;
+  e.preventDefault(); glitch(0.8); scrollTo({ top: t.offsetTop, behavior: reduce ? 'auto' : 'smooth' });
+}));
+
+// ---------- OSD ----------
+const osd = document.getElementById('osd'), tc = document.getElementById('tc');
+let osdTimer = 0;
+function osdFlash(txt, ms = 900) {
+  osd.textContent = txt; clearTimeout(osdTimer);
+  osdTimer = setTimeout(() => { osd.innerHTML = 'PLAY<span class="tri">▶</span>SP'; }, ms);
+}
+const tc0 = 12 * 60 + 47, born = performance.now();
+const pad = (n) => String(n).padStart(2, '0');
+
+// ---------- counters + reveals ----------
+function countUp(el) {
+  const to = +el.dataset.count, dec = +(el.dataset.dec || 0), suf = el.dataset.suf || '';
+  const t0 = performance.now(), dur = reduce ? 1 : 1400;
+  const step = (t) => { const k = Math.min(1, (t - t0) / dur), e = 1 - Math.pow(1 - k, 3); el.textContent = (to * e).toFixed(dec) + suf; if (k < 1) requestAnimationFrame(step); };
+  requestAnimationFrame(step);
+}
+const io = new IntersectionObserver((es) => es.forEach((e) => {
+  if (!e.isIntersecting) return;
+  e.target.classList.add('in');
+  e.target.querySelectorAll('[data-count]').forEach((b) => { if (!b.dataset.done) { b.dataset.done = 1; countUp(b); } });
+}), { threshold: 0.28 });
+sections.forEach((s) => io.observe(s));
+
+// ---------- waveform strip (reference's bottom bars) ----------
+const wave = document.getElementById('wave'), wx = wave.getContext('2d');
+function sizeWave() { const r = Math.min(devicePixelRatio, 2); wave.width = wave.clientWidth * r; wave.height = wave.clientHeight * r; }
+sizeWave();
+function drawWave(t, energy) {
+  const W = wave.width, H = wave.height; wx.clearRect(0, 0, W, H);
+  const gr = wx.createLinearGradient(0, H, 0, 0); gr.addColorStop(0, 'rgba(40,120,255,.10)'); gr.addColorStop(1, 'rgba(40,120,255,0)');
+  wx.fillStyle = gr; wx.beginPath(); wx.moveTo(0, H);
+  for (let x = 0; x <= W; x += 8) wx.lineTo(x, H * 0.55 - Math.sin(x / W * Math.PI) * H * 0.35);
+  wx.lineTo(W, H); wx.fill();
+  const step = Math.max(4, Math.round(W / 260));
+  for (let x = W * 0.03; x < W * 0.97; x += step) {
+    const u = x / W, env = Math.sin(u * Math.PI);
+    const v = (0.35 + 0.65 * Math.abs(Math.sin(u * 37 + t * 2.1) * Math.cos(u * 11 - t * 1.3))) * env * energy;
+    const h = H * 0.08 + v * H * 0.5;
+    wx.fillStyle = `rgba(${150 + u * 100 | 0},${210 - u * 90 | 0},255,${0.18 + v * 0.35})`;
+    wx.fillRect(x, H - h - H * 0.06, Math.max(1, step * 0.35), h);
+  }
+}
+
+// ---------- loop ----------
+const clock = new THREE.Clock();
+let fps = 0, frames = 0, fpsT = 0, active = 0;
+function frame() {
+  const dt = Math.min(clock.getDelta(), 0.05), t = clock.elapsedTime;
+  uniforms.uTime.value = t; crt.uniforms.uTime.value = t;
+  frames++; fpsT += dt; if (fpsT > 1) { fps = frames / fpsT; frames = 0; fpsT = 0; }
+
+  // opening gather
+  uniforms.uBurst.value = Math.max(0, uniforms.uBurst.value - dt * (reduce ? 10 : 0.42));
+
+  prog = progress(); progS += (prog - progS) * Math.min(1, dt * 3.2);
+  const sec = Math.round(prog);
+  if (sec !== lastSec) { lastSec = sec; glitch(1); osdFlash(`CH ${pad(sec + 1)}`, 800); document.querySelectorAll('nav a').forEach((a) => a.classList.toggle('on', +a.dataset.s === sec)); }
+  active = sec;
+
+  // shape weights
+  const w = [0, 0, 0, 0];
+  for (let i = 0; i < 4; i++) w[i] = Math.max(0, 1 - Math.abs(progS - i));
+  const e = (x) => x * x * (3 - 2 * x);
+  const sum = w.reduce((a, b) => a + e(b), 0) || 1;
+  uniforms.uW.value.set(e(w[0]) / sum, e(w[1]) / sum, e(w[2]) / sum, e(w[3]) / sum);
+
+  // placement
+  const slots = small() ? SLOTS_M : SLOTS_D;
+  const i0 = Math.floor(progS), i1 = Math.min(3, i0 + 1), f = e(progS - i0);
+  const a = slots[i0], b = slots[i1];
+  rig.position.set(a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f, 0);
+  rig.scale.setScalar(a[2] + (b[2] - a[2]) * f);
+  const spin = reduce ? 0.02 : 0.09;
+  body.rotation.y += dt * spin; body.rotation.x = 0.18 + Math.sin(t * 0.2) * 0.05;
+  rings.rotation.y += dt * spin * 0.6;
+  const heroW = Math.max(0, 1 - progS);
+  rings.children.forEach((r) => { r.material.uniforms.uFade.value = heroW; });
+  haze.material.uniforms.uFade.value = 0.35 + heroW * 0.65;
+  // behind-text sections: dim the body so copy stays readable
+  const fadeTo = progS < 0.5 ? 1 : small() ? 0.38 : (progS > 2.5 ? 0.45 : 1);
+  uniforms.uFade.value += (fadeTo - uniforms.uFade.value) * Math.min(1, dt * 3);
+
+  // palette
+  palT += (palTarget - palT) * Math.min(1, dt * 4);
+  const pi = Math.round(palT);
+  PALS[pi].forEach((h, k) => palCur[k].lerp(col(h), Math.min(1, dt * 3.5)));
+  uniforms.uC1.value.copy(palCur[0]); uniforms.uC2.value.copy(palCur[1]); uniforms.uC3.value.copy(palCur[2]);
+
+  // pointer → world on the body's plane
+  mouseS.lerp(mouse, Math.min(1, dt * 8));
+  if (pointerIn && !reduce) { ray.setFromCamera(mouseS, camera); plane.constant = -rig.position.z; ray.ray.intersectPlane(plane, hit); uniforms.uMouse.value.copy(hit); }
+  else uniforms.uMouse.value.set(99, 99, 0);
+
+  // parallax
+  const px = reduce ? 0 : mouseS.x, py = reduce ? 0 : mouseS.y;
+  camera.position.x += (px * 0.35 - camera.position.x) * Math.min(1, dt * 2);
+  camera.position.y += (py * 0.22 - camera.position.y) * Math.min(1, dt * 2);
+  camera.lookAt(0, 0, 0);
+  back.position.set(-px * 0.4, -py * 0.25 + progS * 0.6, 0);
+  front.position.set(px * 0.9, py * 0.6 - progS * 1.4, 0);
+
+  // glitch decay
+  glitchT = Math.max(0, glitchT - dt);
+  const gl = reduce ? 0 : Math.min(1, glitchT / 0.35);
+  uniforms.uGlitch.value = gl * 0.6; crt.uniforms.uGlitch.value = gl;
+
+  // OSD timecode
+  const s = tc0 + Math.floor((performance.now() - born) / 1000);
+  tc.textContent = `${pad(Math.floor(s / 3600))}:${pad(Math.floor(s / 60) % 60)}:${pad(s % 60)}`;
+
+  drawWave(t, 0.55 + heroW * 0.45 + gl * 0.6);
+  composer.render();
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+
+addEventListener('resize', () => {
+  renderer.setPixelRatio(Math.min(devicePixelRatio, small() ? 1.5 : 1.75));
+  renderer.setSize(innerWidth, innerHeight); composer.setSize(innerWidth, innerHeight);
+  camera.aspect = innerWidth / innerHeight;
+  camera.fov = innerWidth / innerHeight < 0.8 ? 52 : 38;
+  camera.updateProjectionMatrix();
+  crt.uniforms.uRes.value.set(innerWidth, innerHeight);
+  uniforms.uPix.value = renderer.getPixelRatio() * (small() ? 22 : 27);
+  sizeWave();
+});
+dispatchEvent(new Event('resize'));
+
+window.__site = { get fps() { return fps; }, get section() { return active; }, get prog() { return progS; }, uniforms, renderer, glitch };
+</script>
+</body>
+</html>

@@ -1,0 +1,9 @@
+{
+  "odysseus": { "file": "odysseus.glb", "yaw": -1.5708 },
+  "polyphemus": "polyphemus.glb",
+  "ship": "ship.glb",
+  "olive": "olive.glb",
+  "cave": "cave.glb",
+  "cypress": "cypress.glb",
+  "boulder": null
+}

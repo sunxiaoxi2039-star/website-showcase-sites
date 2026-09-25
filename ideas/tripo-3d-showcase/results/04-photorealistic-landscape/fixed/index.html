@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Alpine Valley — procedural photorealistic landscape</title>
+<link rel="icon" href="data:,">
+<style>
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #9fb4c8; font-family: -apple-system, "Helvetica Neue", Arial, sans-serif; }
+  canvas { display: block; }
+  #loading { position: fixed; inset: 0; display: grid; place-items: center; background: #0d1115; color: #cfd8e0; font-size: 13px; letter-spacing: .3em; transition: opacity 1.5s; z-index: 5; }
+  #ui { position: fixed; left: 20px; bottom: 18px; color: #fff; text-shadow: 0 1px 6px rgba(0,0,0,.5); transition: opacity .5s; }
+  #ui h1 { margin: 0 0 2px; font-size: 15px; font-weight: 600; letter-spacing: .12em; }
+  #ui p { margin: 0 0 10px; font-size: 11px; opacity: .8; letter-spacing: .08em; }
+  #ui button { background: rgba(10,16,22,.45); color: #fff; border: 1px solid rgba(255,255,255,.3); border-radius: 16px; padding: 6px 13px; font-size: 12px; cursor: pointer; margin-right: 6px; backdrop-filter: blur(6px); }
+  #ui button.on { background: rgba(255,255,255,.85); color: #111; }
+  body.hide #ui { opacity: 0; pointer-events: none; }
+</style>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"
+} }
+</script>
+</head>
+<body>
+<div id="loading">GENERATING TERRAIN…</div>
+<div id="ui">
+  <h1>ALPINE VALLEY</h1>
+  <p>Fully procedural · no textures · no models</p>
+  <button id="bPause">Pause flight</button><button id="bFree">Free camera</button><button id="bHide">Hide UI (H)</button>
+</div>
+<script type="module">
+import * as THREE from 'three';
+import { Sky } from 'three/addons/objects/Sky.js';
+import { Reflector } from 'three/addons/objects/Reflector.js';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
+
+// ---------------------------------------------------------------- noise (JS, deterministic)
+function mulberry32(a) { return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+const rnd = mulberry32(20260923);
+const R = (a, b) => a + (b - a) * rnd();
+const perm = new Uint8Array(512); { const p = [...Array(256).keys()]; for (let i = 255; i > 0; i--) { const j = (rnd() * (i + 1)) | 0; [p[i], p[j]] = [p[j], p[i]]; } for (let i = 0; i < 512; i++) perm[i] = p[i & 255]; }
+const G = [[1, 1], [-1, 1], [1, -1], [-1, -1], [1, 0], [-1, 0], [0, 1], [0, -1]];
+const fade = t => t * t * t * (t * (t * 6 - 15) + 10);
+function perlin(x, y) {
+  const X = Math.floor(x), Y = Math.floor(y), xf = x - X, yf = y - Y, xi = X & 255, yi = Y & 255;
+  const g = (h, dx, dy) => { const v = G[h & 7]; return v[0] * dx + v[1] * dy; };
+  const aa = perm[perm[xi] + yi], ab = perm[perm[xi] + yi + 1], ba = perm[perm[xi + 1] + yi], bb = perm[perm[xi + 1] + yi + 1];
+  const u = fade(xf), v = fade(yf);
+  const x1 = g(aa, xf, yf) + u * (g(ba, xf - 1, yf) - g(aa, xf, yf));
+  const x2 = g(ab, xf, yf - 1) + u * (g(bb, xf - 1, yf - 1) - g(ab, xf, yf - 1));
+  return (x1 + v * (x2 - x1)) * 1.1;
+}
+function fbm(x, y, o = 6) { let s = 0, a = .5, f = 1; for (let i = 0; i < o; i++) { s += a * perlin(x * f, y * f); f *= 2.02; a *= .5; } return s; }
+function ridged(x, y, o = 6) { let s = 0, a = .5, f = 1, w = 1; for (let i = 0; i < o; i++) { let n = 1 - Math.abs(perlin(x * f + 13.1 * i, y * f - 7.7 * i)); n *= n; n *= w; w = Math.min(1, Math.max(0, n * 1.6)); s += a * n; f *= 2.05; a *= .5; } return s; }
+const smooth = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
+
+// ---------------------------------------------------------------- terrain height function
+const SIZE = 6000, LAKE = { x: 150, z: -200, r: 420 };
+function height(x, z) {
+  // warp for more natural shapes
+  const wx = x + 180 * fbm(x / 1500 + 3.1, z / 1500 - 1.7, 3), wz = z + 180 * fbm(x / 1500 - 5.2, z / 1500 + 2.3, 3);
+  const d = Math.hypot(wx * .85, wz) / 1500;
+  const valley = smooth(.3, 1.35, d);
+  const mtn = Math.pow(ridged(wx / 1400, wz / 1400, 7), 1.35);
+  const hills = fbm(wx / 520, wz / 520, 6);
+  let h = 6 + hills * 45 * (.35 + valley) + valley * valley * (mtn * 900 + 140);
+  // meadow flattening near valley floor
+  h = h * (1 - .45 * (1 - valley) * smooth(.5, 0, d));
+  // lake bowl
+  const ld = Math.hypot((x - LAKE.x) / 1.35, z - LAKE.z) / LAKE.r;
+  h -= 38 * Math.exp(-ld * ld * 1.6) + fbm(x / 90, z / 90, 3) * 3 * Math.exp(-ld * ld);
+  return h;
+}
+
+// ---------------------------------------------------------------- renderer / scene
+const renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: 'high-performance' });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
+renderer.setSize(innerWidth, innerHeight);
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 0.55;
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+document.body.prepend(renderer.domElement);
+
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(55, innerWidth / innerHeight, 0.5, 60000);
+
+// sun & sky
+const SUN = new THREE.Vector3().setFromSphericalCoords(1, THREE.MathUtils.degToRad(90 - 11), THREE.MathUtils.degToRad(145));
+const sky = new Sky(); sky.scale.setScalar(50000);
+Object.assign(sky.material.uniforms, {});
+sky.material.uniforms.turbidity.value = 5.5;
+sky.material.uniforms.rayleigh.value = 1.5;
+sky.material.uniforms.mieCoefficient.value = 0.004;
+sky.material.uniforms.mieDirectionalG.value = 0.82;
+sky.material.uniforms.sunPosition.value.copy(SUN);
+{
+  const pm = new THREE.PMREMGenerator(renderer);
+  const env = new THREE.Scene(); env.add(sky);
+  scene.environment = pm.fromScene(env).texture;
+  scene.environmentIntensity = 0.6;
+  scene.add(sky);
+}
+const FOG_COLOR = new THREE.Color(0xa9b8c8);
+scene.fog = new THREE.FogExp2(FOG_COLOR, 0.00016);
+
+const sun = new THREE.DirectionalLight(0xffe2bf, 3.2);
+sun.castShadow = true;
+sun.shadow.mapSize.set(2048, 2048);
+Object.assign(sun.shadow.camera, { left: -260, right: 260, top: 260, bottom: -260, near: 1, far: 3000 });
+sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.6;
+scene.add(sun, sun.target);
+scene.add(new THREE.HemisphereLight(0xbcd4ff, 0x4a4030, 0.55));
+
+// ---------------------------------------------------------------- shared GLSL noise
+const GLSL_NOISE = `
+  float hash12(vec2 p){ vec3 p3 = fract(vec3(p.xyx) * .1031); p3 += dot(p3, p3.yzx + 33.33); return fract((p3.x + p3.y) * p3.z); }
+  float vnoise(vec2 p){ vec2 i = floor(p), f = fract(p); vec2 u = f*f*(3.-2.*f);
+    return mix(mix(hash12(i), hash12(i+vec2(1,0)), u.x), mix(hash12(i+vec2(0,1)), hash12(i+vec2(1,1)), u.x), u.y); }
+  float fbm2(vec2 p){ float s = 0., a = .5; for (int i = 0; i < 5; i++){ s += a * vnoise(p); p = p * 2.03 + 17.1; a *= .5; } return s; }
+`;
+
+// ---------------------------------------------------------------- terrain mesh
+const SEG = 420;
+const terrainGeo = new THREE.PlaneGeometry(SIZE, SIZE, SEG, SEG);
+terrainGeo.rotateX(-Math.PI / 2);
+{
+  const p = terrainGeo.attributes.position;
+  for (let i = 0; i < p.count; i++) p.setY(i, height(p.getX(i), p.getZ(i)));
+  terrainGeo.computeVertexNormals();
+}
+const terrainU = { uTime: { value: 0 } };
+const terrainMat = new THREE.MeshStandardMaterial({ roughness: .92, metalness: 0 });
+terrainMat.onBeforeCompile = (sh) => {
+  sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vWPos; varying vec3 vWNorm;')
+    .replace('#include <worldpos_vertex>', '#include <worldpos_vertex>\nvWPos = (modelMatrix * vec4(transformed,1.)).xyz; vWNorm = normalize(mat3(modelMatrix) * objectNormal);');
+  sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying vec3 vWPos; varying vec3 vWNorm;\n' + GLSL_NOISE)
+    .replace('#include <color_fragment>', `#include <color_fragment>
+      {
+        vec2 p = vWPos.xz;
+        float h = vWPos.y;
+        float slope = 1. - clamp(vWNorm.y, 0., 1.);
+        float n1 = fbm2(p * .02), n2 = fbm2(p * .15), n3 = vnoise(p * 1.3);
+        vec3 grassA = vec3(.20, .27, .09), grassB = vec3(.33, .36, .14), dryG = vec3(.42, .38, .20);
+        vec3 grass = mix(grassA, grassB, n1);
+        grass = mix(grass, dryG, smoothstep(.55, .8, n2) * .6);
+        grass *= .85 + .3 * n3;
+        vec3 dirt = vec3(.30, .24, .17) * (.8 + .4 * n2);
+        vec3 rockA = vec3(.2, .19, .18), rockB = vec3(.36, .33, .29);
+        float strata = fbm2(vec2(p.x * .004, h * .03));
+        vec3 rock = mix(rockA, rockB, strata * .6 + n2 * .4) * (.8 + .35 * n3);
+        vec3 snow = vec3(.92, .94, .98);
+        vec3 sand = vec3(.52, .47, .36) * (.85 + .3 * n3);
+        float rockAmt = smoothstep(.28, .45, slope + (n2 - .5) * .18);
+        vec3 c = mix(grass, dirt, smoothstep(.18, .3, slope + (n1 - .5) * .15));
+        float alpine = smoothstep(300., 480., h + n1 * 80.);
+        c = mix(c, mix(rockA, dryG, .35) * (.8 + .4 * n2), alpine * .7);
+        c = mix(c, rock, rockAmt);
+        float snowLine = 620. + (n1 - .5) * 180.;
+        float snowAmt = smoothstep(snowLine, snowLine + 90., h) * (1. - smoothstep(.45, .7, slope + (n2 - .5) * .2));
+        c = mix(c, snow, snowAmt);
+        c = mix(c, sand, smoothstep(3.5, 1.2, h + n3 * .8) * (1. - rockAmt));
+        c = mix(c, c * vec3(.45, .52, .5), smoothstep(0., -6., h));
+        diffuseColor.rgb = c;
+      }`)
+    .replace('#include <roughnessmap_fragment>', `#include <roughnessmap_fragment>
+      roughnessFactor = mix(.95, .55, smoothstep(600., 700., vWPos.y));`);
+};
+const terrain = new THREE.Mesh(terrainGeo, terrainMat);
+terrain.receiveShadow = true; terrain.castShadow = true;
+scene.add(terrain);
+
+// normal / slope helper
+function slopeAt(x, z) { const e = 2; const hx = height(x + e, z) - height(x - e, z), hz = height(x, z + e) - height(x, z - e); return new THREE.Vector3(-hx, 2 * e, -hz).normalize().y; }
+
+// ---------------------------------------------------------------- water
+const WaterShader = {
+  name: 'Lake',
+  uniforms: { color: { value: null }, tDiffuse: { value: null }, textureMatrix: { value: null }, uTime: { value: 0 }, sunDir: { value: SUN }, fogColor: { value: FOG_COLOR }, fogDensity: { value: 0.00016 } },
+  vertexShader: `uniform mat4 textureMatrix; varying vec4 vUv; varying vec3 vW;
+    void main(){ vUv = textureMatrix * vec4(position,1.); vec4 w = modelMatrix * vec4(position,1.); vW = w.xyz; gl_Position = projectionMatrix * viewMatrix * w; }`,
+  fragmentShader: `uniform sampler2D tDiffuse; uniform float uTime; uniform vec3 sunDir, fogColor; uniform float fogDensity; varying vec4 vUv; varying vec3 vW;
+    ${GLSL_NOISE}
+    vec2 grad(vec2 p){ float e = .15; return vec2(fbm2(p + vec2(e,0.)) - fbm2(p - vec2(e,0.)), fbm2(p + vec2(0.,e)) - fbm2(p - vec2(0.,e))) / (2.*e); }
+    void main(){
+      vec2 p = vW.xz;
+      vec2 g = grad(p * .08 + vec2(uTime * .05, uTime * .03)) * .6 + grad(p * .31 - vec2(uTime * .12, -uTime * .07)) * .25;
+      vec3 N = normalize(vec3(-g.x, 6., -g.y));
+      vec3 V = normalize(cameraPosition - vW);
+      float dist = length(cameraPosition - vW);
+      vec4 uv = vUv; uv.xy += N.xz * 3. * uv.w / (1. + dist * .02);
+      vec3 refl = texture2DProj(tDiffuse, uv).rgb;
+      float fr = .02 + .98 * pow(1. - clamp(dot(N, V), 0., 1.), 5.);
+      vec3 deep = vec3(.02, .06, .07);
+      vec3 col = mix(deep, refl, clamp(fr * 1.1 + .15, 0., 1.));
+      vec3 H = normalize(sunDir + V);
+      col += vec3(1., .85, .6) * pow(max(dot(N, H), 0.), 600.) * 12.;
+      float fogF = 1. - exp(-fogDensity * fogDensity * dist * dist);
+      col = mix(col, fogColor, fogF);
+      gl_FragColor = vec4(col, mix(.82, .98, fr));
+      #include <tonemapping_fragment>
+      #include <colorspace_fragment>
+    }`,
+};
+const water = new Reflector(new THREE.PlaneGeometry(1600, 1400), { shader: WaterShader, clipBias: .002, textureWidth: innerWidth * .5, textureHeight: innerHeight * .5 });
+water.rotation.x = -Math.PI / 2; water.position.set(LAKE.x, 0, LAKE.z);
+water.material.transparent = true;
+scene.add(water);
+
+// ---------------------------------------------------------------- vegetation
+function coniferGeo() {
+  const parts = [];
+  const trunk = new THREE.CylinderGeometry(.018, .03, .3, 6); trunk.translate(0, .15, 0);
+  const tc = new THREE.Color(0x3b2b1e); addColor(trunk, tc); parts.push(trunk);
+  const layers = 5;
+  for (let i = 0; i < layers; i++) {
+    const t = i / layers, r = .2 * (1 - t * .7), hgt = .34 * (1 - t * .3);
+    const c = new THREE.ConeGeometry(r, hgt, 9, 1, false); c.translate(0, .12 + t * .7 + hgt / 2, 0);
+    // jitter vertices for irregular silhouettes
+    const p = c.attributes.position; for (let k = 0; k < p.count; k++) if (p.getY(k) < .12 + t * .7 + hgt * .45) { p.setX(k, p.getX(k) * R(.8, 1.15)); p.setZ(k, p.getZ(k) * R(.8, 1.15)); p.setY(k, p.getY(k) + R(-.03, .02)); }
+    const col = new THREE.Color().setHSL(.33, .35, .1 + t * .04); addColor(c, col); parts.push(c);
+  }
+  return mergeGeometries(parts.map(g => g.index ? g.toNonIndexed() : g));
+}
+function broadleafGeo() {
+  const parts = [];
+  const trunk = new THREE.CylinderGeometry(.05, .09, .5, 6); trunk.translate(0, .25, 0); addColor(trunk, new THREE.Color(0x3a2e24)); parts.push(trunk);
+  for (let i = 0; i < 7; i++) {
+    const s = new THREE.IcosahedronGeometry(R(.16, .26), 1);
+    const p = s.attributes.position; for (let k = 0; k < p.count; k++) { const f = R(.85, 1.1); p.setXYZ(k, p.getX(k) * f, p.getY(k) * f, p.getZ(k) * f); }
+    const a = rnd() * Math.PI * 2, rr = R(0, .18); s.translate(Math.cos(a) * rr, R(.5, .85), Math.sin(a) * rr);
+    addColor(s, new THREE.Color().setHSL(R(.23, .3), .32, R(.08, .12))); parts.push(s);
+  }
+  return mergeGeometries(parts.map(g => g.index ? g.toNonIndexed() : g));
+}
+function addColor(g, c) { const n = g.attributes.position.count, a = new Float32Array(n * 3); for (let i = 0; i < n; i++) a.set([c.r, c.g, c.b], i * 3); g.setAttribute('color', new THREE.BufferAttribute(a, 3)); g.deleteAttribute('uv'); }
+
+const foliageMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .9, side: THREE.DoubleSide });
+function forest(geo, count, test, scaleFn) {
+  const mesh = new THREE.InstancedMesh(geo, foliageMat, count);
+  const m = new THREE.Matrix4(), q = new THREE.Quaternion(), c = new THREE.Color(); let n = 0;
+  for (let tries = 0; n < count && tries < count * 40; tries++) {
+    const x = R(-2400, 2400), z = R(-2400, 2400); const h = height(x, z);
+    if (!test(x, z, h)) continue;
+    const s = scaleFn(h);
+    q.setFromAxisAngle(new THREE.Vector3(0, 1, 0), rnd() * 6.28);
+    m.compose(new THREE.Vector3(x, h - .3, z), q, new THREE.Vector3(s * R(.85, 1.15), s, s * R(.85, 1.15)));
+    mesh.setMatrixAt(n, m); mesh.setColorAt(n, c.setHSL(R(.0, .06), .3, R(.8, 1.15))); n++;
+  }
+  mesh.count = n; mesh.castShadow = true; mesh.receiveShadow = true; scene.add(mesh); return mesh;
+}
+const forestMask = (x, z) => fbm(x / 380 + 11, z / 380 - 4, 4) + .12;
+forest(coniferGeo(), 14000, (x, z, h) => h > 4 && h < 520 - fbm(x / 200, z / 200, 2) * 120 && slopeAt(x, z) > .8 && forestMask(x, z) > 0, h => R(14, 26) * (1 - Math.max(0, h - 350) / 400));
+forest(broadleafGeo(), 3000, (x, z, h) => h > 3 && h < 120 && slopeAt(x, z) > .9 && forestMask(x, z) > -.12 && rnd() < .6, () => R(10, 17));
+
+// rocks & boulders
+{
+  const geo = new THREE.IcosahedronGeometry(1, 2);
+  const p = geo.attributes.position, v = new THREE.Vector3();
+  for (let i = 0; i < p.count; i++) { v.fromBufferAttribute(p, i); const k = 1 + .25 * perlin(v.x * 2 + 3, v.z * 2 + v.y); v.multiplyScalar(k); v.y *= .7; p.setXYZ(i, v.x, v.y, v.z); }
+  geo.computeVertexNormals();
+  const mat = new THREE.MeshStandardMaterial({ color: 0x77726a, roughness: .95 });
+  const mesh = new THREE.InstancedMesh(geo, mat, 900), m = new THREE.Matrix4(), q = new THREE.Quaternion(), c = new THREE.Color(); let n = 0;
+  for (let t = 0; n < 900 && t < 40000; t++) {
+    const x = R(-1800, 1800), z = R(-1800, 1800), h = height(x, z); if (h < 1 || h > 700) continue;
+    const s = slopeAt(x, z); if (s > .93 && rnd() > .15) continue;
+    q.setFromEuler(new THREE.Euler(R(0, 3), R(0, 3), R(0, 3))); const k = R(1, 6);
+    m.compose(new THREE.Vector3(x, h, z), q, new THREE.Vector3(k * R(.8, 1.4), k, k)); mesh.setMatrixAt(n, m); mesh.setColorAt(n++, c.setHSL(.08, .06, R(.3, .5)));
+  }
+  mesh.count = n; mesh.castShadow = mesh.receiveShadow = true; scene.add(mesh);
+}
+
+// grass blades around the lake meadows
+const grassU = { uTime: { value: 0 } };
+{
+  const blade = new THREE.BufferGeometry();
+  blade.setAttribute('position', new THREE.Float32BufferAttribute([-.05, 0, 0, .05, 0, 0, -.035, .45, 0, .035, .45, 0, 0, 1, 0], 3));
+  blade.setAttribute('normal', new THREE.Float32BufferAttribute([0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0], 3));
+  blade.setAttribute('ty', new THREE.Float32BufferAttribute([0, 0, .45, .45, 1], 1));
+  blade.setIndex([0, 1, 2, 2, 1, 3, 2, 3, 4]);
+  const N = 160000;
+  const mat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: .85, side: THREE.DoubleSide });
+  mat.onBeforeCompile = (sh) => {
+    sh.uniforms.uTime = grassU.uTime;
+    sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nattribute float ty; uniform float uTime; varying float vTy;')
+      .replace('#include <begin_vertex>', `#include <begin_vertex>
+        vTy = ty;
+        vec3 root = (instanceMatrix * vec4(0.,0.,0.,1.)).xyz;
+        float w = sin(root.x * .05 + uTime * 1.3) * .6 + sin(root.z * .09 + uTime * 2.1) * .3;
+        transformed.x += w * ty * ty * .35; transformed.z += w * ty * ty * .15;`);
+    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying float vTy;')
+      .replace('#include <color_fragment>', '#include <color_fragment>\n diffuseColor.rgb *= mix(.35, 1.15, vTy);');
+  };
+  const mesh = new THREE.InstancedMesh(blade, mat, N), m = new THREE.Matrix4(), q = new THREE.Quaternion(), c = new THREE.Color(); let n = 0;
+  for (let t = 0; n < N && t < N * 6; t++) {
+    const a = rnd() * Math.PI * 2, r = LAKE.r * 1.35 * Math.sqrt(rnd()) + 120;
+    const x = LAKE.x + Math.cos(a) * r * 1.4, z = LAKE.z + Math.sin(a) * r, h = height(x, z);
+    if (h < 1.8 || h > 60 || slopeAt(x, z) < .9) continue;
+    q.setFromAxisAngle(new THREE.Vector3(0, 1, 0), rnd() * 6.28); const s = R(.6, 1.3);
+    m.compose(new THREE.Vector3(x, h - .05, z), q, new THREE.Vector3(s * 2, s * R(.9, 1.6), s * 2)); mesh.setMatrixAt(n, m);
+    mesh.setColorAt(n++, c.setRGB(R(.24, .34), R(.3, .4), R(.1, .16)));
+  }
+  mesh.count = n; mesh.receiveShadow = true; scene.add(mesh);
+}
+
+// ---------------------------------------------------------------- clouds
+const cloudU = { uTime: { value: 0 }, sunDir: { value: SUN } };
+{
+  const geo = new THREE.PlaneGeometry(60000, 60000); geo.rotateX(Math.PI / 2);
+  const mat = new THREE.ShaderMaterial({
+    transparent: true, depthWrite: false, fog: false, side: THREE.DoubleSide, uniforms: cloudU,
+    vertexShader: 'varying vec3 vW; void main(){ vec4 w = modelMatrix * vec4(position,1.); vW = w.xyz; gl_Position = projectionMatrix * viewMatrix * w; }',
+    fragmentShader: `uniform float uTime; uniform vec3 sunDir; varying vec3 vW; ${GLSL_NOISE}
+      void main(){
+        vec2 p = vW.xz * .00022 + vec2(uTime * .004, uTime * .0015);
+        float c = fbm2(p) * .7 + fbm2(p * 3.1 + 5.) * .3;
+        float a = smoothstep(.5, .75, c);
+        float thick = smoothstep(.5, .95, c);
+        vec3 V = normalize(vW - cameraPosition);
+        float s = pow(max(dot(V, sunDir), 0.), 8.);
+        vec3 col = mix(vec3(.62, .66, .74), vec3(1., .96, .9), 1. - thick * .6);
+        col += vec3(1., .75, .45) * s * .9 * (1. - thick);
+        float fade = smoothstep(26000., 6000., length(vW.xz - cameraPosition.xz));
+        gl_FragColor = vec4(col * 1.4, a * .85 * fade);
+        #include <tonemapping_fragment>
+        #include <colorspace_fragment>
+      }`,
+  });
+  const clouds = new THREE.Mesh(geo, mat); clouds.position.y = 2600; scene.add(clouds);
+}
+
+// ---------------------------------------------------------------- camera path
+// highest ground (or water) within radius r — keeps the camera clear of slopes between mesh vertices
+function groundMax(x, z, r) { let m = Math.max(height(x, z), 0); for (let i = 0; i < 8; i++) { const a = i / 8 * Math.PI * 2; m = Math.max(m, height(x + Math.cos(a) * r, z + Math.sin(a) * r)); } return m; }
+const pathPts = [
+  [-900, 600, 16], [-520, 330, 9], [-180, 80, 7], [140, -120, 6], [460, -420, 14], [720, -760, 70], [820, -1150, 150],
+  [480, -1480, 200], [-80, -1500, 220], [-640, -1160, 190], [-980, -520, 120], [-1150, 150, 60], [-1100, 620, 30],
+].map(([x, z, agl]) => new THREE.Vector3(x, groundMax(x, z, 90) + agl, z));
+const path = new THREE.CatmullRomCurve3(pathPts, true, 'centripetal', .5);
+const LOOP = 110;
+const tmp = new THREE.Vector3(), ahead = new THREE.Vector3(), camTarget = new THREE.Vector3();
+let flightT = 0, paused = false, free = false;
+
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enabled = false; controls.enableDamping = true; controls.maxPolarAngle = Math.PI * .495;
+
+// ---------------------------------------------------------------- post
+const composer = new EffectComposer(renderer, new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType, samples: 4 }));
+composer.addPass(new RenderPass(scene, camera));
+composer.addPass(new UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), .22, .6, .92));
+composer.addPass(new OutputPass());
+const finish = new ShaderPass({
+  uniforms: { tDiffuse: { value: null }, uTime: { value: 0 } },
+  vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.); }',
+  fragmentShader: `uniform sampler2D tDiffuse; uniform float uTime; varying vec2 vUv;
+    float h(vec2 p){ return fract(sin(dot(p, vec2(12.9898,78.233))) * 43758.5453); }
+    void main(){ vec2 d = vUv - .5; vec3 c;
+      c.r = texture2D(tDiffuse, vUv - d * .0015).r; c.g = texture2D(tDiffuse, vUv).g; c.b = texture2D(tDiffuse, vUv + d * .0015).b;
+      c *= mix(.72, 1., smoothstep(.85, .3, length(d)));
+      c += (h(vUv * 1000. + fract(uTime)) - .5) * .018;
+      gl_FragColor = vec4(c, 1.); }`,
+});
+composer.addPass(finish);
+
+function onResize() {
+  camera.aspect = innerWidth / innerHeight; camera.fov = camera.aspect < .8 ? 70 : 55; camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight); composer.setSize(innerWidth, innerHeight);
+  water.getRenderTarget().setSize(innerWidth * .5, innerHeight * .5);
+}
+addEventListener('resize', onResize); onResize();
+
+// UI
+const $ = id => document.getElementById(id);
+$('bPause').onclick = () => { paused = !paused; $('bPause').classList.toggle('on', paused); $('bPause').textContent = paused ? 'Resume flight' : 'Pause flight'; };
+$('bFree').onclick = () => {
+  free = !free; controls.enabled = free; $('bFree').classList.toggle('on', free);
+  if (free) { controls.target.copy(camTarget); controls.update(); }
+};
+$('bHide').onclick = () => document.body.classList.toggle('hide');
+addEventListener('keydown', e => { if (e.key === 'h' || e.key === 'H') document.body.classList.toggle('hide'); });
+
+// ---------------------------------------------------------------- loop
+const clock = new THREE.Clock();
+const camPos = new THREE.Vector3();
+renderer.setAnimationLoop(() => {
+  const dt = Math.min(clock.getDelta(), .05), t = clock.elapsedTime;
+  if (!free) {
+    if (!paused) flightT = (flightT + dt / LOOP) % 1;
+    path.getPointAt(flightT, tmp);
+    path.getPointAt((flightT + .018) % 1, ahead);
+    tmp.y = Math.max(tmp.y, groundMax(tmp.x, tmp.z, 30) + 8);
+    camPos.lerp(tmp, camPos.lengthSq() === 0 ? 1 : 1 - Math.exp(-dt * 6));
+    camera.position.copy(camPos);
+    ahead.y = Math.max(ahead.y, Math.max(height(ahead.x, ahead.z), 0) + 2) - 6;
+    camTarget.lerp(ahead, camTarget.lengthSq() === 0 ? 1 : 1 - Math.exp(-dt * 3));
+    camera.lookAt(camTarget);
+  } else controls.update();
+
+  // shadow frustum follows the camera
+  const focus = tmp.copy(camera.position).addScaledVector(camera.getWorldDirection(ahead), 150);
+  sun.position.copy(focus).addScaledVector(SUN, 1500); sun.target.position.copy(focus);
+
+  terrainU.uTime.value = t; grassU.uTime.value = t; cloudU.uTime.value = t; finish.uniforms.uTime.value = t;
+  water.material.uniforms.uTime.value = t;
+  composer.render();
+});
+requestAnimationFrame(() => requestAnimationFrame(() => { const l = $('loading'); l.style.opacity = 0; setTimeout(() => l.remove(), 1600); }));
+</script>
+</body>
+</html>

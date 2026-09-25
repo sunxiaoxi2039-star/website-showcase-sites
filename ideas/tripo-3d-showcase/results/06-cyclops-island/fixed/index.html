@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>ODYSSEY — The Cyclops’ Island</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="./src/style.css">
+<script type="importmap">
+{ "imports": { "three": "./vendor/three/build/three.module.js", "three/addons/": "./vendor/three/examples/jsm/" } }
+</script>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="ui">
+  <!-- top left: seal and titles -->
+  <header class="brand">
+    <div class="seal">Ω</div>
+    <div class="brand-txt"><b>ODYSSEY</b><span>AN INTERACTIVE MYTH</span></div>
+  </header>
+  <section class="intro">
+    <div class="kicker"><i></i>BOOK IX · THE LAND OF THE CYCLOPS</div>
+    <h1>The Cyclops’ Island</h1>
+    <h2>An Odyssey in miniature</h2>
+    <p>Where the sea falls silent, a myth awakens.<br>Walk an unknown shore as Odysseus.</p>
+    <div class="orn"><i></i>◇<i></i></div>
+  </section>
+
+  <!-- top centre: boss -->
+  <section class="boss" id="boss">
+    <div class="kicker2">THE ISLAND’S KEEPER</div>
+    <div class="boss-name">Polyphemus</div>
+    <div class="boss-bar"><i id="suspicion"></i></div>
+    <div class="boss-state" id="bossState">ASLEEP · TREAD LIGHTLY</div>
+  </section>
+
+  <!-- top right: icon buttons + comparison card -->
+  <nav class="icons">
+    <button id="btnModels" title="Models &amp; import" aria-label="Models">⬡</button>
+    <button id="btnSound" title="Sound (off)" aria-label="Sound">🔇︎</button>
+    <button id="btnPause" title="Pause (P)" aria-label="Pause">❚❚</button>
+    <button id="btnHelp" title="Help" aria-label="Help">?</button>
+  </nav>
+  <section class="compare" id="compare">
+    <div class="cmp-head"><b>One island. Two worlds.</b><span>Click to compare ↓</span></div>
+    <div class="cmp-seg">
+      <button id="modeTripo" class="on"><b>✦ Tripo World</b><small>Rich detail &amp; textures</small></button>
+      <button id="modeOrig"><b>Original</b><small>Basic Three.js shapes</small></button>
+    </div>
+    <div class="cmp-foot" id="cmpFoot">Same view. See the difference instantly.</div>
+  </section>
+
+  <!-- bottom left: mission card -->
+  <section class="mission" id="mission">
+    <i class="tab"></i>
+    <div class="m-head"><span id="mKicker">THE FIRST FOOTSTEPS</span><em id="mStage">01 / 03</em></div>
+    <h3 id="mTitle">Follow the sandy path</h3>
+    <p id="mText">Lead your crew to the cave. Keep an eye on the sleeping giant’s suspicion.</p>
+    <div class="m-stats">
+      <div class="hearts" id="hearts"><span>♥</span><span>♥</span><span>♥</span></div>
+      <div class="stam-l">STAMINA</div>
+    </div>
+    <div class="stam"><i id="stamina"></i></div>
+    <div class="segs"><i id="seg1"></i><i id="seg2"></i><i id="seg3"></i></div>
+    <div class="m-foot">
+      <div class="m-seal">Ω</div>
+      <div><b>Odysseus</b><small id="heroStatus">● Taking in the view</small></div>
+      <span class="crew" id="crewCount">3 crew</span>
+    </div>
+  </section>
+
+  <!-- right: dodge, compass, camera -->
+  <section class="right">
+    <button id="btnTake" class="take" hidden>TAKE <kbd>E</kbd></button>
+    <button id="btnDodge" class="dodge"><span>↯ DODGE</span><kbd>SPACE</kbd><i id="dodgeCd"></i></button>
+    <div class="compass"><div class="n">N</div><canvas id="minimap" width="220" height="220"></canvas><div class="cap">EXPLORE THE ISLAND</div></div>
+    <div class="cam">
+      <button id="camL" title="Rotate left (Q)">⟲</button><button id="camR" title="Rotate right (R)">⟳</button><span></span>
+      <button id="zoomOut" title="Zoom out">−</button><button id="zoomIn" title="Zoom in">+</button><span></span>
+      <button id="camReset" title="Reset view">↺</button><button id="camFollow" title="Follow hero (F)">⌖</button>
+    </div>
+  </section>
+
+  <div class="dest" id="dest"><small id="destK">YOUR DESTINATION</small><b id="destT">The Cyclops’ Cave</b><i>◆</i></div>
+  <div class="toast" id="toast"></div>
+  <div class="sea-cap">☼ AEGEAN SEA <i>/</i> THE GOLDEN HOUR</div>
+
+  <footer class="hints">
+    <div class="keys"><kbd>WASD</kbd> / <kbd>↑←↓→</kbd> Move <span>Click ground · Walk</span> <kbd>SHIFT</kbd> Sprint <kbd>SPACE</kbd> Dodge <kbd>E</kbd> Take <kbd>Q</kbd><kbd>R</kbd> Rotate <kbd>F</kbd> Follow <kbd>P</kbd> Pause <span>Scroll · Zoom</span></div>
+    <div class="credit">Reconstruction by <b>Jared</b> · inspired by <b>Jason Chew</b>’s Odyssey island concept · <button id="btnHero" class="linkish">Change hero</button> · <span id="fps">— FPS</span></div>
+  </footer>
+
+  <!-- overlays -->
+  <div class="overlay" id="pauseOv" hidden><div class="card"><div class="kicker2">THE TALE WAITS</div><h2>Paused</h2><p>Press P or the button to continue.</p><button class="primary" id="resume">Resume</button></div></div>
+  <div class="overlay" id="endOv" hidden><div class="card"><div class="kicker2">BOOK IX · COMPLETE</div><h2>You escaped the Cyclops</h2><p id="endText"></p><dl id="endStats"></dl><button class="primary" id="replay">Replay</button></div></div>
+  <div class="overlay" id="helpOv" hidden><div class="card wide">
+    <div class="kicker2">HOW TO PLAY</div><h2>Escape Polyphemus</h2>
+    <ol>
+      <li><b>Approach the cave.</b> Getting close to the sleeping giant, or sprinting nearby, raises his suspicion. At full suspicion he wakes early.</li>
+      <li><b>Take the three supplies.</b> Stand right next to each store and press E. Any theft wakes him.</li>
+      <li><b>Hold the jetty.</b> Stay inside the marked circle for 11 seconds while the crew board. Leaving pauses the boarding.</li>
+    </ol>
+    <p>He must close to 3.6 units before striking. <b>Ground Breaker</b> locks where you stood when he raised the club — step out of the orange circle or dodge through it. Every third slam is <b>charged</b> (gold): a shockwave ring expands outward and hurts where its edge passes you. Dodging gives brief invulnerability.</p>
+    <p class="perf" id="perfLine"></p>
+    <button class="primary" id="helpClose">Back to the island</button></div></div>
+  <div class="overlay" id="modelsOv" hidden><div class="card wide">
+    <div class="kicker2">TRIPO WORLD · MODEL SLOTS</div><h2>Replaceable assets</h2>
+    <p class="small">Import a .glb for any slot. Positions, collisions and gameplay stay the same; a failed import keeps the working model. Imports are saved in this browser.</p>
+    <table class="slots" id="slotTable"></table>
+    <input type="file" id="fileIn" accept=".glb,.gltf,model/gltf-binary" hidden>
+    <button class="primary" id="modelsClose">Done</button></div></div>
+  <div class="loading" id="loading"><div class="seal big">Ω</div><div>Charting the island…</div></div>
+</div>
+<script type="module" src="./src/main.js"></script>
+</body>
+</html>

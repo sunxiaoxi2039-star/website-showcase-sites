@@ -1,0 +1,885 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>桜谷 · 樱花山谷</title>
+<link rel="icon" href="data:,">
+<style>
+  :root { --ink: rgba(248,244,240,.92); --dim: rgba(248,244,240,.58); --glass: rgba(18,22,38,.46); --line: rgba(255,255,255,.14); --accent: #f2b8c6; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #0c1426; color: var(--ink);
+    font-family: "Hiragino Mincho ProN", "Songti SC", "Noto Serif SC", serif; -webkit-font-smoothing: antialiased; }
+  canvas { display: block; touch-action: none; }
+  #title { position: fixed; left: max(20px, env(safe-area-inset-left)); top: max(18px, env(safe-area-inset-top)); pointer-events: none;
+    text-shadow: 0 1px 12px rgba(0,0,0,.35); transition: opacity .5s; }
+  #title h1 { margin: 0; font-size: 26px; font-weight: 500; letter-spacing: .32em; }
+  #title p { margin: 6px 0 0; font-size: 12px; letter-spacing: .24em; color: var(--dim); }
+  #bar { position: fixed; left: 0; right: 0; margin: 0 auto; width: fit-content; bottom: max(16px, env(safe-area-inset-bottom));
+    display: flex; gap: 10px; align-items: center; flex-wrap: wrap; justify-content: center;
+    max-width: calc(100vw - 20px); padding: 8px 10px; border-radius: 14px; background: var(--glass);
+    border: 1px solid var(--line); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); transition: opacity .5s, transform .5s; }
+  .grp { display: flex; gap: 2px; align-items: center; }
+  .grp + .grp { padding-left: 10px; border-left: 1px solid var(--line); }
+  .lbl { font-size: 11px; color: var(--dim); letter-spacing: .15em; margin-right: 6px; }
+  button { font: inherit; font-size: 13px; color: var(--ink); background: transparent; border: 0; border-radius: 8px;
+    padding: 7px 10px; min-height: 34px; cursor: pointer; letter-spacing: .08em; white-space: nowrap; transition: background .2s, color .2s; }
+  button:hover { background: rgba(255,255,255,.08); }
+  button.on { background: rgba(242,184,198,.18); color: #ffe4ea; }
+  button:focus-visible { outline: 1px solid var(--accent); }
+  #showui { position: fixed; right: max(14px, env(safe-area-inset-right)); bottom: max(14px, env(safe-area-inset-bottom));
+    background: var(--glass); border: 1px solid var(--line); opacity: 0; pointer-events: none; transition: opacity .4s; }
+  body.ui-hidden #bar, body.ui-hidden #title { opacity: 0; pointer-events: none; }
+  body.ui-hidden #bar { transform: translateY(20px); }
+  body.ui-hidden #showui { opacity: .55; pointer-events: auto; }
+  #loading { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    background: radial-gradient(ellipse at 50% 60%, #26325a 0%, #0c1426 70%); z-index: 10; transition: opacity .8s; }
+  #loading .t { font-size: 22px; letter-spacing: .5em; margin-bottom: 18px; }
+  #loading .s { font-size: 12px; color: var(--dim); letter-spacing: .3em; }
+  #loading .petal { width: 10px; height: 10px; background: var(--accent); border-radius: 60% 0 60% 0; margin-bottom: 22px; animation: spin 2.4s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg) translateY(4px); } }
+  #loading.done { opacity: 0; pointer-events: none; }
+  #err { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; text-align: center; padding: 30px;
+    background: #0c1426; z-index: 20; line-height: 1.9; font-size: 15px; }
+  #toast { position: fixed; left: 50%; top: 22px; transform: translateX(-50%); padding: 8px 16px; border-radius: 10px; font-size: 13px;
+    background: var(--glass); border: 1px solid var(--line); opacity: 0; transition: opacity .4s; pointer-events: none; letter-spacing: .1em; }
+  @media (max-width: 720px) {
+    #title h1 { font-size: 20px; } #title p { font-size: 11px; }
+    #bar { gap: 4px 6px; padding: 6px; bottom: max(10px, env(safe-area-inset-bottom)); }
+    .grp + .grp { padding-left: 6px; }
+    .lbl { display: none; }
+    button { font-size: 12px; padding: 6px 8px; min-height: 32px; }
+  }
+</style>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"
+} }
+</script>
+</head>
+<body>
+<div id="loading"><div class="petal"></div><div class="t">桜 谷</div><div class="s">正在铺设山谷 · 请稍候</div></div>
+<div id="err"></div>
+<div id="title"><h1>桜谷</h1><p id="sub">樱花山谷 · 蓝调时刻</p></div>
+<div id="bar">
+  <div class="grp" id="views"><span class="lbl">镜头</span>
+    <button data-v="0" class="on">全景</button><button data-v="1">河畔</button><button data-v="2">参道</button><button data-v="3">俯瞰</button></div>
+  <div class="grp" id="moods"><span class="lbl">氛围</span>
+    <button data-m="blue" class="on">蓝调</button><button data-m="morning">清晨</button><button data-m="rain">雨中</button></div>
+  <div class="grp"><button id="tour">巡游</button><button id="sound">声音</button><button id="quality">高画质</button></div>
+  <div class="grp"><button id="reset">重置</button><button id="save">保存</button><button id="hide">隐藏</button></div>
+</div>
+<button id="showui">显示界面</button>
+<div id="toast"></div>
+
+<script>
+  // WebGL 支持检测（在加载模块前）
+  (function () {
+    let ok = false;
+    try { const c = document.createElement('canvas'); ok = !!(c.getContext('webgl2') || c.getContext('webgl')); } catch (e) {}
+    if (!ok) {
+      const e = document.getElementById('err');
+      e.style.display = 'flex';
+      e.innerHTML = '你的浏览器或设备不支持 WebGL，无法显示 3D 山谷。<br>请换用最新版 Chrome / Safari / Edge，或开启硬件加速后重试。';
+      document.getElementById('loading').classList.add('done');
+      window.__noWebGL = true;
+    }
+  })();
+  window.addEventListener('error', (ev) => showFatal(ev.message));
+  window.addEventListener('unhandledrejection', (ev) => showFatal(ev.reason && ev.reason.message || String(ev.reason)));
+  function showFatal(msg) {
+    const e = document.getElementById('err');
+    e.style.display = 'flex';
+    e.innerHTML = '场景加载失败：' + String(msg).replace(/</g, '&lt;') + '<br><span style="opacity:.6;font-size:13px">请检查网络（需要从 CDN 加载 three.js）后刷新页面。</span>';
+    document.getElementById('loading').classList.add('done');
+  }
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { Reflector } from 'three/addons/objects/Reflector.js';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+
+if (window.__noWebGL) throw new Error('no webgl');
+
+const isMobile = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent) || Math.min(innerWidth, innerHeight) < 600;
+const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+let quality = isMobile ? 'lite' : 'high';
+
+// ---------- 随机与噪声 ----------
+function mulberry32(a) { return function () { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+const rnd = mulberry32(20260923);
+const R = (a, b) => a + (b - a) * rnd();
+function hash2(x, z) { const s = Math.sin(x * 127.1 + z * 311.7) * 43758.5453; return s - Math.floor(s); }
+function vnoise(x, z) {
+  const xi = Math.floor(x), zi = Math.floor(z), xf = x - xi, zf = z - zi;
+  const u = xf * xf * (3 - 2 * xf), v = zf * zf * (3 - 2 * zf);
+  const a = hash2(xi, zi), b = hash2(xi + 1, zi), c = hash2(xi, zi + 1), d = hash2(xi + 1, zi + 1);
+  return a + (b - a) * u + (c - a) * v + (a - b - c + d) * u * v;
+}
+function fbm(x, z) { let s = 0, amp = .5, f = 1; for (let i = 0; i < 4; i++) { s += amp * vnoise(x * f, z * f); f *= 2.03; amp *= .5; } return s / .9375; }
+const smooth = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
+const mix = (a, b, t) => a + (b - a) * t;
+
+// ---------- 山谷地形 ----------
+const riverX = z => 7 * Math.sin(z * 0.045 + 0.6) + 3.5 * Math.sin(z * 0.12);
+const riverW = z => 3.2 + 1.2 * Math.sin(z * 0.07);
+const WATER_Y = 0.2;
+
+const pads = [];
+function rawH(x, z) {
+  const d = Math.abs(x - riverX(z)), rw = riverW(z);
+  const n1 = fbm(x * .045 + 3.1, z * .045 - 1.7), n2 = fbm(x * .018 - 5, z * .018 + 2);
+  let h = .9 + n1 * 1.8;
+  const side = smooth(9, 42, d);
+  h += side * side * (9 + n2 * 16);
+  h += smooth(-30, -110, z) * (8 + n2 * 22) * smooth(4, 20, d);
+  h = mix(-1.2, h, smooth(rw, rw + 3.2, d));
+  return h;
+}
+function padH(x, z) {
+  let h = rawH(x, z);
+  for (const p of pads) { const dd = Math.hypot(x - p.x, z - p.z); h = mix(h, p.h, smooth(p.r + 2.5, p.r, dd)); }
+  return h;
+}
+function addPad(x, z, r, h) { pads.push({ x, z, r, h: h ?? Math.round(rawH(x, z) * 2) / 2 }); }
+addPad(-10, -3, 4.5, 1.5);            // 茶屋
+addPad(9, -15, 3.2, 2); addPad(14, -7, 3.5, 2.5); addPad(6, -25, 3, 2); addPad(15, -20, 2.8, 3); // 村落
+addPad(21, -36, 5);                   // 神社
+addPad(-30, -62, 3.5);                // 五重塔
+addPad(-7.5, -8, 2, 1); addPad(5.1, -8, 2, 1); // 桥头
+
+const X0 = -80, X1 = 80, Z0 = -116, Z1 = 66, GW = X1 - X0, GD = Z1 - Z0;
+const HF = new Float32Array(GW * GD);
+for (let j = 0; j < GD; j++) for (let i = 0; i < GW; i++) {
+  const x = X0 + i + .5, z = Z0 + j + .5;
+  let h = padH(x, z);
+  // 量化前加细小抖动，打散等高线形成的规则条纹
+  HF[j * GW + i] = h > 0 ? Math.max(0, Math.round(h * 2 + (hash2(x * 1.7, z * 1.3) - .5) * .9) / 2) : h;
+}
+function hAt(x, z) {
+  const i = Math.min(GW - 1, Math.max(0, Math.floor(x - X0))), j = Math.min(GD - 1, Math.max(0, Math.floor(z - Z0)));
+  return HF[j * GW + i];
+}
+
+// 小径
+const paths = [
+  [[-7.5, -8], [-10, -3], [-9, 6], [-7, 18], [-6, 30]],
+  [[5.1, -8], [9, -11], [12, -15], [15, -24], [18, -30], [21, -33]],
+  [[9, -11], [14, -5]],
+];
+function distSeg(px, pz, ax, az, bx, bz) {
+  const vx = bx - ax, vz = bz - az, t = Math.max(0, Math.min(1, ((px - ax) * vx + (pz - az) * vz) / (vx * vx + vz * vz)));
+  return Math.hypot(px - ax - vx * t, pz - az - vz * t);
+}
+function pathDist(x, z) { let m = 1e9; for (const p of paths) for (let k = 0; k < p.length - 1; k++) m = Math.min(m, distSeg(x, z, p[k][0], p[k][1], p[k + 1][0], p[k + 1][1])); return m; }
+
+// ---------- 渲染器 ----------
+const renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: 'high-performance' });
+renderer.setPixelRatio(quality === 'high' ? Math.min(devicePixelRatio, 2) : 1);
+renderer.setSize(innerWidth, innerHeight);
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.0;
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+document.body.prepend(renderer.domElement);
+
+const scene = new THREE.Scene();
+scene.fog = new THREE.Fog(0x3a4a72, 40, 380);
+const camera = new THREE.PerspectiveCamera(isMobile ? 58 : 46, innerWidth / innerHeight, 0.1, 2000);
+
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true; controls.dampingFactor = .07;
+controls.minDistance = 3; controls.maxDistance = 150; controls.maxPolarAngle = 1.53;
+controls.zoomSpeed = .8; controls.rotateSpeed = .5;
+
+// ---------- 颜色工具 ----------
+const tmpC = new THREE.Color();
+function jit(hex, l = .04, h = .0) { const c = new THREE.Color(hex); const hsl = {}; c.getHSL(hsl); c.setHSL(hsl.h + (rnd() - .5) * h, hsl.s, Math.max(0, hsl.l + (rnd() - .5) * 2 * l)); return c; }
+const C = {
+  stone: 0x7a766e, stoneDark: 0x55534f, wood: 0x5a3b28, woodDark: 0x3a271c, plaster: 0xe8dfcf, roof: 0x3d4450, roofB: 0x343a44,
+  red: 0xa8322a, redDark: 0x7e2420, gold: 0xb8924a, paper: 0xffc98a, lantern: 0xffb066, redLamp: 0xff7040,
+};
+
+// ---------- 实例化收集器 ----------
+const solids = [], glows = [], blossoms = [];
+function pushBox(list, x, y, z, sx, sy, sz, color, ry = 0) { list.push([x, y, z, sx, sy, sz, ry, color instanceof THREE.Color ? color : new THREE.Color(color)]); }
+function builder(ox, oy, oz, ry = 0) {
+  const c = Math.cos(ry), s = Math.sin(ry);
+  const w = (lx, lz) => [ox + lx * c + lz * s, oz - lx * s + lz * c];
+  return {
+    box(lx, ly, lz, sx, sy, sz, col, j = .03) { const [x, z] = w(lx, lz); pushBox(solids, x, oy + ly, z, sx, sy, sz, typeof col === 'number' ? jit(col, j) : col, ry); },
+    glow(lx, ly, lz, sx, sy, sz, col) { const [x, z] = w(lx, lz); pushBox(glows, x, oy + ly, z, sx, sy, sz, col, ry); },
+    world: w,
+  };
+}
+
+// 屋顶：层叠瓦片 + 挑檐 + 翘角 + 瓦当
+function roof(b, w, d, y, n, oh, col, opts = {}) {
+  const W0 = w + oh * 2, D0 = d + oh * 2, lh = .2;
+  for (let i = 0; i < n; i++) {
+    const t = i / n;
+    const lw = W0 - t * (opts.gable ? W0 * .12 : W0 * .62), ld = D0 - t * D0 * .86;
+    b.box(0, y + i * lh + lh / 2, 0, lw, lh, ld, i % 2 ? col : new THREE.Color(col).multiplyScalar(.82), .015);
+  }
+  const top = y + n * lh;
+  const rl = opts.gable ? W0 * .9 : W0 * .38 + .3;
+  b.box(0, top + .12, 0, rl, .24, .34, C.roofB, .01);
+  b.box(rl / 2, top + .2, 0, .22, .32, .38, C.roofB, .01); b.box(-rl / 2, top + .2, 0, .22, .32, .38, C.roofB, .01);
+  for (const sx of [-1, 1]) for (const sz of [-1, 1]) b.box(sx * (W0 / 2 - .08), y + .28, sz * (D0 / 2 - .08), .26, .16, .26, col, .01);
+  const nt = Math.floor(W0 / .34);
+  for (let k = 0; k < nt; k++) { const x = -W0 / 2 + .17 + k * .34; b.box(x, y + .02, D0 / 2 - .02, .12, .1, .08, C.roofB, .02); b.box(x, y + .02, -D0 / 2 + .02, .12, .1, .08, C.roofB, .02); }
+}
+
+// 窗格：发光纸窗 + 木格
+function windowAt(b, lx, ly, lz, ww, wh, face) {
+  // face: 0 = +z, 1 = -z, 2 = +x, 3 = -x（在本地坐标）
+  const vert = face >= 2;
+  const gx = vert ? .05 : ww, gz = vert ? ww : .05;
+  b.glow(lx, ly, lz, gx, wh, gz, new THREE.Color(C.paper));
+  const off = [.04, -.04, .04, -.04][face];
+  const px = vert ? lx + off : lx, pz = vert ? lz : lz + off;
+  const bars = 3;
+  for (let k = 1; k < bars; k++) { const o = -ww / 2 + ww * k / bars; b.box(vert ? px : px + o, ly, vert ? pz + o : pz, vert ? .04 : .04, wh, vert ? .04 : .04, C.woodDark, 0); }
+  b.box(px, ly, pz, vert ? .04 : ww, .04, vert ? ww : .04, C.woodDark, 0);
+  b.box(px, ly + wh / 2, pz, vert ? .06 : ww + .1, .06, vert ? ww + .1 : .06, C.wood, 0);
+  b.box(px, ly - wh / 2, pz, vert ? .06 : ww + .1, .06, vert ? ww + .1 : .06, C.wood, 0);
+}
+
+function house(x, z, ry, w, d, hh, o = {}) {
+  const y0 = hAt(x, z);
+  const b = builder(x, y0, z, ry);
+  b.box(0, .2, 0, w + .7, .4, d + .7, C.stone);
+  b.box(0, .45, 0, w + .2, .1, d + .2, C.woodDark);
+  const wallCol = o.wall ?? C.plaster;
+  b.box(0, .5 + hh / 2, 0, w - .12, hh, d - .12, wallCol, .02);
+  const np = Math.max(2, Math.round(w / 1.5));
+  for (let k = 0; k <= np; k++) { const px = -w / 2 + w * k / np; b.box(px, .5 + hh / 2, d / 2, .2, hh, .2, C.wood); b.box(px, .5 + hh / 2, -d / 2, .2, hh, .2, C.wood); }
+  b.box(w / 2, .5 + hh / 2, 0, .2, hh, .2, C.wood); b.box(-w / 2, .5 + hh / 2, 0, .2, hh, .2, C.wood);
+  b.box(0, .5 + hh * .18, d / 2 - .03, w, .12, .1, C.woodDark); // 腰板
+  if (o.kura) { b.box(0, .5 + hh * .2, 0, w - .05, hh * .4, d - .05, 0x2e2a28); windowAt(b, 0, .5 + hh * .7, d / 2 - .02, .5, .4, 0); }
+  else {
+    const nw = Math.max(1, Math.floor(w / 1.4));
+    for (let k = 0; k < nw; k++) { const lx = -w / 2 + w * (k + .5) / nw; if (o.door && k === Math.floor(nw / 2)) { b.box(lx, .5 + hh * .42, d / 2 + .01, .8, hh * .84, .06, C.woodDark); b.glow(lx, .5 + hh * .42, d / 2 + .05, .5, hh * .6, .02, new THREE.Color(C.paper).multiplyScalar(.6)); continue; } windowAt(b, lx, .5 + hh * .58, d / 2 - .02, .8, .62, 0); }
+    windowAt(b, 0, .5 + hh * .58, -d / 2 + .02, .8, .62, 1);
+    if (d > 2.4) { windowAt(b, w / 2 - .02, .5 + hh * .58, 0, .8, .62, 2); windowAt(b, -w / 2 + .02, .5 + hh * .58, 0, .8, .62, 3); }
+  }
+  b.box(0, .5 + hh, 0, w + .3, .18, d + .3, C.woodDark);
+  let top = .5 + hh + .09;
+  if (o.second) {
+    roof(b, w, d, top, 3, .75, o.roofCol ?? C.roof);
+    const w2 = w * .7, d2 = d * .72, h2 = hh * .8, y2 = top + .5;
+    b.box(0, y2 + h2 / 2, 0, w2, h2, d2, wallCol, .02);
+    for (const sx of [-1, 1]) for (const sz of [-1, 1]) b.box(sx * w2 / 2, y2 + h2 / 2, sz * d2 / 2, .2, h2, .2, C.wood);
+    windowAt(b, -w2 / 4, y2 + h2 * .55, d2 / 2 + .02, .7, .55, 0); windowAt(b, w2 / 4, y2 + h2 * .55, d2 / 2 + .02, .7, .55, 0);
+    b.box(0, y2 + h2, 0, w2 + .3, .16, d2 + .3, C.woodDark);
+    roof(b, w2, d2, y2 + h2 + .08, o.roofLayers ?? 5, .7, o.roofCol ?? C.roof);
+  } else roof(b, w, d, top, o.roofLayers ?? 5, o.oh ?? .75, o.roofCol ?? C.roof, o);
+  return b;
+}
+
+function stoneLantern(x, z, s = 1, y0 = null) {
+  const y = y0 ?? hAt(x, z), b = builder(x, y, z, R(0, .6));
+  b.box(0, .12 * s, 0, .7 * s, .24 * s, .7 * s, C.stone, .05);
+  b.box(0, .6 * s, 0, .26 * s, .8 * s, .26 * s, C.stone, .05);
+  b.box(0, 1.05 * s, 0, .56 * s, .14 * s, .56 * s, C.stone, .05);
+  b.box(0, 1.3 * s, 0, .46 * s, .36 * s, .46 * s, C.stoneDark, .03);
+  b.glow(0, 1.3 * s, 0, .3 * s, .26 * s, .5 * s, new THREE.Color(C.lantern));
+  b.glow(0, 1.3 * s, 0, .5 * s, .26 * s, .3 * s, new THREE.Color(C.lantern));
+  b.box(0, 1.56 * s, 0, .86 * s, .12 * s, .86 * s, C.stone, .05);
+  b.box(0, 1.68 * s, 0, .5 * s, .12 * s, .5 * s, C.stone, .05);
+  b.box(0, 1.82 * s, 0, .16 * s, .18 * s, .16 * s, C.stone, .05);
+}
+
+function torii(x, z, ry, s = 1) {
+  const y = hAt(x, z), b = builder(x, y, z, ry);
+  for (const sx of [-1, 1]) { b.box(sx * 1.25 * s, 1.6 * s, 0, .28 * s, 3.2 * s, .28 * s, C.red, .02); b.box(sx * 1.25 * s, .12 * s, 0, .4 * s, .24 * s, .4 * s, 0x222222, .02); }
+  b.box(0, 2.55 * s, 0, 3.1 * s, .2 * s, .22 * s, C.red, .02);
+  b.box(0, 3.25 * s, 0, 3.9 * s, .24 * s, .36 * s, C.red, .02);
+  b.box(0, 3.42 * s, 0, 4.2 * s, .14 * s, .42 * s, 0x1e1e22, .01);
+  b.box(0, 2.9 * s, 0, .22 * s, .5 * s, .18 * s, C.red, .02);
+}
+
+function paperLantern(b, lx, ly, lz, col = C.redLamp) {
+  b.box(lx, ly + .26, lz, .08, .12, .08, C.woodDark, 0);
+  b.glow(lx, ly, lz, .3, .42, .3, new THREE.Color(col));
+  b.box(lx, ly + .22, lz, .34, .05, .34, 0x222222, 0); b.box(lx, ly - .22, lz, .34, .05, .34, 0x222222, 0);
+}
+
+// ---------- 樱花树（体素分枝 + 不规则花簇） ----------
+const BLOSSOM = [0xf6c6d3, 0xf2b3c6, 0xeaa2b8, 0xfbd8e2, 0xf7cfd9, 0xe893ad];
+function sakura(x, z, s = 1, seed = 1, o = {}) {
+  const r = mulberry32(seed);
+  const y = o.y ?? hAt(x, z);
+  const wood = (px, py, pz, t) => pushBox(solids, px, py, pz, t, t, t, jit(0x3b2a24, .03));
+  // 根部
+  for (let k = 0; k < 5; k++) { const a = k / 5 * Math.PI * 2 + r(); for (let q = 1; q < 4; q++) wood(x + Math.cos(a) * q * .28 * s, y + .12 * s - q * .04, z + Math.sin(a) * q * .28 * s, (.4 - q * .07) * s); }
+  function grow(px, py, pz, dx, dy, dz, len, th, depth) {
+    const step = Math.max(.12, th * .7);
+    const n = Math.ceil(len / step);
+    for (let k = 0; k < n; k++) {
+      dx += (r() - .5) * .25; dz += (r() - .5) * .25; dy += (r() - .5) * .12;
+      const l = Math.hypot(dx, dy, dz); dx /= l; dy /= l; dz /= l;
+      px += dx * step; py += dy * step; pz += dz * step;
+      wood(px, py, pz, th * (1 - .35 * k / n));
+    }
+    if (depth >= (o.depth ?? 4) || th < .09 * s) { cluster(px, py, pz); return; }
+    const nb = depth === 0 ? 3 : 2 + (r() < .45 ? 1 : 0);
+    for (let q = 0; q < nb; q++) {
+      const a = r() * Math.PI * 2, spread = .55 + depth * .12;
+      let ndx = dx + Math.cos(a) * spread + (o.lean ?? 0) * .3, ndz = dz + Math.sin(a) * spread, ndy = dy * .7 + .15;
+      grow(px, py, pz, ndx, ndy, ndz, len * (.62 + r() * .2), th * .66, depth + 1);
+    }
+    if (depth >= 2 && r() < .5) cluster(px, py, pz, .7);
+  }
+  function cluster(cx, cy, cz, k = 1) {
+    const rad = (1.05 + r() * .5) * s * k, n = Math.round((34 + r() * 22) * k * (o.dense ?? 1));
+    for (let i = 0; i < n; i++) {
+      const u = r() * 2 - 1, a = r() * Math.PI * 2, rr = Math.cbrt(r()) * rad;
+      const sq = Math.sqrt(1 - u * u);
+      const px = cx + sq * Math.cos(a) * rr * 1.25, py = cy + u * rr * .62 + .15 * s, pz = cz + sq * Math.sin(a) * rr * 1.25;
+      if (vnoise(px * 2.3 + seed, pz * 2.3 + py) < .3) continue; // 留出空隙
+      const sz = (.13 + r() * .15) * Math.min(s, 1.1);
+      const c = new THREE.Color(BLOSSOM[(r() * BLOSSOM.length) | 0]); c.offsetHSL(0, 0, (r() - .5) * .06 - (u < -.3 ? .08 : 0));
+      pushBox(blossoms, px, py, pz, sz, sz, sz, c, r() * 1.5);
+    }
+  }
+  const th0 = .5 * s;
+  grow(x, y, z, (o.lean ?? 0) + (r() - .5) * .3, 1, (r() - .5) * .3, 2.4 * s, th0, 0);
+}
+
+function conifer(x, z, s) {
+  const y = hAt(x, z);
+  pushBox(solids, x, y + .5 * s, z, .3 * s, 1 * s, .3 * s, jit(0x3a2a20, .03));
+  const g = jit(0x2c4a38, .05, .04);
+  for (let k = 0; k < 4; k++) { const w = (1.6 - k * .36) * s; pushBox(solids, x, y + (1 + k * .7) * s, z, w, .7 * s, w, g.clone().offsetHSL(0, 0, k * .015), R(0, 1)); }
+}
+
+// ---------- 场景：建筑与景物 ----------
+// 茶屋（带外廊、暖帘、红伞）
+{
+  const x = -10, z = -3, ry = -1.35;
+  const b = house(x, z, ry, 5.6, 3.2, 1.9, { door: true, roofLayers: 4, oh: .9, gable: true });
+  const y0 = hAt(x, z);
+  const bb = builder(x, y0, z, ry);
+  bb.box(0, .55, 2.35, 6.2, .1, 1.3, C.wood);
+  for (let k = 0; k < 5; k++) bb.box(-2.8 + k * 1.4, 1.5, 2.95, .16, 2, .16, C.wood);
+  bb.box(0, 2.45, 2.95, 6.2, .14, .16, C.woodDark);
+  for (let k = 0; k < 4; k++) bb.box(-1.5 + k * 1, 2.1, 1.66, .9, .55, .04, k % 2 ? 0x283a5c : 0x2f4468, .01);
+  paperLantern(bb, -2.2, 2.05, 2.95); paperLantern(bb, 2.2, 2.05, 2.95);
+  bb.box(-1.2, .8, 3.6, 1.6, .12, .6, C.red); bb.box(-1.2, .6, 3.6, 1.5, .3, .5, C.woodDark);
+  bb.box(1.6, 1.2, 3.8, .06, 2.2, .06, C.woodDark);
+  for (let k = 0; k < 3; k++) bb.box(1.6, 2.25 + k * .1, 3.8, 2.2 - k * .7, .08, 2.2 - k * .7, C.red, .02);
+}
+// 村落：用途、体量不同
+house(9, -15, .25, 4.2, 3, 2.1, { door: true, second: true });
+house(14, -7, -.3, 3.6, 2.8, 1.8, { door: true });
+house(6, -25, .1, 2.6, 2.2, 1.9, { kura: true, roofLayers: 4, roofCol: 0x2f343c });
+house(15, -20, .5, 3, 2.4, 1.7, {});
+stoneLantern(11.4, -10.5, .8);
+// 神社
+{
+  const x = 21, z = -37, y0 = hAt(x, z), ry = -.45;
+  const b = builder(x, y0, z, ry);
+  b.box(0, .4, 0, 8, .8, 6, C.stone, .02);
+  for (let k = 0; k < 4; k++) b.box(0, .1 + k * .2, 3.3 + k * -.25 + .8, 2.4, .2, .5, C.stone, .03);
+  b.box(0, .9, 0, 6.8, .2, 4.8, C.woodDark);
+  const h = 2.6;
+  b.box(0, 1 + h / 2, 0, 5.8, h, 3.8, C.plaster, .02);
+  for (let k = 0; k <= 4; k++) { const px = -2.9 + k * 1.45; b.box(px, 1 + h / 2, 1.95, .26, h, .26, C.red); b.box(px, 1 + h / 2, -1.95, .26, h, .26, C.red); }
+  for (let k = 0; k < 3; k++) windowAt(b, -1.45 + k * 1.45, 1 + h * .55, 1.9, 1.1, 1.1, 0);
+  b.box(0, 1 + h, 0, 6.4, .22, 4.4, C.redDark);
+  roof(b, 5.8, 3.8, 1 + h + .11, 7, 1.2, 0x2e4c4a, { gable: true });
+  paperLantern(b, -2.3, 3.1, 2.7, C.lantern); paperLantern(b, 2.3, 3.1, 2.7, C.lantern);
+  stoneLantern(...b.world(-3.2, 5.2), .9); stoneLantern(...b.world(3.2, 5.2), .9);
+}
+torii(16.1, -26.2, -.6, .85); torii(19.2, -31, -.55, .85);
+// 五重塔
+{
+  const x = -30, z = -62, y0 = hAt(x, z), b = builder(x, y0, z, .3);
+  b.box(0, .3, 0, 5, .6, 5, C.stone, .02);
+  let y = .6;
+  for (let k = 0; k < 5; k++) {
+    const w = 3.2 - k * .34, hh = 1.35;
+    b.box(0, y + hh / 2, 0, w, hh, w, C.plaster, .02);
+    for (const sx of [-1, 1]) for (const sz of [-1, 1]) b.box(sx * w / 2, y + hh / 2, sz * w / 2, .22, hh, .22, C.red);
+    for (let f = 0; f < 4; f++) { const a = f * Math.PI / 2; const [wx, wz] = [Math.sin(a) * w / 2, Math.cos(a) * w / 2]; windowAt(b, wx * 1.01, y + hh * .55, wz * 1.01, .5, .5, [0, 2, 1, 3][f]); }
+    b.box(0, y + hh, 0, w + .4, .16, w + .4, C.redDark);
+    roof(b, w, w, y + hh + .08, 3, 1.05, C.roof);
+    y += hh + .95;
+  }
+  b.box(0, y + 1.4, 0, .16, 2.8, .16, C.gold, .02);
+  for (let k = 0; k < 7; k++) b.box(0, y + .4 + k * .3, 0, .5 - k * .03, .06, .5 - k * .03, C.gold, .02);
+}
+// 红桥（拱形）
+{
+  const zc = -8, xa = -7.5, xb = 5.1, n = 34, ya = 1.05;
+  for (let k = 0; k < n; k++) {
+    const t = (k + .5) / n, x = mix(xa, xb, t), y = ya + Math.sin(Math.PI * t) * 1.6;
+    pushBox(solids, x, y, zc, (xb - xa) / n + .02, .16, 2.1, jit(0x6b4630, .03));
+    pushBox(solids, x, y - .15, zc, (xb - xa) / n + .02, .14, 1.9, jit(C.redDark, .02));
+    for (const sz of [-1, 1]) {
+      pushBox(solids, x, y + .72, zc + sz * 1.02, (xb - xa) / n + .03, .09, .12, jit(C.red, .02));
+      if (k % 4 === 0) pushBox(solids, x, y + .38, zc + sz * 1.02, .14, .78, .14, jit(C.red, .02));
+    }
+  }
+  for (const t of [.28, .5, .72]) { const x = mix(xa, xb, t), y = ya + Math.sin(Math.PI * t) * 1.6; for (const sz of [-1, 1]) pushBox(solids, x, (y - .2 - .9) / 2, zc + sz * .8, .26, y - .2 + .9, .26, jit(C.woodDark, .02)); }
+  for (const x of [xa - .2, xb + .2]) for (const sz of [-1, 1]) { pushBox(solids, x, ya + .45, zc + sz * 1.05, .2, 1, .2, jit(C.red, .02)); pushBox(glows, x, ya + 1.05, zc + sz * 1.05, .16, .2, .16, new THREE.Color(C.lantern)); }
+}
+stoneLantern(-4, 34, 1.1); stoneLantern(-9.2, -9.5, .9); stoneLantern(6.6, -10.4, .9); stoneLantern(-8.2, 12, .8);
+
+// 樱花：前景古树 + 中景 + 远景
+sakura(-7.5, 43, 1.4, 7, { lean: .6, depth: 5, dense: 1.5 });
+const trees = [];
+function freeSpot(x, z, clear = 4) {
+  const d = Math.abs(x - riverX(z)); if (d < riverW(z) + 2.5) return false;
+  for (const p of pads) if (Math.hypot(x - p.x, z - p.z) < p.r + clear) return false;
+  if (pathDist(x, z) < 1.6) return false;
+  for (const t of trees) if (Math.hypot(x - t[0], z - t[1]) < t[2]) return false;
+  return true;
+}
+[[-13.5, 4], [-15, -11], [3.2, -18.5], [12.5, 1.5], [18.5, -13], [-3, -34], [25, -28], [-17, 18], [-14, 30], [10.5, -31]].forEach(([x, z], i) => {
+  if (!freeSpot(x, z, 1.5)) return; trees.push([x, z, 3]); sakura(x, z, R(.85, 1.15), 100 + i, { depth: 4 });
+});
+for (let k = 0, tries = 0; k < 40 && tries < 2000; tries++) {
+  const x = R(-60, 60), z = R(-110, -38);
+  if (!freeSpot(x, z, 2) || hAt(x, z) < 1) continue;
+  trees.push([x, z, 3]); sakura(x, z, R(.7, 1), 300 + k, { depth: 3, dense: .8 }); k++;
+}
+for (let k = 0, tries = 0; k < 520 && tries < 12000; tries++) {
+  const x = R(-79, 79), z = R(-115, 44);
+  const d = Math.abs(x - riverX(z));
+  if (d < 13 || hAt(x, z) < 2.5 || fbm(x * .06 + 9, z * .06) < .47) continue;
+  if (!freeSpot(x, z, 3)) continue;
+  if (Math.hypot(x + 36, z - 12) < 16) continue; // 给俯瞰机位留出视线
+  trees.push([x, z, 1.3]); conifer(x, z, R(.9, 1.6)); k++;
+}
+// 河岸湿石与草丛
+for (let k = 0, tries = 0; k < 150 && tries < 20000; tries++) {
+  const z = R(-100, 62), side = rnd() < .5 ? -1 : 1, off = riverW(z) + R(.6, 3);
+  const x = riverX(z) + side * off;
+  const h = hAt(x, z); if (h < WATER_Y + .2) continue;
+  const s = R(.25, .6);
+  pushBox(solids, x, h + s * .2, z, s, s * .6, s * R(.7, 1.2), jit(rnd() < .5 ? 0x6a6d68 : 0x5a6358, .04), R(0, 3)); k++;
+}
+for (let k = 0; k < 500; k++) {
+  const x = R(-40, 40), z = R(-60, 60);
+  const d = Math.abs(x - riverX(z)); if (d < riverW(z) + 1.2 || pathDist(x, z) < 1) continue;
+  const h = hAt(x, z); if (h < WATER_Y) continue;
+  const s = R(.1, .22); pushBox(solids, x, h + s * .5, z, s, s * 1.4, s, jit(rnd() < .4 ? 0x86a352 : 0x62823f, .05), R(0, 3));
+}
+// 前景落花在地面
+for (let k = 0; k < 160; k++) { const x = -6 + R(-5, 7), z = 42 + R(-5, 5); const h = hAt(x, z); if (h < WATER_Y) continue; pushBox(blossoms, x, h + .03, z, .12, .04, .12, new THREE.Color(BLOSSOM[k % 6]), R(0, 3)); }
+
+// ---------- 地形网格（实例化柱体） ----------
+const unitBox = new THREE.BoxGeometry(1, 1, 1);
+function terrainColor(x, z, h) {
+  const d = Math.abs(x - riverX(z)), rw = riverW(z);
+  if (h < WATER_Y) return jit(0x2f3330, .02);
+  if (pathDist(x, z) < .95) return jit(0x8e8576, .04);
+  if (d < rw + 1.4) return jit(rnd() < .5 ? 0x4c5446 : 0x55604a, .04);
+  const n = fbm(x * .12, z * .12);
+  if (h > 26) return jit(0x9aa2ab, .05);
+  if (h > 17) return jit(0x6c6a62, .05);
+  const g = new THREE.Color(0x4b6b35).lerp(new THREE.Color(0x789448), n);
+  const hsl = {}; g.getHSL(hsl); g.setHSL(hsl.h, hsl.s, hsl.l + (rnd() - .5) * .04);
+  return g;
+}
+const terrainMat = new THREE.MeshStandardMaterial({ roughness: .95, metalness: 0 });
+terrainMat.onBeforeCompile = (sh) => {
+  sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying float vSide;')
+    .replace('#include <begin_vertex>', '#include <begin_vertex>\nvSide = 1.0 - step(0.5, abs(normal.y));');
+  sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying float vSide;')
+    .replace('#include <color_fragment>', '#include <color_fragment>\ndiffuseColor.rgb = mix(diffuseColor.rgb, diffuseColor.rgb * vec3(0.62,0.5,0.4), vSide * 0.75);');
+};
+const terrain = new THREE.InstancedMesh(unitBox, terrainMat, GW * GD);
+{
+  const m = new THREE.Matrix4(), q = new THREE.Quaternion(), p = new THREE.Vector3(), s = new THREE.Vector3();
+  let n = 0;
+  for (let j = 0; j < GD; j++) for (let i = 0; i < GW; i++) {
+    const x = X0 + i + .5, z = Z0 + j + .5, h = HF[j * GW + i];
+    const bot = -4;
+    p.set(x, (h + bot) / 2, z); s.set(1, h - bot, 1);
+    m.compose(p, q, s); terrain.setMatrixAt(n, m); terrain.setColorAt(n, terrainColor(x, z, h)); n++;
+  }
+}
+terrain.castShadow = true; terrain.receiveShadow = true;
+scene.add(terrain);
+
+// 远山与雪峰（大体素）
+{
+  const cells = [];
+  for (let gz = -250; gz < -112; gz += 4) for (let gx = -200; gx < 200; gx += 4) {
+    const n = fbm(gx * .012 + 4, gz * .012), ridge = 1 - Math.abs(fbm(gx * .02 - 2, gz * .02 + 7) * 2 - 1);
+    const dist = smooth(-112, -200, gz);
+    const h = 8 + dist * (20 + ridge * 55 * n + n * 22);
+    cells.push([gx + 2, gz + 2, Math.round(h / 2) * 2]);
+  }
+  for (let gz = -112; gz < 66; gz += 4) for (const side of [-1, 1]) for (let k = 0; k < 14; k++) {
+    const gx = side * (82 + k * 4);
+    const n = fbm(gx * .02, gz * .02 + 11);
+    cells.push([gx, gz + 2, Math.round((14 + k * 2.2 + n * 18) / 2) * 2]);
+  }
+  const mesh = new THREE.InstancedMesh(unitBox, terrainMat, cells.length);
+  const m = new THREE.Matrix4(), q = new THREE.Quaternion(), p = new THREE.Vector3(), s = new THREE.Vector3();
+  cells.forEach(([x, z, h], i) => {
+    p.set(x, (h - 6) / 2, z); s.set(4, h + 6, 4); m.compose(p, q, s); mesh.setMatrixAt(i, m);
+    const snow = h > 44 ? 1 : h > 34 ? .5 : 0;
+    const c = snow ? jit(0xdfe6ee, .03) : h > 20 ? jit(0x5b6168, .04) : jit(0x34503a, .04);
+    if (snow === .5) c.lerp(new THREE.Color(0x5b6168), rnd() * .6);
+    mesh.setColorAt(i, c);
+  });
+  mesh.receiveShadow = true;
+  scene.add(mesh);
+}
+
+// 把收集到的盒子变成实例网格
+function toInstanced(list, mat, cast = true) {
+  const mesh = new THREE.InstancedMesh(unitBox, mat, list.length);
+  const m = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Euler(), p = new THREE.Vector3(), s = new THREE.Vector3();
+  list.forEach((b, i) => { p.set(b[0], b[1], b[2]); s.set(b[3], b[4], b[5]); e.set(0, b[6], 0); q.setFromEuler(e); m.compose(p, q, s); mesh.setMatrixAt(i, m); mesh.setColorAt(i, b[7]); });
+  mesh.castShadow = cast; mesh.receiveShadow = true;
+  scene.add(mesh); return mesh;
+}
+const solidMat = new THREE.MeshStandardMaterial({ roughness: .85, metalness: 0 });
+toInstanced(solids, solidMat);
+const blossomMat = new THREE.MeshStandardMaterial({ roughness: .8, metalness: 0 });
+const bloomU = { uEm: { value: .12 } };
+blossomMat.onBeforeCompile = (sh) => {
+  sh.uniforms.uEm = bloomU.uEm;
+  sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform float uEm;')
+    .replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\ntotalEmissiveRadiance += vColor * uEm;');
+};
+toInstanced(blossoms, blossomMat);
+const glowMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+const glowMesh = toInstanced(glows, glowMat, false);
+
+// ---------- 天空 ----------
+const skyU = { top: { value: new THREE.Color() }, hor: { value: new THREE.Color() }, glow: { value: new THREE.Color() }, sunDir: { value: new THREE.Vector3(-.3, .3, -1).normalize() } };
+const sky = new THREE.Mesh(new THREE.SphereGeometry(1000, 32, 16), new THREE.ShaderMaterial({
+  side: THREE.BackSide, depthWrite: false, fog: false, uniforms: skyU,
+  vertexShader: 'varying vec3 vDir; void main(){ vDir = position; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.); }',
+  fragmentShader: `uniform vec3 top, hor, glow, sunDir; varying vec3 vDir;
+    void main(){ vec3 d = normalize(vDir); float h = d.y;
+      vec3 c = mix(hor, top, smoothstep(-0.02, 0.55, h));
+      float s = max(dot(d, normalize(sunDir)), 0.);
+      c += glow * (pow(s, 12.) * .3 + smoothstep(.99988, .99994, s) * 1.6);
+      c = mix(c, hor * .92, smoothstep(0.0, -0.25, h));
+      gl_FragColor = vec4(c, 1.);
+      #include <tonemapping_fragment>
+      #include <colorspace_fragment>
+    }`,
+}));
+sky.renderOrder = -1;
+scene.add(sky);
+const stars = (() => {
+  const n = 1400, pos = new Float32Array(n * 3);
+  for (let i = 0; i < n; i++) { const u = R(.08, 1), a = R(0, Math.PI * 2), r = 900; const sq = Math.sqrt(1 - u * u); pos.set([Math.cos(a) * sq * r, u * r, Math.sin(a) * sq * r], i * 3); }
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  const p = new THREE.Points(g, new THREE.PointsMaterial({ color: 0xdfe8ff, size: 1.6, sizeAttenuation: false, transparent: true, opacity: .7, fog: false, depthWrite: false }));
+  scene.add(p); return p;
+})();
+
+// ---------- 光照 ----------
+const hemi = new THREE.HemisphereLight(0x6d86c4, 0x2a2638, 1.1);
+scene.add(hemi);
+const sun = new THREE.DirectionalLight(0x9fb4ff, .9);
+sun.castShadow = true;
+sun.shadow.mapSize.set(quality === 'high' ? 2048 : 1024, quality === 'high' ? 2048 : 1024);
+Object.assign(sun.shadow.camera, { left: -70, right: 70, top: 70, bottom: -70, near: 1, far: 400 });
+sun.shadow.bias = -.0004; sun.shadow.normalBias = .04;
+sun.target.position.set(0, 0, -15);
+scene.add(sun, sun.target);
+const lamps = [[-10.5, 3, -1.5], [10, 4, -12], [21, 5, -33], [-1.2, 3.5, -8], [-5, 2.5, 34]].map(([x, y, z]) => {
+  const l = new THREE.PointLight(0xffa860, 6, 14, 2); l.position.set(x, hAt(x, z) + y - 1, z); scene.add(l); return l;
+});
+
+// ---------- 水面（真实反射 + 波纹 + 深浅） ----------
+const WaterShader = {
+  name: 'ValleyWater',
+  uniforms: { color: { value: null }, tDiffuse: { value: null }, textureMatrix: { value: null }, uTime: { value: 0 }, uDeep: { value: new THREE.Color(0x0e1c33) }, uRain: { value: 0 } },
+  vertexShader: `uniform mat4 textureMatrix; varying vec4 vUv; varying vec3 vWorld;
+    void main(){ vUv = textureMatrix * vec4(position, 1.); vec4 wp = modelMatrix * vec4(position, 1.); vWorld = wp.xyz; gl_Position = projectionMatrix * viewMatrix * wp; }`,
+  fragmentShader: `uniform vec3 color; uniform sampler2D tDiffuse; uniform float uTime, uRain; uniform vec3 uDeep;
+    varying vec4 vUv; varying vec3 vWorld;
+    float riverX(float z){ return 7.*sin(z*.045+.6) + 3.5*sin(z*.12); }
+    float riverW(float z){ return 3.2 + 1.2*sin(z*.07); }
+    void main(){
+      vec2 w = vWorld.xz;
+      float r = 1. + uRain * 2.5;
+      vec2 off = vec2(sin(w.y*1.7 + uTime*1.3) + sin(w.x*1.1 - uTime*.9 + w.y*.4),
+                      cos(w.x*1.9 + uTime*1.1) + cos(w.y*.8 + uTime*.7 - w.x*.3)) * .0035 * r;
+      off += vec2(sin(w.x*6.1+uTime*3.), cos(w.y*5.7-uTime*2.6)) * .0012 * uRain;
+      vec4 uv = vUv; uv.xy += off * uv.w;
+      vec3 refl = texture2DProj(tDiffuse, uv).rgb;
+      vec3 V = normalize(cameraPosition - vWorld);
+      float fres = .22 + .78 * pow(1. - clamp(V.y, 0., 1.), 4.);
+      float d = abs(w.x - riverX(w.y)) / riverW(w.y);
+      float shallow = smoothstep(.55, 1.05, d);
+      vec3 deep = mix(uDeep, uDeep * 1.5 + vec3(.02,.03,.02), shallow);
+      vec3 col = mix(deep, refl, fres * (.9 - shallow * .3));
+      gl_FragColor = vec4(col, 1.);
+      #include <tonemapping_fragment>
+      #include <colorspace_fragment>
+    }`,
+};
+const water = new Reflector(new THREE.PlaneGeometry(170, 190), {
+  shader: WaterShader, clipBias: .003,
+  textureWidth: innerWidth * (quality === 'high' ? .75 : .45), textureHeight: innerHeight * (quality === 'high' ? .75 : .45),
+});
+water.rotation.x = -Math.PI / 2; water.position.set(0, WATER_Y, -25);
+scene.add(water);
+
+// ---------- 动态元素 ----------
+// 飘落花瓣
+const PET = 520;
+const petalMesh = new THREE.InstancedMesh(new THREE.PlaneGeometry(.16, .11), new THREE.MeshStandardMaterial({ color: 0xf6c3d1, side: THREE.DoubleSide, roughness: .8, emissive: 0x3a1a22 }), PET);
+const petals = [];
+for (let i = 0; i < PET; i++) petals.push({ x: R(-30, 30), y: R(0, 14), z: R(-30, 55), vy: R(.35, .7), ph: R(0, 6.28), sp: R(.8, 2), rx: R(0, 6), ry: R(0, 6) });
+petalMesh.frustumCulled = false; scene.add(petalMesh);
+// 萤火虫
+const FF = 90, ffPos = new Float32Array(FF * 3), ffBase = [];
+for (let i = 0; i < FF; i++) { const z = R(-30, 40), x = riverX(z) + R(-8, 8); ffBase.push([x, Math.max(hAt(x, z), WATER_Y) + R(.4, 2.2), z, R(0, 6)]); }
+const ffGeo = new THREE.BufferGeometry(); ffGeo.setAttribute('position', new THREE.BufferAttribute(ffPos, 3));
+const ffMat = new THREE.PointsMaterial({ color: 0xfff0a0, size: .16, transparent: true, opacity: .9, blending: THREE.AdditiveBlending, depthWrite: false });
+const fireflies = new THREE.Points(ffGeo, ffMat); fireflies.frustumCulled = false; scene.add(fireflies);
+// 雨
+const RN = 2400, rainPos = new Float32Array(RN * 6), rainSeed = [];
+for (let i = 0; i < RN; i++) rainSeed.push([R(-40, 40), R(0, 30), R(-40, 40), R(18, 26)]);
+const rainGeo = new THREE.BufferGeometry(); rainGeo.setAttribute('position', new THREE.BufferAttribute(rainPos, 3));
+const rainMat = new THREE.LineBasicMaterial({ color: 0xc8d4e0, transparent: true, opacity: 0, depthWrite: false });
+const rain = new THREE.LineSegments(rainGeo, rainMat); rain.frustumCulled = false; scene.add(rain);
+// 锦鲤
+const koiMesh = new THREE.InstancedMesh(unitBox, new THREE.MeshStandardMaterial({ roughness: .5 }), 6 * 3);
+const kois = []; for (let i = 0; i < 6; i++) kois.push({ z: R(-25, 25), off: R(-1.5, 1.5), sp: R(.4, .9) * (rnd() < .5 ? 1 : -1), ph: R(0, 6) });
+for (let i = 0; i < 18; i++) koiMesh.setColorAt(i, new THREE.Color([0xe8622a, 0xf4f0ea, 0xe8622a][i % 3]).multiplyScalar(i % 6 < 3 ? 1 : .9));
+koiMesh.frustumCulled = false; scene.add(koiMesh);
+// 远处飞鸟
+const birds = []; const birdMat = new THREE.MeshBasicMaterial({ color: 0x1b1f2a, fog: true });
+for (let i = 0; i < 5; i++) {
+  const g = new THREE.Group(); const wl = new THREE.Mesh(unitBox, birdMat), wr = new THREE.Mesh(unitBox, birdMat);
+  wl.scale.set(.9, .06, .25); wr.scale.set(.9, .06, .25); wl.position.x = -.45; wr.position.x = .45;
+  const pl = new THREE.Group(), pr = new THREE.Group(); pl.add(wl); pr.add(wr); g.add(pl, pr);
+  g.userData = { pl, pr, r: R(30, 50), a: R(0, 6), sp: R(.04, .07), y: R(28, 36), ph: R(0, 6) };
+  scene.add(g); birds.push(g);
+}
+
+// ---------- 氛围 ----------
+const MOODS = {
+  blue: { name: '蓝调时刻', top: 0x0b1a3a, hor: 0x4a5f8f, glow: 0xc98aa0, sun: [-.35, .32, -1], fog: 0x3a4a72, fogN: 40, fogF: 380, hs: 0x6d86c4, hg: 0x2a2638, hi: 1.3, dc: 0x9fb4ff, di: .9, exp: 1.0, lamp: 1, ff: 1, star: .75, rain: 0, deep: 0x0e1c33, em: .12, fall: .9 },
+  morning: { name: '清晨', top: 0x7fa6d6, hor: 0xf3d3c0, glow: 0xffd9a8, sun: [.7, .22, -1], fog: 0xd6c8c6, fogN: 50, fogF: 420, hs: 0xbcd4ff, hg: 0x6f5f50, hi: 1.3, dc: 0xffd6a8, di: 2.6, exp: .9, lamp: .12, ff: 0, star: 0, rain: 0, deep: 0x2a4a60, em: .04, fall: 1 },
+  rain: { name: '雨中', top: 0x3b4652, hor: 0x7d8894, glow: 0x8a939c, sun: [-.2, .6, -.6], fog: 0x6d7680, fogN: 12, fogF: 170, hs: 0x9aa6b4, hg: 0x3b3f44, hi: 1.2, dc: 0xc8d2dc, di: .45, exp: .95, lamp: .6, ff: 0, star: 0, rain: 1, deep: 0x1f2a33, em: .06, fall: .5 },
+};
+const cur = {}, tgt = {};
+function moodObj(m) { return { top: new THREE.Color(m.top), hor: new THREE.Color(m.hor), glow: new THREE.Color(m.glow), sun: new THREE.Vector3(...m.sun).normalize(), fog: new THREE.Color(m.fog), fogN: m.fogN, fogF: m.fogF, hs: new THREE.Color(m.hs), hg: new THREE.Color(m.hg), hi: m.hi, dc: new THREE.Color(m.dc), di: m.di, exp: m.exp, lamp: m.lamp, ff: m.ff, star: m.star, rain: m.rain, deep: new THREE.Color(m.deep), em: m.em, fall: m.fall }; }
+Object.assign(cur, moodObj(MOODS.blue)); Object.assign(tgt, moodObj(MOODS.blue));
+let moodKey = 'blue';
+function setMood(k) {
+  moodKey = k; Object.assign(tgt, moodObj(MOODS[k]));
+  document.getElementById('sub').textContent = '樱花山谷 · ' + MOODS[k].name;
+  document.querySelectorAll('#moods button').forEach(b => b.classList.toggle('on', b.dataset.m === k));
+  audio.setMood(k);
+}
+function applyMood(a) {
+  for (const k of ['top', 'hor', 'glow', 'fog', 'hs', 'hg', 'dc', 'deep']) cur[k].lerp(tgt[k], a);
+  cur.sun.lerp(tgt.sun, a).normalize();
+  for (const k of ['fogN', 'fogF', 'hi', 'di', 'exp', 'lamp', 'ff', 'star', 'rain', 'em', 'fall']) cur[k] += (tgt[k] - cur[k]) * a;
+  skyU.top.value.copy(cur.top); skyU.hor.value.copy(cur.hor); skyU.glow.value.copy(cur.glow); skyU.sunDir.value.copy(cur.sun);
+  scene.fog.color.copy(cur.fog); scene.fog.near = cur.fogN; scene.fog.far = cur.fogF;
+  hemi.color.copy(cur.hs); hemi.groundColor.copy(cur.hg); hemi.intensity = cur.hi;
+  sun.color.copy(cur.dc); sun.intensity = cur.di; sun.position.copy(cur.sun).multiplyScalar(160).add(sun.target.position);
+  renderer.toneMappingExposure = cur.exp;
+  glowMat.color.setScalar(.25 + cur.lamp * 3.2);
+  lamps.forEach(l => l.intensity = cur.lamp * 7);
+  ffMat.opacity = cur.ff * .9; fireflies.visible = cur.ff > .02;
+  stars.material.opacity = cur.star; stars.visible = cur.star > .02;
+  rainMat.opacity = cur.rain * .32; rain.visible = cur.rain > .02;
+  water.material.uniforms.uDeep.value.copy(cur.deep); water.material.uniforms.uRain.value = cur.rain;
+  bloomU.uEm.value = cur.em;
+}
+
+// ---------- 后期 ----------
+let composer, bloom;
+function buildComposer() {
+  const pr = renderer.getPixelRatio();
+  const rt = new THREE.WebGLRenderTarget(innerWidth * pr, innerHeight * pr, { type: THREE.HalfFloatType, samples: quality === 'high' ? 4 : 2 });
+  composer = new EffectComposer(renderer, rt);
+  composer.addPass(new RenderPass(scene, camera));
+  bloom = new UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), .38, .55, .92);
+  composer.addPass(bloom);
+  composer.addPass(new OutputPass());
+}
+buildComposer();
+
+// ---------- 镜头 ----------
+const VIEWS = [
+  { p: [8, 10, 56], t: [-2, 3, -20] },
+  { p: [7.5, 1.4, 15], t: [-1.2, 2, -8] },
+  { p: [12.6, 4.6, -20.4], t: [21.5, 5.6, -37] },
+  { p: [-30, 34, 16], t: [2, 0, -18] },
+];
+if (isMobile && innerHeight > innerWidth) { VIEWS[0] = { p: [6, 13, 64], t: [-1, 3, -18] }; }
+let tween = null, curView = 0;
+function goView(i, instant = false) {
+  curView = i;
+  document.querySelectorAll('#views button').forEach(b => b.classList.toggle('on', +b.dataset.v === i));
+  const v = VIEWS[i];
+  if (instant || reduceMotion) { camera.position.set(...v.p); controls.target.set(...v.t); controls.update(); tween = null; return; }
+  tween = { p0: camera.position.clone(), t0: controls.target.clone(), p1: new THREE.Vector3(...v.p), t1: new THREE.Vector3(...v.t), s: performance.now(), d: 2600 };
+}
+goView(0, true);
+controls.addEventListener('start', () => { tween = null; if (touring) setTour(false); });
+
+let touring = false, tourT = 0;
+function setTour(on) { touring = on && !reduceMotion; tourT = 0; document.getElementById('tour').classList.toggle('on', touring); if (touring) goView((curView + 1) % 4); }
+
+// ---------- 环境音（默认关闭） ----------
+const audio = (() => {
+  let ctx = null, on = false, gWind, gWater, gRain, chimeTimer;
+  function start() {
+    ctx = ctx || new (window.AudioContext || window.webkitAudioContext)();
+    const buf = ctx.createBuffer(1, ctx.sampleRate * 3, ctx.sampleRate), d = buf.getChannelData(0);
+    let last = 0; for (let i = 0; i < d.length; i++) { const w = Math.random() * 2 - 1; last = (last + .02 * w) / 1.02; d[i] = last * 3.2; }
+    const mk = (type, f, q, g) => { const s = ctx.createBufferSource(); s.buffer = buf; s.loop = true; const fl = ctx.createBiquadFilter(); fl.type = type; fl.frequency.value = f; fl.Q.value = q; const gg = ctx.createGain(); gg.gain.value = 0; s.connect(fl).connect(gg).connect(ctx.destination); s.start(); gg.target = g; return gg; };
+    gWind = mk('lowpass', 420, .6, .35); gWater = mk('bandpass', 1400, .7, .22); gRain = mk('highpass', 2600, .3, .0);
+    const t = ctx.currentTime; gWind.gain.linearRampToValueAtTime(.35, t + 2); gWater.gain.linearRampToValueAtTime(.22, t + 2);
+    setMood(moodKey);
+    const chime = () => {
+      if (!on) return;
+      const f = [523.25, 587.33, 659.25, 783.99, 880][Math.floor(Math.random() * 5)] * (Math.random() < .3 ? 2 : 1);
+      const o = ctx.createOscillator(), g = ctx.createGain(); o.type = 'sine'; o.frequency.value = f; g.gain.value = 0;
+      const n = ctx.currentTime; g.gain.linearRampToValueAtTime(.05, n + .01); g.gain.exponentialRampToValueAtTime(.0001, n + 3.5);
+      o.connect(g).connect(ctx.destination); o.start(); o.stop(n + 3.6);
+      chimeTimer = setTimeout(chime, 4000 + Math.random() * 7000);
+    };
+    chimeTimer = setTimeout(chime, 2500);
+  }
+  function setMood(k) {
+    if (!ctx || !on) return; const t = ctx.currentTime + 1.5;
+    gRain.gain.linearRampToValueAtTime(k === 'rain' ? .3 : 0, t);
+    gWind.gain.linearRampToValueAtTime(k === 'morning' ? .22 : .35, t);
+  }
+  return {
+    toggle() { on = !on; if (on) { if (!gWind) start(); else { ctx.resume(); setMood(moodKey); setTimeout(() => {}, 0); } } else if (ctx) ctx.suspend(); return on; },
+    setMood,
+  };
+})();
+
+// ---------- 画质 ----------
+function setQuality(q) {
+  quality = q;
+  renderer.setPixelRatio(q === 'high' ? Math.min(devicePixelRatio, 2) : 1);
+  sun.shadow.mapSize.set(q === 'high' ? 2048 : 1024, q === 'high' ? 2048 : 1024);
+  if (sun.shadow.map) { sun.shadow.map.dispose(); sun.shadow.map = null; }
+  const k = q === 'high' ? .75 : .45;
+  water.getRenderTarget().setSize(innerWidth * k, innerHeight * k);
+  petalMesh.count = q === 'high' ? PET : 200;
+  composer.dispose(); buildComposer(); onResize();
+  document.getElementById('quality').textContent = q === 'high' ? '高画质' : '轻量';
+}
+
+// ---------- 界面 ----------
+const $ = id => document.getElementById(id);
+document.querySelectorAll('#views button').forEach(b => b.onclick = () => { setTour(false); goView(+b.dataset.v); });
+document.querySelectorAll('#moods button').forEach(b => b.onclick = () => setMood(b.dataset.m));
+$('tour').onclick = () => setTour(!touring);
+$('sound').onclick = () => { const on = audio.toggle(); $('sound').classList.toggle('on', on); toast(on ? '环境音已开启' : '环境音已关闭'); };
+$('quality').onclick = () => setQuality(quality === 'high' ? 'lite' : 'high');
+$('reset').onclick = () => { setTour(false); goView(0); };
+$('hide').onclick = () => document.body.classList.add('ui-hidden');
+$('showui').onclick = () => document.body.classList.remove('ui-hidden');
+$('save').onclick = () => {
+  composer.render();
+  const a = document.createElement('a'); a.download = 'sakura-valley-' + Date.now() + '.png'; a.href = renderer.domElement.toDataURL('image/png'); a.click();
+  toast('已保存当前画面');
+};
+addEventListener('keydown', e => {
+  if (e.key >= '1' && e.key <= '4') { setTour(false); goView(+e.key - 1); }
+  if (e.key === 'h' || e.key === 'H') document.body.classList.toggle('ui-hidden');
+});
+let toastT; function toast(s) { const t = $('toast'); t.textContent = s; t.style.opacity = 1; clearTimeout(toastT); toastT = setTimeout(() => t.style.opacity = 0, 1600); }
+if (quality === 'lite') { $('quality').textContent = '轻量'; petalMesh.count = 200; }
+
+function onResize() {
+  camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight); composer.setSize(innerWidth, innerHeight);
+  const k = quality === 'high' ? .75 : .45; water.getRenderTarget().setSize(innerWidth * k, innerHeight * k);
+}
+addEventListener('resize', onResize);
+
+// ---------- 主循环 ----------
+const clock = new THREE.Clock();
+const M = new THREE.Matrix4(), Q = new THREE.Quaternion(), E = new THREE.Euler(), P = new THREE.Vector3(), S = new THREE.Vector3(1, 1, 1);
+const ease = t => t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+function tick() {
+  const dt = Math.min(clock.getDelta(), .05), t = clock.elapsedTime;
+  const motion = reduceMotion ? .3 : 1;
+  applyMood(1 - Math.exp(-dt * 2.2));
+  if (tween) {
+    const k = Math.min(1, (performance.now() - tween.s) / tween.d), e = ease(k);
+    camera.position.lerpVectors(tween.p0, tween.p1, e); controls.target.lerpVectors(tween.t0, tween.t1, e);
+    if (k >= 1) tween = null;
+  }
+  if (touring) {
+    tourT += dt;
+    if (!tween) { const off = new THREE.Vector3().subVectors(camera.position, controls.target); off.applyAxisAngle(new THREE.Vector3(0, 1, 0), dt * .025); camera.position.copy(controls.target).add(off); }
+    if (tourT > 14) { tourT = 0; goView((curView + 1) % 4); }
+  }
+  controls.update();
+  water.material.uniforms.uTime.value = t;
+
+  const n = petalMesh.count;
+  for (let i = 0; i < n; i++) {
+    const p = petals[i];
+    p.y -= p.vy * dt * motion * cur.fall; p.x += (Math.sin(t * .6 + p.ph) * .5 + .45) * dt * motion; p.z += Math.cos(t * .4 + p.ph) * .25 * dt * motion;
+    if (p.y < Math.max(WATER_Y, hAt(p.x, p.z)) + .02) { p.y = R(8, 14); p.x = R(-30, 30); p.z = R(-30, 55); }
+    E.set(p.rx + t * p.sp * motion, p.ry + t * p.sp * .7 * motion, 0); Q.setFromEuler(E); P.set(p.x, p.y, p.z);
+    S.setScalar(P.distanceTo(camera.position) < 3.5 ? 0 : 1); // 贴脸的花瓣不画，避免巨大色块
+    M.compose(P, Q, S); petalMesh.setMatrixAt(i, M);
+  }
+  petalMesh.instanceMatrix.needsUpdate = true;
+  if (fireflies.visible) {
+    for (let i = 0; i < FF; i++) { const b = ffBase[i]; ffPos[i * 3] = b[0] + Math.sin(t * .5 + b[3]) * .8; ffPos[i * 3 + 1] = b[1] + Math.sin(t * .8 + b[3] * 2) * .35; ffPos[i * 3 + 2] = b[2] + Math.cos(t * .4 + b[3]) * .8; }
+    ffGeo.attributes.position.needsUpdate = true;
+    ffMat.size = .12 + Math.sin(t * 3) * .02;
+  }
+  if (rain.visible) {
+    const cx = camera.position.x, cz = camera.position.z;
+    for (let i = 0; i < RN; i++) {
+      const s = rainSeed[i]; let y = (s[1] - t * s[3]) % 30; if (y < 0) y += 30;
+      const x = cx + s[0], z = cz + s[2] - 20;
+      rainPos.set([x, y, z, x - .04, y + .7, z], i * 6);
+    }
+    rainGeo.attributes.position.needsUpdate = true;
+  }
+  kois.forEach((k, i) => {
+    k.z += k.sp * dt * motion; if (k.z > 28) k.z = -28; if (k.z < -28) k.z = 28;
+    const z = k.z, x = riverX(z) + k.off + Math.sin(t * .7 + k.ph) * .4;
+    const dx = riverX(z + .5) - riverX(z - .5), ang = Math.atan2(dx, 1) + (k.sp < 0 ? Math.PI : 0);
+    for (let s = 0; s < 3; s++) {
+      const back = s * .22 * Math.sign(k.sp);
+      E.set(0, ang + Math.sin(t * 4 + k.ph + s) * .15 * s, 0); Q.setFromEuler(E);
+      P.set(x - Math.sin(ang) * back * Math.sign(k.sp), WATER_Y + .03, z - back); S.set(.16 - s * .03, .04, .24);
+      M.compose(P, Q, S); koiMesh.setMatrixAt(i * 3 + s, M);
+    }
+  });
+  S.set(1, 1, 1); koiMesh.instanceMatrix.needsUpdate = true;
+  birds.forEach(b => {
+    const u = b.userData; u.a += u.sp * dt * motion;
+    b.position.set(Math.cos(u.a) * u.r - 10, u.y + Math.sin(u.a * 3) * 1.5, -70 + Math.sin(u.a) * u.r * .6);
+    b.rotation.y = -u.a; const f = Math.sin(t * 6 + u.ph) * .5 * motion; u.pl.rotation.z = f; u.pr.rotation.z = -f;
+  });
+  composer.render();
+}
+
+// 首帧渲染后淡出加载层
+renderer.setAnimationLoop(tick);
+requestAnimationFrame(() => requestAnimationFrame(() => $('loading').classList.add('done')));
+</script>
+</body>
+</html>
