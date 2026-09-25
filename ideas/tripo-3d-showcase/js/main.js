@@ -177,9 +177,10 @@ $('#asset-grid').innerHTML = AS.map((a) => `
         <dt>面数</dt><dd>${a.tris.toLocaleString()}<span class="sub">生成时 ${a.rawTris.toLocaleString()}</span></dd>
         <dt>文件</dt><dd>${fmtMB(a.bytes)}<span class="sub">贴图 ${esc(a.tex)}</span></dd>
         <dt>处理</dt><dd>${esc(a.post)}</dd>
+        ${a.rig ? `<dt>动作</dt><dd>${esc(a.rig.clips)}<span class="sub">自动绑骨 ${a.rig.bones} 根骨骼 · 带动作的文件 ${fmtMB(a.rig.bytes)}</span></dd>` : ''}
       </dl>
       <div class="player-actions">
-        <button class="btn primary small" type="button" data-view="${a.key}">▶ 实时查看</button>
+        <button class="btn primary small" type="button" data-view="${a.key}">▶ ${a.rig ? '实时查看（可切换动作）' : '实时查看'}</button>
         <button class="btn small" type="button" data-stop hidden>■ 停止</button>
       </div>
     </div>
@@ -414,7 +415,8 @@ function loadLive(sec, variant) {
 }
 function loadViewer(card) {
   const a = AS.find((x) => x.key === card.dataset.asset);
-  const src = `viewer.html?src=${encodeURIComponent(`${BASE}results/06-cyclops-island/v3/models/${a.key}.glb`)}&yaw=${a.yaw || 0}`;
+  const file = a.rig ? a.rig.file : `${a.key}.glb`, yaw = a.rig ? a.rig.yaw : a.yaw || 0;
+  const src = `viewer.html?src=${encodeURIComponent(`${BASE}results/06-cyclops-island/v3/models/${file}`)}&yaw=${yaw}`;
   mountLive({ box: card, screen: $('.screen', card), src, title: `${a.zh} 模型实时查看器`,
     nn: 'asset', variant: a.key, badgeText: '实时 · 可拖动', button: $('[data-view]', card) });
 }
@@ -483,3 +485,4 @@ initVideos();
 initLive();
 initPromptUI();
 initHero();
+import('./fx.js').then((m) => m.initFX({ gsap, ST, reduced, mobile: isMobile() })).catch((e) => console.warn('[fx] 微交互未启用：', e?.message || e));

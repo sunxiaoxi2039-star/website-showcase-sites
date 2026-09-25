@@ -1,6 +1,6 @@
 {
-  "odysseus": { "file": "odysseus.glb", "yaw": -1.5708 },
-  "polyphemus": "polyphemus.glb",
+  "odysseus": { "file": "odysseus-rigged.glb", "yaw": -1.5708 },
+  "polyphemus": { "file": "polyphemus-rigged.glb", "yaw": -1.5708 },
   "ship": "ship.glb",
   "olive": "olive.glb",
   "cave": "cave.glb",

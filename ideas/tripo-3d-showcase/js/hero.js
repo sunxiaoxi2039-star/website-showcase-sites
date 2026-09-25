@@ -7,6 +7,32 @@ import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
+
+// 自写的最后一道调色：开场噪声溶解、按滚动速度加重的色散、暗角、胶片颗粒（在色调映射之前，线性空间里做）
+const GRADE = {
+  uniforms: { tDiffuse: { value: null }, uTime: { value: 0 }, uReveal: { value: 0 }, uVel: { value: 0 }, uAspect: { value: 1 } },
+  vertexShader: `varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.); }`,
+  fragmentShader: /* glsl */`
+    uniform sampler2D tDiffuse; uniform float uTime, uReveal, uVel, uAspect; varying vec2 vUv;
+    float h(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+    float vn(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3. - 2. * f);
+      return mix(mix(h(i), h(i + vec2(1, 0)), f.x), mix(h(i + vec2(0, 1)), h(i + 1.), f.x), f.y); }
+    void main(){
+      vec2 d = vUv - .5; d.x *= uAspect; float r = length(d);
+      // 色散：红蓝两路沿径向各偏一点，滚得越快偏得越多
+      vec2 dir = (vUv - .5) * (.0035 + uVel * .05) * r;
+      vec3 c = vec3(texture2D(tDiffuse, vUv + dir).r, texture2D(tDiffuse, vUv).g, texture2D(tDiffuse, vUv - dir).b);
+      c *= mix(.42, 1., smoothstep(.95, .25, r));                                   // 暗角
+      c *= 1. + (h(vUv * vec2(1733., 997.) + fract(uTime * 7.)) - .5) * .06;          // 颗粒
+      // 开场溶解：分形噪声 + 由中心向外的梯度，阈值随 uReveal 推进，边缘带一圈暖色
+      float n = (vn(vUv * 6.) * .6 + vn(vUv * 15.) * .3 + vn(vUv * 40.) * .1) * .55 + r * .9;
+      float t = uReveal * 1.6 - .1, m = smoothstep(t, t - .08, n);
+      float edge = smoothstep(t - .12, t - .04, n) * m;
+      c = c * m + vec3(1., .62, .3) * edge * 1.6;
+      gl_FragColor = vec4(c, 1.);
+    }`,
+};
 
 // Ashima Arts 3D simplex noise（MIT）
 const SNOISE = /* glsl */`
@@ -290,7 +316,7 @@ vec3 objectTangent = vec3(tangent.xyz);
 
   // 可选：Tripo GLB 替换雕塑
   if (glb) {
-    import('three/addons/loaders/GLTFLoader.js').then(({ GLTFLoader }) => {
+    Promise.all([import('three/addons/loaders/GLTFLoader.js'), import('three/addons/utils/SkeletonUtils.js')]).then(([{ GLTFLoader }, SkeletonUtils]) => {
       new GLTFLoader().load(glb, (gltf) => {
         const model = gltf.scene;
         model.rotation.y = THREE.MathUtils.degToRad(glbYaw); // 各家模型的「正面」朝向不同，先转到面向镜头
@@ -300,19 +326,30 @@ vec3 objectTangent = vec3(tangent.xyz);
         model.scale.setScalar(s);
         const b2 = new THREE.Box3().setFromObject(model); const c2 = b2.getCenter(new THREE.Vector3());
         model.position.set(-c2.x, 1.18 - b2.min.y, -c2.z);
-        model.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; if (o.material && !o.material.envMap) { o.material.envMap = env; o.material.envMapIntensity = 0.9; } } });
+        model.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; o.frustumCulled = !o.isSkinnedMesh; if (o.material && !o.material.envMap) { o.material.envMap = env; o.material.envMapIntensity = 0.9; } } });
         blob.visible = false; blobMirror.visible = false;
-        addBoth(model); needsRender = true;
+        if (gltf.animations.length && !reduced) {
+          // 绑过骨的模型：倒影要用 SkeletonUtils 克隆（普通 clone 会和原件共用骨骼），两边各一个 mixer 同步播放
+          const idle = gltf.animations.find(a => /idle/i.test(a.name)) || gltf.animations[0];
+          world.add(model);
+          const mir = SkeletonUtils.clone(model); mir.traverse(o => { o.castShadow = false; o.receiveShadow = false; }); mirror.add(mir);
+          for (const obj of [model, mir]) { const mx = new THREE.AnimationMixer(obj); mx.clipAction(idle).play(); mixers.push(mx); }
+        } else addBoth(model);
+        needsRender = true;
       }, undefined, (err) => { console.warn('[hero] GLB 加载失败，保留程序化雕塑：', glb, err?.message || err); });
     });
   }
+  const mixers = [];
 
-  // 后期：辉光只给最亮的部分
-  let composer = null;
+  // 后期：辉光只给最亮的部分，最后一道是自写的调色（见文件顶部 GRADE）
+  let composer = null, grade = null;
   if (!mobile) {
     composer = new EffectComposer(renderer);
     composer.addPass(new RenderPass(scene, camera));
     composer.addPass(new UnrealBloomPass(new THREE.Vector2(512, 512), 0.5, 0.55, 0.82));
+    grade = new ShaderPass(GRADE);
+    grade.uniforms.uReveal.value = reduced ? 1 : 0;
+    composer.addPass(grade);
     composer.addPass(new OutputPass());
   }
 
@@ -323,6 +360,7 @@ vec3 objectTangent = vec3(tangent.xyz);
     camera.fov = w / h < 0.8 ? 58 : 40; // 竖屏把视角放宽，画框不至于被切掉
     camera.updateProjectionMatrix();
     if (composer) composer.setSize(w, h);
+    if (grade) grade.uniforms.uAspect.value = w / h;
     needsRender = true;
   }
   resize();
@@ -350,6 +388,13 @@ vec3 objectTangent = vec3(tangent.xyz);
     if (!reduced) {
       uTime.value += dt;
       blob.rotation.y += dt * 0.12; blobMirror.rotation.y = blob.rotation.y;
+      for (const m of mixers) m.update(dt);
+    }
+    if (grade) {
+      grade.uniforms.uTime.value = uTime.value;
+      grade.uniforms.uReveal.value = Math.min(1, grade.uniforms.uReveal.value + dt / 2.6);
+      const v = Math.min(1, Math.abs(target - current) * 14);
+      grade.uniforms.uVel.value += (v - grade.uniforms.uVel.value) * (1 - Math.exp(-dt * 6));
     }
     place(dt);
     if (!reduced || needsRender) draw();

@@ -85,7 +85,7 @@ export function createEffects(scene) {
   fx.trail = (x, y, z) => emit(x, y + .25, z, { life: .35, vx: 0, vy: .2, vz: 0, size: .32, grow: -.4, color: '#f5e6c0', alpha: .5 });
   fx.hurt = (x, y, z) => { for (let i = 0; i < 14; i++) { const a = Math.random() * 6.283; emit(x, y + .4, z, { life: .45, vx: Math.cos(a) * 1.6, vy: 1 + Math.random() * 1.5, vz: Math.sin(a) * 1.6, g: 5, size: .1, color: '#e0443a' }); } };
   fx.pickup = (x, y, z) => { for (let i = 0; i < 22; i++) { const a = Math.random() * 6.283; emit(x, y + .2, z, { life: .8, vx: Math.cos(a) * .6, vy: 1.4 + Math.random(), vz: Math.sin(a) * .6, drag: 1.5, size: .1, color: '#ffe39a' }); } };
-  fx.zzz = (x, y, z) => emit(x + (Math.random() - .5) * .2, y, z, { life: 2.2, vx: .15, vy: .35, vz: -.05, size: .12, grow: .1, color: '#f4ecd8', alpha: .6 });
+  fx.zzz = (x, y, z) => emit(x + (Math.random() - .5) * .2, y, z, { life: 2.2, vx: .15, vy: .35, vz: -.05, size: .12, grow: .1, color: '#f4ecd8', alpha: .3 });   // v3: fainter, so puffs piling up at low fps never hide the giant's face
   fx.embers = (x, y, z) => emit(x + (Math.random() - .5) * .3, y, z + (Math.random() - .5) * .3, { life: 1.2, vx: (Math.random() - .5) * .2, vy: .6 + Math.random() * .4, vz: (Math.random() - .5) * .2, size: .05, color: '#ffb050' });
 
   // ---------- rock fragments ----------

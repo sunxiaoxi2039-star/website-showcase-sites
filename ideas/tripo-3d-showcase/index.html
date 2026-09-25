@@ -23,8 +23,9 @@
 <script type="module" src="js/main.js"></script>
 </head>
 <!-- hero 的模型槽位：data-hero-glb 指向带贴图的 GLB（留空时用程序化雕塑），data-hero-yaw 是让它面向镜头的旋转角（度）。
-     v3 放的是第 6 条的奥德修斯（Tripo H3.1 图生 3D），和 results/06-cyclops-island/v3/models/odysseus.glb 同一个文件。 -->
-<body data-base="./" data-md-base="https://github.com/sunxiaoxi2039-star/website-showcase-sites/blob/main/ideas/tripo-3d-showcase/tutorials/" data-hero-glb="media/hero.glb" data-hero-yaw="-115">
+     v3 放的是第 6 条的奥德修斯（Tripo H3.1 图生 3D，再经 hy-3d-rigging 绑骨），和 results/06-cyclops-island/v3/models/odysseus-rigged.glb 同一个文件，
+     开场播它的 idle 动作。绑骨后模型整体多转了 90°，所以朝向是 -115 - 90 = -205。 -->
+<body data-base="./" data-md-base="https://github.com/sunxiaoxi2039-star/website-showcase-sites/blob/main/ideas/tripo-3d-showcase/tutorials/" data-hero-glb="media/hero-rigged.glb" data-hero-yaw="-205">
 
 <div class="progress" aria-hidden="true"><i id="progress-bar"></i></div>
 

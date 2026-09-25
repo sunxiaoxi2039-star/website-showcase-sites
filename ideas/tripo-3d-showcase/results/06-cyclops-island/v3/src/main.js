@@ -13,6 +13,9 @@ import { createEffects } from './effects.js';
 import { createAudio } from './audio.js';
 import { createEncounter, TUNING, STAGES } from './encounter.js';
 import { normalizeModel } from './actors.js';
+import { goldenPass, tiltShift, patchScene, patchWind, tickPolish } from './polish.js';
+// v3 look (golden hour, tilt-shift, cloud shadows, wind). ?look=flat turns it off for before/after comparisons.
+const POLISH = new URLSearchParams(location.search).get('look') !== 'flat';
 
 const $ = id => document.getElementById(id);
 const canvas = $('c');
@@ -31,8 +34,9 @@ scene.fog = new THREE.Fog('#0c3a45', 62, 120);
 const pmrem = new THREE.PMREMGenerator(renderer);
 scene.environment = pmrem.fromScene(new RoomEnvironment(), .04).texture; scene.environmentIntensity = .35;
 
-const hemi = new THREE.HemisphereLight('#d7ecea', '#5d4a30', .8); scene.add(hemi);
-const sun = new THREE.DirectionalLight('#ffd6a0', 2.9);
+const hemi = new THREE.HemisphereLight(POLISH ? '#cfe2e4' : '#d7ecea', POLISH ? '#6b4d2a' : '#5d4a30', POLISH ? .72 : .8); scene.add(hemi);
+const sun = new THREE.DirectionalLight(POLISH ? '#ffc382' : '#ffd6a0', POLISH ? 3.3 : 2.9);
+const SUN_OFF = POLISH ? new THREE.Vector3(-22, 15, 12) : new THREE.Vector3(-15, 21, 9);   // golden hour: lower sun, longer shadows
 sun.position.set(-15, 21, 9); sun.castShadow = true; sun.shadow.mapSize.set(2048, 2048);
 Object.assign(sun.shadow.camera, { left: -16, right: 16, top: 16, bottom: -16, near: 1, far: 70 }); sun.shadow.bias = -.0004; sun.shadow.normalBias = .03;
 scene.add(sun, sun.target);
@@ -52,7 +56,7 @@ const cam = { az: AZ0, azGoal: AZ0, zoom: 1, zoomGoal: 1, target: new THREE.Vect
 const defaultTarget = () => new THREE.Vector3(isPhone() ? .2 : .4, 0, isPhone() ? 1.6 : 1.2);
 function resize() {
   const w = innerWidth, h = innerHeight, a = w / h;
-  renderer.setSize(w, h, false); composer.setSize(w, h); bloom.setSize(w, h);
+  renderer.setSize(w, h, false); composer.setSize(w, h); bloom.setSize(w, h); tilt.setSize(w, h);
   const vh = VIEW * (a < .8 ? 1.9 : 1);
   camera.left = -vh * a / 2; camera.right = vh * a / 2; camera.top = vh / 2; camera.bottom = -vh / 2; camera.updateProjectionMatrix();
 }
@@ -76,8 +80,11 @@ const resetCam = () => { cam.azGoal = AZ0 + Math.round((cam.az - AZ0) / (Math.PI
 // ---------------- post-processing: bloom, vignette + grain, ACES output ----------------
 const composer = new EffectComposer(renderer);
 composer.addPass(new RenderPass(scene, camera));
+if (POLISH) composer.addPass(goldenPass());
 const bloom = new UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), .22, .45, .9);
 composer.addPass(bloom);
+const tilt = tiltShift(); let focusY = .5;
+if (POLISH) tilt.passes.forEach(p => composer.addPass(p));
 const grade = new ShaderPass({
   uniforms: { tDiffuse: { value: null }, uTime: { value: 0 }, uHurt: { value: 0 } },
   vertexShader: `varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.); }`,
@@ -122,7 +129,9 @@ function applyWorldSlot(key, gltf) {
       group.add(inst);
     }
     if (key === 'ship') { group.position.copy(SHIP_POS); group.children[0].position.set(0, 0, 0); group.children[0].rotation.y = 0; }
+    if (POLISH && (key === 'olive' || key === 'cypress')) patchWind(group);
     scene.add(group); slot.imported = group;
+    if (POLISH) patchScene(scene);
   }
   applyMode();
 }
@@ -383,7 +392,15 @@ function frame() {
     markerT = Math.max(0, markerT - dt); marker.material.opacity = markerT; marker.scale.setScalar(1 + (1 - markerT) * .6);
   }
   updateCamera(paused ? 0 : dt);
-  sun.position.set(cam.target.x - 15, 21, cam.target.z + 9); sun.target.position.set(cam.target.x, 0, cam.target.z);
+  sun.position.set(cam.target.x + SUN_OFF.x, SUN_OFF.y, cam.target.z + SUN_OFF.z); sun.target.position.set(cam.target.x, 0, cam.target.z);
+  if (POLISH) {
+    tickPolish(simT);
+    // tilt-shift: keep whatever the camera is looking at (normally Odysseus) in the focus band; blur grows with zoom
+    // (closer = more "miniature") but is capped, since a 9-tap kernel stretched further starts to show blocks
+    const hp = cam.target.clone().setY(0).project(camera);
+    focusY += ((hp.y + 1) / 2 - focusY) * (1 - Math.exp(-dt * 6));
+    tilt.set(THREE.MathUtils.clamp(focusY, .25, .75), isPhone() ? .2 : .15, Math.min((isPhone() ? 1.8 : 3.0) * (.7 + .3 * cam.zoom), 2.2));
+  }
   renderer.info.reset(); composer.render();   // count every pass, not just the last one
   updateUI(paused ? 0 : dt);
   fpsT += raw; if (fpsT > .5) { fpsT = 0; const avg = frames.reduce((a, b) => a + b, 0) / frames.length; $('fps').textContent = Math.round(1000 / avg) + ' FPS'; }
@@ -396,5 +413,6 @@ window.__game = { E, world, nav, fx, cam, camera, TUNING, setPaused, isPaused: (
 
 addEventListener('resize', resize);
 resize(); resetCam(); cam.target.copy(cam.targetGoal); applyMode(); renderSlots();
+if (POLISH) patchScene(scene);
 frame();
-loadSavedModels().finally(() => setTimeout(() => $('loading').classList.add('done'), 250));
+loadSavedModels().finally(() => { if (POLISH) patchScene(scene); setTimeout(() => $('loading').classList.add('done'), 250); });

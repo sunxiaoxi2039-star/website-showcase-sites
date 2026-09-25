@@ -11,7 +11,15 @@
   html, body { margin: 0; height: 100%; background: #10141a; color: #ece6da; font: 12px/1.4 -apple-system, "PingFang SC", sans-serif; overflow: hidden; }
   canvas { display: block; width: 100%; height: 100%; touch-action: none; }
   #info { position: absolute; right: 10px; bottom: 10px; padding: 6px 10px; border-radius: 99px; background: rgba(0,0,0,.5); color: rgba(236,230,218,.75); pointer-events: none; }
+  #info:empty { display: none; }
   #msg { position: absolute; inset: 0; display: grid; place-items: center; color: rgba(236,230,218,.7); pointer-events: none; }
+  /* 绑过骨的模型：左上角一排动作按钮 */
+  #clips { position: absolute; left: 10px; top: 10px; right: 10px; display: flex; flex-wrap: wrap; gap: 6px; }
+  #clips button { font: inherit; color: rgba(236,230,218,.85); background: rgba(0,0,0,.5); border: 1px solid rgba(236,230,218,.25);
+    border-radius: 99px; padding: 5px 11px; cursor: pointer; transition: background .2s, color .2s, border-color .2s; }
+  #clips button:hover { border-color: rgba(236,230,218,.6); }
+  #clips button[aria-pressed="true"] { background: #e8c27a; color: #1a140a; border-color: #e8c27a; }
+  #clips button:focus-visible { outline: 2px solid #e8c27a; outline-offset: 2px; }
 </style>
 <script type="importmap">
 { "imports": {
@@ -23,12 +31,18 @@
 <body>
 <div id="msg">加载模型中…</div>
 <div id="info"></div>
+<div id="clips" role="group" aria-label="切换动作" hidden></div>
+<script>
+  // three.js 走 CDN：CDN 连不上时模块脚本根本不会执行，这里 20 秒后给一句说明，不让人一直等
+  setTimeout(() => { const m = document.getElementById('msg'); if (m && !window.__viewerStarted) m.textContent = '三维库没加载上（需要能访问 jsDelivr），点「停止」回到转台录像'; }, 20000);
+</script>
 <script type="module">
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 
+window.__viewerStarted = true;
 const q = new URLSearchParams(location.search);
 const src = q.get('src');
 const yaw = THREE.MathUtils.degToRad(parseFloat(q.get('yaw')) || 0);
@@ -56,7 +70,7 @@ ground.rotation.x = -Math.PI / 2; ground.receiveShadow = true; scene.add(ground)
 
 const camera = new THREE.PerspectiveCamera(35, 1, 0.01, 100);
 const controls = new OrbitControls(camera, renderer.domElement);
-controls.enableDamping = true; controls.autoRotate = !reduced; controls.autoRotateSpeed = 1.2;
+controls.enableDamping = true; controls.autoRotate = !reduced && q.get('spin') !== '0';   // ?spin=0：不自动转（截图对朝向用） controls.autoRotateSpeed = 1.2;
 
 function resize() {
   const w = innerWidth, h = innerHeight;
@@ -88,10 +102,36 @@ else new GLTFLoader().load(src, (gltf) => {
   camera.position.copy(new THREE.Vector3(0.55, 0.28, 0.8).normalize().multiplyScalar(dist)).add(controls.target);
   msg.remove();
   info.textContent = `${Math.round(tris).toLocaleString()} 面 · 拖动旋转，滚轮缩放`;
-  console.info('[viewer] loaded', src, Math.round(tris));
+  if (gltf.animations.length) initClips(model, gltf.animations);
+  console.info('[viewer] loaded', src, Math.round(tris), gltf.animations.length ? `${gltf.animations.length} clips` : '');
 }, undefined, (err) => { msg.textContent = '模型加载失败'; console.warn('[viewer] load failed', src, err?.message || err); });
 
-renderer.setAnimationLoop(() => { controls.update(); renderer.render(scene, camera); });
+// 绑过骨的模型：每段动作一个按钮，切换时 0.35 秒交叉淡入淡出。减弱动效时不自动播放，点了才动。
+const CLIP_ZH = { idle: '待机', walk: '走', run: '跑', dodge: '闪避', die: '倒下', cheer: '欢呼', attack: '蓄力砸地' };
+let mixer = null;
+function initClips(model, clips) {
+  mixer = new THREE.AnimationMixer(model);
+  const bar = document.getElementById('clips');
+  let current = null;
+  const play = (clip, btn) => {
+    const next = mixer.clipAction(clip);
+    if (current && current !== next) { next.reset().play(); current.crossFadeTo(next, 0.35, false); }
+    else next.reset().play();
+    current = next;
+    for (const b of bar.children) b.setAttribute('aria-pressed', String(b === btn));
+  };
+  for (const clip of clips) {
+    const b = document.createElement('button');
+    b.type = 'button'; b.textContent = CLIP_ZH[clip.name] || clip.name; b.setAttribute('aria-pressed', 'false');
+    b.addEventListener('click', () => play(clip, b));
+    bar.appendChild(b);
+  }
+  bar.hidden = false;
+  if (!reduced) play(clips.find((c) => c.name === 'idle') || clips[0], bar.children[clips.findIndex((c) => c.name === 'idle')] || bar.children[0]);
+}
+
+const clock = new THREE.Clock();
+renderer.setAnimationLoop(() => { const dt = Math.min(clock.getDelta(), 0.1); if (mixer) mixer.update(dt); controls.update(); renderer.render(scene, camera); });
 </script>
 </body>
 </html>
