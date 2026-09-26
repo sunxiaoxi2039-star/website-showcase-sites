@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#05070f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>雷霆战机 · THUNDERFALL</title>
+<meta name="description" content="致敬街机《雷电》的竖版射击游戏：三款战机、四色武器、五大关卡与多阶段 BOSS，手机与电脑均可游玩。">
+<style>
+@font-face { font-family: 'Orbitron'; font-weight: 700; font-display: swap; src: url('vendor/orbitron/orbitron-latin-700-normal.woff2') format('woff2'); }
+@font-face { font-family: 'Orbitron'; font-weight: 900; font-display: swap; src: url('vendor/orbitron/orbitron-latin-900-normal.woff2') format('woff2'); }
+:root {
+  --bg: #04060d; --panel: rgba(10, 16, 32, .82); --line: rgba(120, 170, 255, .22); --gold: #ffcf4a; --gold2: #ff9a1e;
+  --red: #ff4a3a; --blue: #4aa8ff; --text: #e8f0ff; --muted: #8ea2c4;
+  --num: 'Orbitron', 'PingFang SC', 'Microsoft YaHei', 'WenQuanYi Zen Hei', sans-serif;
+  --cn: 'PingFang SC', 'Microsoft YaHei', 'Noto Sans SC', 'WenQuanYi Zen Hei', sans-serif;
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text); font-family: var(--cn); overflow: hidden; overscroll-behavior: none; }
+body { touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
+  background: radial-gradient(120% 80% at 50% 0%, #0d1830 0%, #04060d 60%) fixed; }
+#app { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; gap: 22px; }
+#stage { position: relative; flex: none; overflow: hidden; box-shadow: 0 0 0 1px rgba(140,180,255,.18), 0 0 60px rgba(40,100,255,.18); background: #000; }
+#game { position: absolute; left: 0; top: 0; width: 100%; height: 100%; display: block; }
+
+/* 侧边面板（宽屏） */
+.side { width: 250px; flex: none; display: none; flex-direction: column; gap: 14px; align-self: center; }
+.side.show { display: flex; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; backdrop-filter: blur(6px); }
+.card h3 { margin: 0 0 10px; font: 700 11px var(--num); letter-spacing: .18em; color: var(--muted); }
+.logo-s { font: 900 30px var(--cn); letter-spacing: .08em; background: linear-gradient(180deg, #fff 0%, #ffe28a 45%, #ff8a1e 100%); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 2px 0 #5a1a00); }
+.logo-e { font: 900 12px var(--num); letter-spacing: .42em; color: #7fb6ff; margin-top: 2px; }
+.kv { display: flex; justify-content: space-between; align-items: baseline; padding: 5px 0; border-bottom: 1px dashed rgba(140,170,220,.12); font-size: 13px; color: var(--muted); }
+.kv:last-child { border-bottom: 0; }
+.kv b { font: 900 15px var(--num); color: #fff; }
+.legend { display: grid; grid-template-columns: 30px 1fr; gap: 8px 10px; align-items: center; font-size: 12.5px; line-height: 1.35; color: #c8d6f0; }
+.legend canvas { width: 28px; height: 28px; }
+.legend b { color: #fff; font-weight: 700; }
+.keys { font-size: 12.5px; color: #c8d6f0; line-height: 1.9; }
+kbd { display: inline-block; min-width: 22px; padding: 0 6px; border-radius: 5px; border: 1px solid rgba(160,190,255,.35); background: rgba(255,255,255,.06); font: 700 11px var(--num); color: #fff; text-align: center; line-height: 20px; }
+
+/* 覆盖层界面 */
+.screen { position: absolute; inset: 0; display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 24px 18px; z-index: 5; }
+.screen.show { display: flex; }
+.dim { background: linear-gradient(180deg, rgba(2,4,12,.25) 0%, rgba(2,4,12,.55) 60%, rgba(2,4,12,.85) 100%); }
+.dim2 { background: rgba(3,6,16,.78); backdrop-filter: blur(3px); }
+.btn { appearance: none; border: 0; cursor: pointer; font: 700 17px var(--cn); letter-spacing: .12em; color: #1a0c00; min-width: 200px; padding: 13px 26px; margin: 6px; border-radius: 4px;
+  background: linear-gradient(180deg, #fff2b8 0%, #ffcf4a 40%, #ff9a1e 100%); box-shadow: 0 0 0 1px #6a3a00 inset, 0 3px 0 #8a4400, 0 8px 24px rgba(255,150,30,.35);
+  clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px); transition: transform .08s; }
+.btn:active { transform: translateY(2px); }
+.btn.ghost { color: #dbe8ff; background: linear-gradient(180deg, rgba(60,90,150,.55), rgba(20,34,70,.75)); box-shadow: 0 0 0 1px rgba(140,180,255,.45) inset, 0 3px 0 rgba(10,20,50,.9); }
+.btn:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
+
+#title .logo { margin-top: -6%; }
+#title .logo .cn { font: 900 clamp(54px, 15vw, 84px)/1 var(--cn); letter-spacing: .06em; background: linear-gradient(180deg, #ffffff 0%, #fff0b0 30%, #ffb21e 58%, #c84a00 100%); -webkit-background-clip: text; background-clip: text; color: transparent;
+  filter: drop-shadow(0 3px 0 #3a0e00) drop-shadow(0 0 24px rgba(255,140,30,.55)); }
+#title .logo .en { font: 900 clamp(15px, 4.2vw, 20px) var(--num); letter-spacing: .55em; margin: 12px 0 0 .55em; color: #9fd0ff; text-shadow: 0 0 12px rgba(60,160,255,.8); }
+#title .tag { margin: 18px 0 30px; font-size: 14px; color: #c9d8f5; letter-spacing: .2em; }
+#title .hi { margin-top: 20px; font: 700 12px var(--num); color: #ffcf4a; letter-spacing: .2em; }
+#title .blink { margin-top: 16px; font: 700 12px var(--num); letter-spacing: .3em; color: #fff; animation: blink 1.1s steps(2) infinite; }
+@keyframes blink { 50% { opacity: .15; } }
+.corner { position: absolute; font: 700 10px var(--num); color: rgba(200,220,255,.55); letter-spacing: .2em; }
+
+#select { justify-content: flex-start; padding-top: 20px; overflow-y: auto; }
+.hd { font: 900 24px var(--cn); letter-spacing: .2em; margin: 0; }
+.hd small { display: block; font: 700 10px var(--num); letter-spacing: .5em; color: var(--muted); margin-top: 4px; }
+#preview { width: min(300px, 70%); aspect-ratio: 1 / 1; display: block; margin: 4px auto -6px; }
+.sel-code { font: 900 12px var(--num); letter-spacing: .3em; color: #7fb6ff; }
+.sel-name { font: 900 34px var(--cn); letter-spacing: .15em; margin: 2px 0 8px; }
+.bars { width: min(330px, 92%); margin: 0 auto; }
+.bar { display: grid; grid-template-columns: 44px 1fr; align-items: center; gap: 10px; font-size: 13px; color: var(--muted); margin: 5px 0; text-align: left; }
+.pips { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; }
+.pips i { height: 8px; background: rgba(255,255,255,.1); transform: skewX(-20deg); }
+.pips i.on { background: linear-gradient(90deg, #ffcf4a, #ff8a1e); box-shadow: 0 0 8px rgba(255,160,40,.6); }
+.spec { width: min(330px, 92%); margin: 10px auto 0; font-size: 12.5px; color: #c8d6f0; text-align: left; line-height: 1.7; }
+.spec b { color: #fff; }
+.thumbs { display: flex; gap: 10px; margin: 14px 0 6px; }
+.thumb { width: 92px; padding: 6px 0 8px; border-radius: 8px; border: 1px solid rgba(140,180,255,.25); background: rgba(10,20,40,.6); color: #cfe0ff; font: 700 13px var(--cn); cursor: pointer; }
+.thumb canvas { width: 60px; height: 60px; display: block; margin: 0 auto 2px; }
+.thumb.on { border-color: var(--gold); background: rgba(80,50,0,.45); color: #fff; box-shadow: 0 0 16px rgba(255,190,60,.35); }
+.stages { display: flex; gap: 6px; align-items: center; justify-content: center; margin: 6px 0 8px; font-size: 12px; color: var(--muted); flex-wrap: wrap; }
+.stages button { width: 34px; height: 30px; border-radius: 5px; border: 1px solid rgba(140,180,255,.3); background: rgba(10,20,40,.6); color: #fff; font: 900 13px var(--num); cursor: pointer; }
+.stages button.on { background: var(--gold); color: #1a0c00; border-color: var(--gold); }
+.stages button:disabled { opacity: .3; cursor: not-allowed; }
+.row { display: flex; gap: 4px; flex-wrap: wrap; justify-content: center; }
+.row .btn { min-width: 130px; }
+
+#help .card { max-width: 420px; text-align: left; margin: 0 0 12px; }
+.big-t { font: 900 44px var(--num); letter-spacing: .08em; margin: 0 0 6px; }
+.gold { color: var(--gold); text-shadow: 0 0 20px rgba(255,180,40,.6); }
+.red { color: #ff4a5a; text-shadow: 0 0 20px rgba(255,40,60,.6); }
+.sub { font-size: 14px; color: #c8d6f0; letter-spacing: .15em; margin-bottom: 18px; }
+.stats { width: min(320px, 90%); margin: 0 auto 20px; }
+.count { font: 900 72px var(--num); color: #fff; margin: 4px 0 16px; text-shadow: 0 0 24px rgba(255,80,80,.7); }
+
+/* 触屏按钮 */
+.hudbtn { position: absolute; z-index: 4; display: none; border: 0; cursor: pointer; color: #fff; }
+.hudbtn.show { display: block; }
+#pauseBtn { right: 8px; top: 8px; width: 38px; height: 38px; border-radius: 8px; background: rgba(0,0,0,.35); box-shadow: 0 0 0 1px rgba(255,255,255,.25) inset; }
+#pauseBtn::before, #pauseBtn::after { content: ''; position: absolute; top: 11px; width: 5px; height: 16px; background: #fff; border-radius: 1px; }
+#pauseBtn::before { left: 12px; } #pauseBtn::after { right: 12px; }
+#bombBtn { right: 14px; bottom: 18px; width: 72px; height: 72px; border-radius: 50%; font: 900 13px var(--num);
+  background: radial-gradient(circle at 40% 35%, #ffd0a0 0%, #ff4a1a 45%, #7a0e00 100%); box-shadow: 0 0 0 2px rgba(255,255,255,.7) inset, 0 0 22px rgba(255,80,30,.6); opacity: .82; }
+#bombBtn span { display: block; font: 700 10px var(--cn); letter-spacing: .1em; }
+#bombBtn:active { transform: scale(.94); }
+#bombBtn.empty { filter: grayscale(1); opacity: .35; }
+#rotate { display: none; }
+@media (orientation: landscape) and (max-height: 500px) { #rotate { display: flex; position: fixed; inset: auto 0 0 0; z-index: 20; justify-content: center; padding: 6px; font-size: 12px; background: rgba(0,0,0,.7); color: #ffcf4a; } }
+</style>
+</head>
+<body>
+<div id="app">
+  <aside class="side" id="sideL">
+    <div class="card">
+      <div class="logo-s">雷霆战机</div>
+      <div class="logo-e">THUNDERFALL</div>
+    </div>
+    <div class="card" id="liveCard">
+      <h3>STATUS</h3>
+      <div class="kv"><span>得分</span><b id="sScore">00000000</b></div>
+      <div class="kv"><span>最高分</span><b id="sHi">00000000</b></div>
+      <div class="kv"><span>关卡</span><b id="sStage">—</b></div>
+      <div class="kv"><span>战机</span><b id="sShip">—</b></div>
+      <div class="kv"><span>武器</span><b id="sWeapon">—</b></div>
+      <div class="kv"><span>用时</span><b id="sTime">0:00</b></div>
+    </div>
+  </aside>
+  <div id="stage">
+    <canvas id="game"></canvas>
+
+    <section class="screen dim show" id="title">
+      <div class="corner" style="left:14px;top:12px">INSERT COIN</div>
+      <div class="corner" style="right:14px;top:12px" id="tCredit">CREDIT 01</div>
+      <div class="logo"><div class="cn">雷霆战机</div><div class="en">THUNDERFALL</div></div>
+      <div class="tag">五大战区 · 三款战机 · 四色武器</div>
+      <button class="btn" id="startBtn">开始游戏</button>
+      <button class="btn ghost" id="helpBtn">操作说明</button>
+      <div class="hi" id="tHi">HI-SCORE 00000000</div>
+      <div class="blink">PRESS START</div>
+    </section>
+
+    <section class="screen dim2" id="select">
+      <h2 class="hd">选择战机<small>SELECT YOUR FIGHTER</small></h2>
+      <canvas id="preview" width="600" height="600"></canvas>
+      <div class="sel-code" id="selCode">R-1 FALCON</div>
+      <div class="sel-name" id="selName">赤隼</div>
+      <div class="bars">
+        <div class="bar"><span>火力</span><div class="pips" id="pPower"></div></div>
+        <div class="bar"><span>速度</span><div class="pips" id="pSpeed"></div></div>
+        <div class="bar"><span>炸弹</span><div class="pips" id="pBomb"></div></div>
+      </div>
+      <div class="spec" id="selSpec"></div>
+      <div class="thumbs" id="thumbs"></div>
+      <div class="stages" id="stages"></div>
+      <div class="row"><button class="btn ghost" id="backBtn">返回</button><button class="btn" id="goBtn">出击</button></div>
+    </section>
+
+    <section class="screen dim2" id="help">
+      <h2 class="hd" style="margin-bottom:14px">操作说明<small>HOW TO PLAY</small></h2>
+      <div class="card"><h3>CONTROLS</h3><div class="keys">
+        <b>手机：</b>按住屏幕任意位置拖动，战机按相对位移跟随（手指不会挡住战机），全程自动射击；右下角按钮释放炸弹。<br>
+        <b>电脑：</b><kbd>↑</kbd><kbd>↓</kbd><kbd>←</kbd><kbd>→</kbd> / <kbd>WASD</kbd> 移动，或按住鼠标拖动；<kbd>Shift</kbd> 精确低速；<kbd>空格</kbd>/<kbd>X</kbd> 炸弹；<kbd>P</kbd>/<kbd>Esc</kbd> 暂停。
+      </div></div>
+      <div class="card"><h3>WEAPONS · 击落敌机概率掉落，在屏幕内飘荡约 10 秒</h3><div class="legend" id="helpLegend"></div></div>
+      <button class="btn" id="helpBack">知道了</button>
+    </section>
+
+    <section class="screen dim2" id="pause">
+      <div class="big-t gold">PAUSE</div>
+      <div class="sub">暂停中</div>
+      <button class="btn" id="resumeBtn">继续游戏</button>
+      <button class="btn ghost" id="muteBtn">声音：开</button>
+      <button class="btn ghost" id="restartBtn">重新开始本关</button>
+      <button class="btn ghost" id="quitBtn">返回标题</button>
+    </section>
+
+    <section class="screen dim2" id="continue">
+      <div class="big-t red">CONTINUE?</div>
+      <div class="sub">是否续关？（分数将清零）</div>
+      <div class="count" id="contCount">9</div>
+      <button class="btn" id="contYes">继续战斗</button>
+      <button class="btn ghost" id="contNo">放弃</button>
+    </section>
+
+    <section class="screen dim2" id="over">
+      <div class="big-t red">GAME OVER</div>
+      <div class="sub" id="overSub">战机全灭</div>
+      <div class="stats card" id="overStats"></div>
+      <button class="btn" id="overRetry">再次挑战</button>
+      <button class="btn ghost" id="overTitle">返回标题</button>
+    </section>
+
+    <section class="screen dim2" id="ending">
+      <div class="big-t gold">MISSION<br>COMPLETE</div>
+      <div class="sub">雷霆母舰已被击毁 · 全部战区解放</div>
+      <div class="stats card" id="endStats"></div>
+      <button class="btn" id="endRetry">再来一局</button>
+      <button class="btn ghost" id="endTitle">返回标题</button>
+    </section>
+
+    <button class="hudbtn" id="pauseBtn" aria-label="暂停"></button>
+    <button class="hudbtn" id="bombBtn" aria-label="炸弹">BOMB<span id="bombN">×3</span></button>
+  </div>
+  <aside class="side" id="sideR">
+    <div class="card"><h3>WEAPON DROPS</h3><div class="legend" id="sideLegend"></div></div>
+    <div class="card"><h3>CONTROLS</h3><div class="keys">
+      <kbd>↑↓←→</kbd>/<kbd>WASD</kbd> 移动<br><kbd>鼠标拖动</kbd> 相对移动<br><kbd>Shift</kbd> 精确低速<br><kbd>空格</kbd>/<kbd>X</kbd> 炸弹 · <kbd>P</kbd> 暂停<br>全程自动射击
+    </div></div>
+  </aside>
+</div>
+<div id="rotate">竖屏游玩体验更佳</div>
+<script type="module" src="js/main.js"></script>
+</body>
+</html>
