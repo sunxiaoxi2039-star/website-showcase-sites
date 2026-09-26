@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#050b14" />
+  <title>轨道能量核心 · Orbital Core</title>
+  <meta name="description" content="可旋转、缩放、拆解的双环能量核心：程序化硬表面建模 + PBR 材质 + 辉光后期，Three.js 实时渲染。" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='5' fill='%2377d7ff'/%3E%3Cellipse cx='16' cy='16' rx='13' ry='5' fill='none' stroke='%2377d7ff' stroke-width='1.6'/%3E%3Cellipse cx='16' cy='16' rx='5' ry='13' fill='none' stroke='%233a8dff' stroke-width='1.6'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="css/fonts-cjk.css" />
+  <link rel="stylesheet" href="css/style.css" />
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "./vendor/three/three.module.min.js",
+        "three/addons/": "./vendor/three/addons/"
+      }
+    }
+  </script>
+</head>
+<body>
+  <!-- 三方对照顶栏 -->
+  <nav class="compare-bar" aria-label="对照导航">
+    <a class="cb-back" href="../../compare/index.html">← 三方对照</a>
+    <div class="cb-title"><span class="cb-name">轨道能量核心</span><span class="cb-tag">Opus 5.5 · 独立逆向</span></div>
+    <a class="cb-orig" href="https://x.com/oneruofeng/status/2096551010089263181" target="_blank" rel="noopener">原作 @oneruofeng ↗</a>
+  </nav>
+
+  <main class="experience" aria-label="轨道能量核心 三维展示">
+    <canvas id="scene" aria-label="可交互的三维双环能量核心模型：拖拽旋转，滚轮或双指缩放"></canvas>
+    <div class="fx-grid" aria-hidden="true"></div>
+    <div class="fx-grain" aria-hidden="true"></div>
+
+    <header class="brandbar">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true"><i></i></span>
+        <span class="brand-text">ORBITAL<br />OBJECTS</span>
+      </div>
+      <div class="specimen">样本 <strong>01</strong><br /><span>DUAL-RING CONTAINMENT</span></div>
+    </header>
+
+    <section class="intro">
+      <p class="eyebrow"><span></span>能量核心 / SPECIMEN 01</p>
+      <h1>两道轨道<br /><em>一颗恒星。</em></h1>
+      <p class="lede">等离子球体悬浮在测地约束笼中，两道分段机加工的轨道环以陀螺架方式交错转动。拖拽它、放大它，或者把它拆开看。</p>
+    </section>
+
+    <aside class="readout" aria-label="实时参数">
+      <div class="ro-row"><span>状态</span><b><i class="ro-dot"></i><em id="roState">运行中</em></b></div>
+      <div class="ro-row"><span>核心频率</span><b id="roFreq">48.6 THz</b></div>
+      <div class="ro-row"><span>外环方位 α</span><b id="roAlpha">000.0°</b></div>
+      <div class="ro-row"><span>内环俯仰 β</span><b id="roBeta">000.0°</b></div>
+      <div class="ro-row"><span>场强输出</span><b id="roOut">100%</b></div>
+      <canvas class="scope" id="scope" width="340" height="72" aria-hidden="true"></canvas>
+    </aside>
+
+    <div class="labels" id="labels" aria-hidden="true">
+      <div class="tag" data-part="core" data-side="R"><div class="tag-line"></div><div class="tag-box"><b>01</b><strong>等离子核心</strong><small>Ø 1.00 · 自发光湍流壳</small></div></div>
+      <div class="tag" data-part="cage" data-side="L"><div class="tag-line"></div><div class="tag-box"><b>02</b><strong>测地约束笼</strong><small>120 支杆 · 42 节点</small></div></div>
+      <div class="tag" data-part="outer" data-side="R"><div class="tag-line"></div><div class="tag-box"><b>03</b><strong>外环 · 方位环</strong><small>Ø 2.84 · 12 段机加工</small></div></div>
+      <div class="tag" data-part="inner" data-side="L"><div class="tag-line"></div><div class="tag-box"><b>04</b><strong>内环 · 俯仰环</strong><small>Ø 2.32 · 10 段 · 钛合金枢轴</small></div></div>
+      <div class="tag" data-part="pedestal" data-side="R"><div class="tag-line"></div><div class="tag-box"><b>05</b><strong>悬浮基座</strong><small>Ø 3.64 · 72 散热鳍 · 刻度盘</small></div></div>
+    </div>
+
+    <nav class="controls" aria-label="展示模式">
+      <button class="control is-active" type="button" data-mode="orbit" aria-pressed="true"><span class="glyph g-orbit"></span>轨道<kbd>1</kbd></button>
+      <button class="control" type="button" data-mode="pulse" aria-pressed="false"><span class="glyph g-pulse"></span>脉冲<kbd>2</kbd></button>
+      <button class="control" type="button" data-mode="still" aria-pressed="false"><span class="glyph g-still"></span>静止<kbd>3</kbd></button>
+      <button class="control" type="button" data-mode="explode" aria-pressed="false"><span class="glyph g-explode"></span>拆解<kbd>4</kbd></button>
+    </nav>
+
+    <footer class="footer">
+      <span class="hint">拖拽旋转 · 滚轮 / 双指缩放 · 双击复位</span>
+      <button class="sound" id="sound" type="button" aria-pressed="false"><span class="sound-bars"><i></i><i></i><i></i><i></i></span><em>声音 · 关</em></button>
+    </footer>
+
+    <div class="loader" id="loader" role="status">
+      <div class="loader-ring"></div>
+      <p>正在点亮核心<span id="loaderPct"></span></p>
+    </div>
+    <div class="fail" id="fail" hidden>
+      <p>这个浏览器没能创建 WebGL 上下文，三维核心无法显示。<br />请换用支持 WebGL 2 的浏览器再试。</p>
+    </div>
+  </main>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>

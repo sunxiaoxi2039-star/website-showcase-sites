@@ -1,0 +1,916 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aeroform — Speculative Sneaker Concept</title>
+<meta name="description" content="Aeroform is a speculative sneaker design study. Imagined specifications, three accent colorways and an exploded view. Concept only — not for sale.">
+<style>
+:root{
+  --bg:#e3e6ea;
+  --bg-2:#d9dde2;
+  --cloud:#eef0f3;
+  --ink:#15181d;
+  --ink-2:#3a4049;
+  --mute:#68707b;
+  --line:rgba(21,24,29,.12);
+  --line-2:rgba(21,24,29,.2);
+  --backdrop:rgba(21,24,29,.055);
+  --card:rgba(255,255,255,.46);
+  --card-solid:#f3f4f6;
+  --accent:#c9ef3a;
+  --accent-deep:#8fb313;
+  --accent-ink:#1b2203;
+  --ease:cubic-bezier(.2,.8,.2,1);
+  --sans:"Helvetica Neue","Inter","Segoe UI",Roboto,Arial,"Liberation Sans",system-ui,sans-serif;
+  --mono:ui-monospace,"SF Mono",Menlo,Consolas,"Liberation Mono","DejaVu Sans Mono",monospace;
+  --gutter:clamp(16px,4vw,56px);
+  color-scheme:light;
+}
+body[data-colorway="ember"]{--accent:#ff5a36;--accent-deep:#c9361a;--accent-ink:#2a0a03}
+body[data-colorway="ion"]{--accent:#4f7dff;--accent-deep:#2447c4;--accent-ink:#ffffff}
+
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
+body{
+  margin:0;min-height:100vh;
+  font-family:var(--sans);color:var(--ink);
+  background:
+    radial-gradient(1200px 700px at 72% 18%, rgba(255,255,255,.75), transparent 60%),
+    radial-gradient(900px 600px at 10% 90%, rgba(255,255,255,.45), transparent 60%),
+    linear-gradient(180deg,var(--bg) 0%,var(--bg-2) 100%);
+  background-color:var(--bg);
+  overflow-x:hidden;
+  -webkit-font-smoothing:antialiased;
+}
+::selection{background:var(--accent);color:var(--accent-ink)}
+a{color:inherit}
+button{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--ink);outline-offset:3px;border-radius:6px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* ---------- top bar ---------- */
+.topbar{
+  position:relative;z-index:5;
+  display:flex;align-items:center;justify-content:space-between;gap:16px;
+  padding:18px var(--gutter);
+  font-size:12px;letter-spacing:.14em;text-transform:uppercase;
+}
+.brand{display:flex;align-items:center;gap:10px;font-weight:800;letter-spacing:.2em;font-style:italic}
+.brand svg{width:26px;height:26px}
+.topbar .meta{color:var(--mute)}
+.pill{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:7px 12px;border:1px solid var(--line-2);border-radius:999px;
+  background:rgba(255,255,255,.4);white-space:nowrap;
+}
+.pill i{width:7px;height:7px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 2px rgba(21,24,29,.12);transition:background .5s var(--ease)}
+
+/* ---------- hero / slide 01 ---------- */
+.hero{position:relative;overflow:hidden;overflow:clip;min-height:calc(100vh - 64px);display:grid;grid-template-rows:auto 1fr auto;padding:0 var(--gutter) 28px;isolation:isolate}
+.backdrop{
+  position:absolute;inset:-4% -6% auto -6%;z-index:-1;pointer-events:none;
+  font-weight:900;font-style:italic;letter-spacing:-.07em;line-height:.78;
+  color:var(--backdrop);user-select:none;white-space:nowrap;
+  font-size:clamp(150px,27vw,470px);
+  transform:skewX(-6deg);
+}
+.backdrop span{display:block}
+.backdrop span:nth-child(2){padding-left:22vw}
+.backdrop span:nth-child(3){padding-left:6vw;color:rgba(21,24,29,.035)}
+
+.hero-head{display:grid;grid-template-columns:1.1fr .9fr;gap:24px;align-items:end;padding-top:clamp(8px,3vh,36px)}
+.eyebrow{display:flex;gap:12px;align-items:center;font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--mute)}
+.eyebrow b{color:var(--ink);font-weight:600}
+.eyebrow .rule{flex:0 0 36px;height:1px;background:var(--line-2)}
+h1{
+  margin:12px 0 0;font-size:clamp(46px,7.4vw,112px);line-height:.86;
+  font-weight:900;font-style:italic;letter-spacing:-.055em;
+}
+h1 sup{font-size:.18em;letter-spacing:.08em;font-style:normal;font-weight:600;vertical-align:top;position:relative;top:.6em;margin-left:.3em;color:var(--mute)}
+.lede{max-width:430px;margin:0 0 6px auto;font-size:clamp(15px,1.25vw,18px);line-height:1.5;color:var(--ink-2)}
+.lede em{font-style:normal;border-bottom:2px solid var(--accent);transition:border-color .5s var(--ease)}
+
+.stage{position:relative;display:grid;place-items:center;min-height:0;margin:0 calc(var(--gutter) * -1)}
+.stage svg.shoe{width:min(100%,1180px);height:auto;max-height:64vh;overflow:visible;display:block}
+.stage-tags{position:absolute;inset:0;pointer-events:none;font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--mute)}
+.stage-tags .t{position:absolute;display:flex;gap:8px;align-items:center}
+.stage-tags .t1{left:var(--gutter);top:14%}
+.stage-tags .t2{right:var(--gutter);top:10%;text-align:right}
+.stage-tags .t3{left:var(--gutter);bottom:8%}
+.stage-tags .t i{display:inline-block;width:18px;height:1px;background:var(--line-2)}
+
+.controls{
+  display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:14px 22px;
+  padding:14px 14px 14px 20px;border:1px solid var(--line);border-radius:22px;
+  background:var(--card);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  box-shadow:0 1px 0 rgba(255,255,255,.7) inset,0 18px 40px -28px rgba(21,24,29,.35);
+}
+.ctl-group{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.ctl-label{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--mute)}
+.swatches{display:flex;gap:8px}
+.swatch{
+  display:flex;align-items:center;gap:10px;cursor:pointer;
+  padding:6px 14px 6px 6px;border-radius:999px;border:1px solid var(--line);
+  background:rgba(255,255,255,.35);font-size:13px;font-weight:600;letter-spacing:.01em;
+  transition:background .3s var(--ease),border-color .3s var(--ease),transform .3s var(--ease);
+}
+.swatch:hover{background:rgba(255,255,255,.75)}
+.swatch .dot{width:26px;height:26px;border-radius:50%;background:var(--c);box-shadow:inset 0 -3px 6px rgba(0,0,0,.18),inset 0 2px 3px rgba(255,255,255,.5),0 0 0 1px rgba(21,24,29,.15)}
+.swatch[aria-pressed="true"]{background:var(--ink);color:#f4f5f7;border-color:var(--ink)}
+.swatch[aria-pressed="true"] .dot{box-shadow:inset 0 -3px 6px rgba(0,0,0,.18),inset 0 2px 3px rgba(255,255,255,.5),0 0 0 2px var(--ink),0 0 0 3.5px var(--c)}
+.explode{
+  display:inline-flex;align-items:center;gap:12px;cursor:pointer;
+  padding:12px 20px 12px 14px;border:0;border-radius:999px;
+  background:var(--accent);color:var(--accent-ink);font-weight:800;font-size:14px;letter-spacing:.02em;
+  box-shadow:0 10px 24px -14px var(--accent-deep),inset 0 -2px 0 rgba(0,0,0,.12);
+  transition:background .5s var(--ease),color .5s var(--ease),transform .25s var(--ease);
+}
+.explode:hover{transform:translateY(-1px)}
+.explode:active{transform:translateY(1px)}
+.explode svg{width:22px;height:22px}
+.explode .ic-a,.explode .ic-b{transition:transform .5s var(--ease)}
+.explode[aria-pressed="true"] .ic-a{transform:translateY(-3px)}
+.explode[aria-pressed="true"] .ic-b{transform:translateY(3px)}
+
+.legend{
+  list-style:none;margin:0;padding:0;display:flex;gap:10px 22px;flex-wrap:wrap;
+  font-size:12px;color:var(--ink-2);
+  max-height:0;opacity:0;overflow:hidden;transition:max-height .5s var(--ease),opacity .4s var(--ease),margin .5s var(--ease);
+}
+.legend.on{max-height:120px;opacity:1;margin-top:12px}
+.legend li{display:flex;align-items:center;gap:8px}
+.legend b{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;background:var(--ink);color:#fff;font-size:10px;font-family:var(--mono)}
+.legend span{color:var(--mute)}
+
+/* ---------- SVG shoe ---------- */
+.shoe .acc{fill:var(--accent);transition:fill .6s var(--ease)}
+.shoe .acc-deep{fill:var(--accent-deep);transition:fill .6s var(--ease)}
+.shoe .acc-stroke{stroke:var(--accent);transition:stroke .6s var(--ease)}
+.float{animation:float 7s ease-in-out infinite}
+.ground-shadow{transform-box:fill-box;transform-origin:center;animation:shadow 7s ease-in-out infinite}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-9px)}}
+@keyframes shadow{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(.95);opacity:.82}}
+.part{transition:transform 1s var(--ease)}
+.part-mid{transition-delay:.04s}
+.markers{opacity:0;transition:opacity .4s var(--ease)}
+.guides{opacity:0;transition:opacity .5s var(--ease)}
+.is-exploded .part-upper{transform:translate(0px,-104px)}
+.is-exploded .part-out{transform:translate(0px,54px)}
+.is-exploded .markers{opacity:1;transition-delay:.55s}
+.is-exploded .guides{opacity:1;transition-delay:.35s}
+.shadow-wrap{transition:transform 1s var(--ease),opacity 1s var(--ease);transform-box:fill-box;transform-origin:center}
+.is-exploded .shadow-wrap{transform:scale(.86);opacity:.7}
+.marker .n{font-family:var(--mono);font-size:13px;font-weight:700;fill:#fff}
+.marker-label{font-family:var(--sans);font-size:15px;font-weight:700;fill:var(--ink);font-style:italic}
+.marker-sub{font-family:var(--mono);font-size:10.5px;fill:var(--mute);letter-spacing:.08em}
+
+/* ---------- sections ---------- */
+section.slide{position:relative;padding:clamp(64px,10vh,120px) var(--gutter);border-top:1px solid var(--line)}
+.slide-head{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr);gap:24px 48px;align-items:end;margin-bottom:clamp(32px,5vh,56px)}
+.slide-no{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--mute);display:flex;gap:12px;align-items:center}
+.slide-no .rule{width:36px;height:1px;background:var(--line-2)}
+h2{margin:12px 0 0;font-size:clamp(34px,5.2vw,76px);line-height:.9;font-weight:900;font-style:italic;letter-spacing:-.05em}
+.slide-head p{margin:0;max-width:560px;font-size:16px;line-height:1.6;color:var(--ink-2)}
+.ghost{
+  position:absolute;right:-2vw;top:clamp(20px,4vh,50px);z-index:-1;pointer-events:none;
+  font-size:clamp(120px,20vw,340px);font-weight:900;font-style:italic;letter-spacing:-.07em;line-height:.8;color:var(--backdrop);
+  white-space:nowrap;
+}
+section.slide{isolation:isolate;overflow:hidden}
+
+.tag{
+  display:inline-flex;align-items:center;gap:6px;
+  font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;
+  padding:3px 8px;border-radius:999px;border:1px dashed var(--line-2);color:var(--mute);white-space:nowrap;
+}
+.tag::before{content:"";width:5px;height:5px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 1px rgba(21,24,29,.25);transition:background .5s var(--ease)}
+
+.anatomy{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.layer{
+  position:relative;padding:26px 24px 22px;border-radius:24px;border:1px solid var(--line);
+  background:var(--card);overflow:hidden;
+}
+.layer .num{font-family:var(--mono);font-size:12px;color:var(--mute)}
+.layer h3{margin:18px 0 6px;font-size:26px;font-style:italic;font-weight:900;letter-spacing:-.03em}
+.layer > p{margin:0 0 18px;font-size:14.5px;line-height:1.55;color:var(--ink-2)}
+.layer .glyph{height:86px;margin:6px -6px 4px;display:block;width:calc(100% + 12px)}
+dl.specs{margin:0;display:grid;gap:0}
+dl.specs div{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 12px;align-items:center;padding:11px 0;border-top:1px solid var(--line)}
+dl.specs dt{font-size:12.5px;color:var(--mute)}
+dl.specs dd{margin:0;font-weight:700;font-size:15px;text-align:right}
+dl.specs .tag{grid-column:1 / -1;justify-self:start}
+
+.sheet{margin-top:16px;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border:1px solid var(--line);border-radius:24px;overflow:hidden;background:rgba(255,255,255,.3)}
+.sheet .cell{padding:22px 22px 20px;border-left:1px solid var(--line)}
+.sheet .cell:first-child{border-left:0}
+.sheet .k{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--mute)}
+.sheet .v{margin:10px 0 12px;font-size:clamp(30px,3.4vw,48px);font-weight:900;font-style:italic;letter-spacing:-.04em;line-height:1}
+.sheet .v small{font-size:.4em;font-weight:700;letter-spacing:0;margin-left:4px;color:var(--ink-2)}
+
+.ways{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.way{
+  position:relative;text-align:left;cursor:pointer;padding:0;border:1px solid var(--line);border-radius:26px;overflow:hidden;
+  background:var(--card);display:flex;flex-direction:column;
+  transition:transform .4s var(--ease),border-color .4s var(--ease),box-shadow .4s var(--ease);
+}
+.way:hover{transform:translateY(-3px);box-shadow:0 24px 50px -34px rgba(21,24,29,.5)}
+.way[aria-pressed="true"]{border-color:var(--ink);box-shadow:0 0 0 1px var(--ink),0 24px 50px -34px rgba(21,24,29,.5)}
+.way .pic{position:relative;aspect-ratio:16/10;display:grid;place-items:center;background:
+  radial-gradient(80% 70% at 50% 40%,rgba(255,255,255,.8),transparent 70%),linear-gradient(180deg,#e9ecef,#d7dbe0)}
+.way .pic::after{content:"";position:absolute;left:0;right:0;bottom:0;height:6px;background:var(--c)}
+.way .pic svg{width:92%;height:auto;overflow:visible}
+.way .pic .big{position:absolute;left:14px;top:6px;font-size:84px;font-weight:900;font-style:italic;letter-spacing:-.06em;color:rgba(21,24,29,.06);line-height:1}
+.way .body{padding:18px 20px 20px;display:grid;gap:10px}
+.way .row{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
+.way h3{margin:0;font-size:22px;font-style:italic;font-weight:900;letter-spacing:-.03em}
+.way .hex{font-family:var(--mono);font-size:11px;color:var(--mute)}
+.way p{margin:0;font-size:13.5px;line-height:1.5;color:var(--ink-2)}
+.way .sel{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--mute)}
+.way[aria-pressed="true"] .sel{color:var(--ink)}
+.chips{display:flex;gap:6px}
+.chips i{width:18px;height:18px;border-radius:6px;box-shadow:inset 0 0 0 1px rgba(21,24,29,.15)}
+
+.statement{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:40px;align-items:start}
+.statement blockquote{margin:0;font-size:clamp(28px,3.6vw,52px);line-height:1.02;font-weight:900;font-style:italic;letter-spacing:-.04em}
+.statement blockquote mark{background:none;color:inherit;box-shadow:inset 0 -.22em 0 var(--accent);transition:box-shadow .5s var(--ease)}
+.notice{border:1.5px dashed var(--ink);border-radius:22px;padding:24px;display:grid;gap:12px;background:rgba(255,255,255,.35)}
+.notice .stamp{display:inline-flex;align-self:start;justify-self:start;gap:8px;align-items:center;padding:6px 12px;border-radius:8px;background:var(--ink);color:#f3f4f6;font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase}
+.notice p{margin:0;font-size:14.5px;line-height:1.6;color:var(--ink-2)}
+.notice ul{margin:0;padding-left:18px;font-size:14px;line-height:1.7;color:var(--ink-2)}
+
+footer{padding:26px var(--gutter) 40px;border-top:1px solid var(--line);display:flex;flex-wrap:wrap;gap:10px 24px;justify-content:space-between;font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--mute)}
+
+/* ---------- responsive ---------- */
+@media (max-width:1020px){
+  .anatomy,.ways{grid-template-columns:1fr}
+  .sheet{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .sheet .cell:nth-child(3){border-left:0}
+  .sheet .cell:nth-child(n+3){border-top:1px solid var(--line)}
+  .statement{grid-template-columns:1fr}
+  .way{flex-direction:row}
+  .way .pic{flex:0 0 46%;aspect-ratio:auto;min-height:180px}
+}
+@media (max-width:760px){
+  .topbar .meta{display:none}
+  .hero{min-height:auto;padding-bottom:22px}
+  .hero-head{grid-template-columns:1fr;gap:14px}
+  .lede{margin:0;max-width:none}
+  .stage{margin:6px calc(var(--gutter) * -1) 0;padding:12px 0}
+  .stage svg.shoe{width:106%;max-height:none;margin-left:1%}
+  .stage-tags .t2,.stage-tags .t1{display:none}
+  .stage-tags .t3{bottom:2%}
+  .controls{flex-direction:column;align-items:stretch;padding:14px;border-radius:20px}
+  .ctl-group{flex-direction:column;align-items:stretch;gap:10px}
+  .swatches{display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}
+  .swatch{flex-direction:column;gap:6px;padding:8px 4px;border-radius:16px;font-size:12px}
+  .explode{justify-content:center}
+  .backdrop{font-size:clamp(120px,44vw,300px);top:2%}
+  .slide-head{grid-template-columns:1fr}
+  .way{flex-direction:column}
+  .way .pic{flex:none;aspect-ratio:16/10;min-height:0}
+  .sheet .v{font-size:30px}
+  .sheet .cell{padding:18px 16px}
+}
+@media (max-width:420px){
+  .brand span{letter-spacing:.14em}
+  .pill{padding:6px 10px;font-size:10.5px}
+}
+
+/* ---------- reduced motion ---------- */
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  *,*::before,*::after{animation:none!important;transition-duration:.01ms!important;transition-delay:0s!important}
+}
+body.rm .float,body.rm .ground-shadow{animation:none!important}
+</style>
+</head>
+<body data-colorway="volt">
+
+<header class="topbar">
+  <div class="brand" aria-label="Aeroform">
+    <svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="9" fill="#15181d"/><path d="M7 23 L16 8 L25 23" fill="none" stroke="#f3f4f6" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/><path class="acc" d="M5 19.5 C12 18 20 17.5 27 18.5 L26 21 C19 20.3 12 20.6 5.5 22 Z" style="fill:var(--accent);transition:fill .6s"/></svg>
+    <span>Aeroform</span>
+  </div>
+  <div class="meta">Speculative footwear study · Deck 01</div>
+  <div class="pill"><i></i>Concept · Not for sale</div>
+</header>
+
+<main>
+<!-- ================= SLIDE 01 ================= -->
+<section class="hero" aria-labelledby="t-hero">
+  <div class="backdrop" aria-hidden="true"><span>Aero</span><span>form</span><span>Aeroform</span></div>
+
+  <div class="hero-head">
+    <div>
+      <div class="eyebrow"><b>01 / 04</b><span class="rule"></span>Speculative concept runner</div>
+      <h1 id="t-hero">Aeroform<sup>AF—01</sup></h1>
+    </div>
+    <p class="lede">A design study for a runner shaped by moving air: an <em>engineered aero-mesh</em> upper, a single swept fin and a sculpted, layered cloud-foam sole. A concept only — it is not, and will not be, for sale.</p>
+  </div>
+
+  <div class="stage" id="stage">
+    <div class="stage-tags" aria-hidden="true">
+      <div class="t t1"><i></i>Lateral · 9° heel-strike pose</div>
+      <div class="t t2">Fig. A — assembled<i></i></div>
+      <div class="t t3"><i></i>All specs imagined</div>
+    </div>
+
+    <svg class="shoe" id="shoeSvg" viewBox="40 40 960 560" role="img" aria-labelledby="shoeTitle shoeDesc">
+      <title id="shoeTitle">Aeroform concept sneaker, lateral view</title>
+      <desc id="shoeDesc">An angled side view of a speculative running shoe with an engineered mesh upper, crossed laces, a swept accent panel, a sculpted two-layer foam sole with a heel air window, and a treaded rubber outsole, floating above a soft shadow.</desc>
+      <defs>
+        <!-- mesh patterns -->
+        <pattern id="mesh" width="9" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(-6)">
+          <rect width="9" height="8" fill="#eef0f3"/>
+          <path d="M0 4 H9 M4.5 0 V8" stroke="#e1e4e8" stroke-width=".6"/>
+          <ellipse cx="2.25" cy="2" rx="1.55" ry="1.2" fill="#c4cad2"/>
+          <ellipse cx="6.75" cy="6" rx="1.55" ry="1.2" fill="#c4cad2"/>
+          <ellipse cx="2.25" cy="1.7" rx="1.2" ry=".6" fill="#aeb5bf" opacity=".6"/>
+          <ellipse cx="6.75" cy="5.7" rx="1.2" ry=".6" fill="#aeb5bf" opacity=".6"/>
+        </pattern>
+        <pattern id="meshOpen" width="12" height="10" patternUnits="userSpaceOnUse" patternTransform="rotate(-6)">
+          <rect width="12" height="10" fill="#f1f3f5"/>
+          <path d="M3 0 L6 2.5 L3 5 L0 2.5 Z M9 5 L12 7.5 L9 10 L6 7.5 Z" fill="#bcc3cc"/>
+          <path d="M3 .9 L5 2.5 L3 4.1 L1 2.5 Z M9 5.9 L11 7.5 L9 9.1 L7 7.5 Z" fill="#9aa2ad"/>
+        </pattern>
+        <pattern id="knitLining" width="4" height="4" patternUnits="userSpaceOnUse">
+          <rect width="4" height="4" fill="#353a42"/>
+          <path d="M0 4 L4 0" stroke="#2a2e35" stroke-width="1"/>
+        </pattern>
+
+        <linearGradient id="upperShade" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#ffffff" stop-opacity=".55"/>
+          <stop offset=".45" stop-color="#ffffff" stop-opacity="0"/>
+          <stop offset="1" stop-color="#6f7782" stop-opacity=".32"/>
+        </linearGradient>
+        <linearGradient id="upperShadeX" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stop-color="#58606b" stop-opacity=".28"/>
+          <stop offset=".25" stop-color="#58606b" stop-opacity="0"/>
+          <stop offset=".8" stop-color="#ffffff" stop-opacity="0"/>
+          <stop offset="1" stop-color="#58606b" stop-opacity=".18"/>
+        </linearGradient>
+        <radialGradient id="toeGlow" cx=".78" cy=".55" r=".3">
+          <stop offset="0" stop-color="#fff" stop-opacity=".7"/>
+          <stop offset="1" stop-color="#fff" stop-opacity="0"/>
+        </radialGradient>
+        <linearGradient id="overlay" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#e3e6ea"/>
+          <stop offset="1" stop-color="#c3c8cf"/>
+        </linearGradient>
+        <linearGradient id="overlayDark" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#3b4049"/>
+          <stop offset="1" stop-color="#23272d"/>
+        </linearGradient>
+        <linearGradient id="gloss" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#fff" stop-opacity=".55"/>
+          <stop offset=".5" stop-color="#fff" stop-opacity=".08"/>
+          <stop offset="1" stop-color="#000" stop-opacity=".14"/>
+        </linearGradient>
+        <linearGradient id="foamTop" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#ffffff"/>
+          <stop offset=".6" stop-color="#f1f2f4"/>
+          <stop offset="1" stop-color="#dfe2e6"/>
+        </linearGradient>
+        <linearGradient id="foamLow" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#d9dde2"/>
+          <stop offset="1" stop-color="#b9bfc7"/>
+        </linearGradient>
+        <linearGradient id="foamSide" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stop-color="#7d8590" stop-opacity=".25"/>
+          <stop offset=".12" stop-color="#7d8590" stop-opacity="0"/>
+          <stop offset=".9" stop-color="#7d8590" stop-opacity="0"/>
+          <stop offset="1" stop-color="#7d8590" stop-opacity=".2"/>
+        </linearGradient>
+        <linearGradient id="rubber" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#4a505a"/>
+          <stop offset="1" stop-color="#262a30"/>
+        </linearGradient>
+        <linearGradient id="tpu" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#ffffff" stop-opacity=".85"/>
+          <stop offset="1" stop-color="#b8c0ca" stop-opacity=".45"/>
+        </linearGradient>
+        <radialGradient id="shadowGrad" cx=".5" cy=".5" r=".5">
+          <stop offset="0" stop-color="#1b1f25" stop-opacity=".42"/>
+          <stop offset=".55" stop-color="#1b1f25" stop-opacity=".16"/>
+          <stop offset="1" stop-color="#1b1f25" stop-opacity="0"/>
+        </radialGradient>
+        <filter id="soft" x="-20%" y="-200%" width="140%" height="500%">
+          <feGaussianBlur stdDeviation="10"/>
+        </filter>
+        <filter id="softer" x="-20%" y="-300%" width="140%" height="700%">
+          <feGaussianBlur stdDeviation="4"/>
+        </filter>
+
+        <clipPath id="clipUpper">
+          <path id="upperPath" d="M152 352 C140 320 138 280 146 250 C150 228 158 212 170 200 C182 192 198 192 210 198 C240 214 272 236 304 240 C330 243 352 232 372 214 L388 202 C440 224 500 252 560 274 C620 294 670 306 720 316 C790 328 850 334 892 344 C914 350 926 357 920 365 C890 379 850 387 800 389 C700 394 560 391 450 386 C300 380 200 367 152 356 Z"/>
+        </clipPath>
+        <clipPath id="clipMid">
+          <path d="M150 350 C200 360 300 374 450 380 C560 385 700 388 800 383 C850 380 890 372 918 360 C934 372 932 392 915 404 C900 418 870 430 830 438 C780 447 700 452 600 451 L320 447 C260 445 200 440 138 430 C124 418 124 395 132 378 C136 366 142 356 150 350 Z"/>
+        </clipPath>
+        <clipPath id="clipPod">
+          <path d="M190 400 C230 402 272 408 304 417 C312 426 306 436 294 437 C256 433 214 427 184 422 C174 416 176 403 190 400 Z"/>
+        </clipPath>
+      </defs>
+
+      <!-- ground -->
+      <g class="shadow-wrap">
+        <g class="ground-shadow">
+          <ellipse cx="500" cy="542" rx="370" ry="24" fill="url(#shadowGrad)" filter="url(#soft)"/>
+          <ellipse cx="320" cy="536" rx="170" ry="8" fill="#1b1f25" opacity=".28" filter="url(#softer)"/>
+        </g>
+      </g>
+
+      <g class="float">
+      <g id="shoeArt" transform="rotate(-9 530 360)">
+
+        <!-- alignment guides (exploded) -->
+        <g class="guides" fill="none" stroke="#15181d" stroke-opacity=".28" stroke-width="1" stroke-dasharray="3 6">
+          <path d="M170 250 V520"/>
+          <path d="M520 250 V520"/>
+          <path d="M860 260 V510"/>
+        </g>
+
+        <!-- ============ OUTSOLE ============ -->
+        <g class="part part-out" id="partOut">
+          <path d="M138 430 C200 440 260 445 320 447 L600 451 C700 452 780 447 830 438 C870 430 900 418 915 404 C923 408 923 415 917 421 C896 441 860 456 800 463 C740 469 660 469 600 469 L300 467 C240 467 180 465 150 459 C134 455 130 440 138 430 Z" fill="url(#rubber)"/>
+          <path d="M140 432 C200 442 260 447 320 449 L600 453 C700 454 780 449 830 440 C870 432 900 420 914 407" fill="none" stroke="#6a717c" stroke-width="1.4" opacity=".8"/>
+          <g id="chevrons" fill="none" stroke="#1d2126" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></g>
+          <g id="lugs" fill="#23272d"></g>
+          <path id="guideSideOut" d="M150 447 C200 453 260 456 320 457 L600 460 C700 461 780 456 830 448 C870 441 898 428 912 415" fill="none" stroke="none"/>
+          <path id="guideBottom" d="M152 460 C190 466 240 467 300 467 L600 469 C660 469 740 469 800 463 C860 456 895 441 916 421" fill="none" stroke="none"/>
+          <!-- toe bumper wrap -->
+          <path d="M905 408 C915 400 921 392 922 384 C928 392 926 404 918 416 Z" fill="#2f343b"/>
+        </g>
+
+        <!-- ============ MIDSOLE ============ -->
+        <g class="part part-mid" id="partMid">
+          <path d="M150 350 C200 360 300 374 450 380 C560 385 700 388 800 383 C850 380 890 372 918 360 C934 372 932 392 915 404 C900 418 870 430 830 438 C780 447 700 452 600 451 L320 447 C260 445 200 440 138 430 C124 418 124 395 132 378 C136 366 142 356 150 350 Z" fill="url(#foamTop)"/>
+          <g clip-path="url(#clipMid)">
+            <!-- lower foam layer with sculpted wave -->
+            <path d="M120 398 C170 400 220 405 270 413 C340 425 400 438 470 441 C560 445 640 432 720 420 C790 410 850 398 905 380 L940 380 L940 480 L120 480 Z" fill="url(#foamLow)"/>
+            <path d="M120 398 C170 400 220 405 270 413 C340 425 400 438 470 441 C560 445 640 432 720 420 C790 410 850 398 905 380" fill="none" stroke="#ffffff" stroke-width="2.2" opacity=".9"/>
+            <path d="M120 401 C170 403 220 408 270 416 C340 428 400 441 470 444 C560 448 640 435 720 423 C790 413 850 401 905 383" fill="none" stroke="#8f97a2" stroke-width="1.2" opacity=".5"/>
+            <!-- sculpt channel in upper foam -->
+            <path d="M300 392 C380 404 440 410 520 410 C600 410 660 404 740 398 C700 408 640 418 560 420 C470 422 390 412 300 392 Z" fill="#dde1e6"/>
+            <path d="M300 392 C380 404 440 410 520 410 C600 410 660 404 740 398" fill="none" stroke="#fff" stroke-width="1.6"/>
+            <!-- forefoot flex notches -->
+            <path d="M640 440 C646 428 652 422 660 418 M690 434 C696 422 702 416 710 412 M740 426 C746 414 752 408 760 404" fill="none" stroke="#9aa2ad" stroke-width="2" stroke-linecap="round"/>
+            <path d="M642 441 C648 429 654 423 662 419 M692 435 C698 423 704 417 712 413 M742 427 C748 415 754 409 762 405" fill="none" stroke="#fff" stroke-width="1" stroke-linecap="round" opacity=".8"/>
+            <rect x="100" y="340" width="850" height="140" fill="url(#foamSide)"/>
+          </g>
+          <!-- heel air pod window -->
+          <path d="M190 400 C230 402 272 408 304 417 C312 426 306 436 294 437 C256 433 214 427 184 422 C174 416 176 403 190 400 Z" class="acc"/>
+          <g clip-path="url(#clipPod)">
+            <g id="podRibs" fill="none" stroke="#000" stroke-opacity=".22" stroke-width="3"></g>
+            <path d="M180 402 C230 404 272 410 310 419 L310 410 L180 396 Z" fill="#fff" opacity=".45"/>
+            <path d="M180 432 C230 434 272 436 310 440 L310 450 L180 450 Z" fill="#000" opacity=".18"/>
+          </g>
+          <path d="M190 400 C230 402 272 408 304 417 C312 426 306 436 294 437 C256 433 214 427 184 422 C174 416 176 403 190 400 Z" fill="none" stroke="#1d2126" stroke-opacity=".35" stroke-width="1.5"/>
+          <!-- TPU heel clip -->
+          <path d="M152 352 C140 368 131 390 131 414 C131 424 134 430 140 434 L178 438 C168 420 168 396 176 376 C182 362 190 356 198 356 Z" fill="url(#tpu)" stroke="#9aa2ad" stroke-opacity=".6" stroke-width="1"/>
+          <path d="M150 362 C142 380 138 398 139 418" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" opacity=".9"/>
+          <!-- top edge highlight -->
+          <path d="M152 352 C200 362 300 376 450 382 C560 387 700 390 800 385 C850 382 890 374 916 363" fill="none" stroke="#fff" stroke-width="2"/>
+          <path d="M925 372 C930 384 926 396 916 404" fill="none" stroke="#b9c0c9" stroke-width="1.5"/>
+        </g>
+
+        <!-- ============ UPPER ============ -->
+        <g class="part part-upper" id="partUpper">
+          <!-- inner collar lining -->
+          <path d="M166 206 C184 176 238 170 290 188 C322 200 352 198 380 186 L386 222 C352 242 322 248 300 246 C262 242 222 222 190 208 Z" fill="url(#knitLining)"/>
+          <path d="M166 206 C184 176 238 170 290 188 C322 200 352 198 380 186" fill="none" stroke="#4a505a" stroke-width="5" stroke-linecap="round"/>
+          <!-- tongue -->
+          <path d="M358 238 C356 204 360 176 370 154 C378 138 394 128 414 130 C436 132 454 142 462 158 L476 206 L400 214 Z" fill="url(#mesh)"/>
+          <path d="M358 238 C356 204 360 176 370 154 C378 138 394 128 414 130 C436 132 454 142 462 158 L476 206 L400 214 Z" fill="url(#upperShade)"/>
+          <path d="M358 238 C356 204 360 176 370 154 C378 138 394 128 414 130 C436 132 454 142 462 158 L476 206 L400 214 Z" fill="none" stroke="#8f97a2" stroke-opacity=".6" stroke-width="1.3" stroke-linejoin="round"/>
+          <path d="M370 154 C378 138 394 128 414 130 C436 132 454 142 462 158" fill="none" stroke="#c3c9d1" stroke-width="7" stroke-linecap="round"/>
+          <path d="M372 150 C380 136 396 128 414 128" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+          <!-- tongue label -->
+          <g transform="translate(414 166) rotate(12) scale(.82)">
+            <rect x="-22" y="-13" width="44" height="26" rx="5" fill="#15181d"/>
+            <rect x="-22" y="7" width="44" height="6" class="acc"/>
+            <rect x="-22" y="7" width="44" height="6" fill="none"/>
+            <text x="0" y="3" text-anchor="middle" font-family="Helvetica Neue,Arial,Liberation Sans,sans-serif" font-size="10" font-weight="800" font-style="italic" fill="#f3f4f6" letter-spacing=".5">AF·01</text>
+          </g>
+          <!-- tongue band + far eyestay (generated) -->
+          <g id="farSide"></g>
+
+          <!-- main upper body -->
+          <path d="M152 352 C140 320 138 280 146 250 C150 228 158 212 170 200 C182 192 198 192 210 198 C240 214 272 236 304 240 C330 243 352 232 372 214 L388 202 C440 224 500 252 560 274 C620 294 670 306 720 316 C790 328 850 334 892 344 C914 350 926 357 920 365 C890 379 850 387 800 389 C700 394 560 391 450 386 C300 380 200 367 152 356 Z" fill="url(#mesh)"/>
+          <g clip-path="url(#clipUpper)">
+            <!-- open ventilation zone -->
+            <path d="M560 300 C640 318 720 330 790 338 C760 360 700 372 620 374 C560 372 520 350 560 300 Z" fill="url(#meshOpen)" opacity=".95"/>
+            <path d="M420 250 C470 272 520 292 560 300" fill="none" stroke="#dde1e6" stroke-width="1"/>
+            <rect x="120" y="100" width="820" height="300" fill="url(#upperShade)"/>
+            <rect x="120" y="100" width="820" height="300" fill="url(#upperShadeX)"/>
+            <rect x="120" y="100" width="820" height="300" fill="url(#toeGlow)"/>
+            <!-- heel counter -->
+            <path d="M140 360 C136 320 136 280 144 250 C150 226 160 210 172 200 C186 196 198 200 208 208 C218 242 236 282 272 312 C302 336 332 352 364 380 C300 376 220 366 140 360 Z" fill="url(#overlay)"/>
+            <path d="M140 360 C136 320 136 280 144 250 C150 226 160 210 172 200 C186 196 198 200 208 208 C218 242 236 282 272 312 C302 336 332 352 364 380 C300 376 220 366 140 360 Z" fill="url(#gloss)" opacity=".7"/>
+            <path d="M200 214 C210 246 228 286 263 316 C292 340 320 355 346 376" fill="none" stroke="#8e96a1" stroke-width="1.1" stroke-dasharray="4 3.2"/>
+            <path d="M208 208 C218 242 236 282 272 312 C302 336 332 352 364 380" fill="none" stroke="#fff" stroke-width="1.4" opacity=".8"/>
+            <!-- accent fin -->
+            <path d="M184 344 C270 332 360 318 444 298 C500 285 546 285 590 292 C550 310 496 330 436 346 C354 366 270 372 190 368 C176 362 174 350 184 344 Z" class="acc"/>
+            <path d="M184 344 C270 332 360 318 444 298 C500 285 546 285 590 292 C550 310 496 330 436 346 C354 366 270 372 190 368 C176 362 174 350 184 344 Z" fill="url(#gloss)"/>
+            <path d="M190 350 C272 339 360 326 444 306 C494 294 534 292 568 295" fill="none" stroke="#fff" stroke-width="1.2" opacity=".7"/>
+            <path d="M196 362 C270 363 350 356 430 338" fill="none" stroke="#000" stroke-opacity=".28" stroke-width="1" stroke-dasharray="3.5 3"/>
+            <!-- secondary speed line -->
+            <path d="M260 382 C340 378 420 368 500 352 C530 346 552 344 572 345 C540 356 504 366 470 372 C400 384 330 388 262 388 Z" fill="#15181d" opacity=".78"/>
+            <!-- toe cap / mudguard -->
+            <path d="M590 392 C646 374 708 358 780 351 C840 346 890 349 920 356 C928 360 928 366 920 368 C890 382 850 390 800 392 C720 396 660 394 590 392 Z" fill="url(#overlay)"/>
+            <path d="M590 392 C646 374 708 358 780 351 C840 346 890 349 920 356 C928 360 928 366 920 368 C890 382 850 390 800 392 C720 396 660 394 590 392 Z" fill="url(#gloss)" opacity=".6"/>
+            <path d="M606 390 C660 374 716 362 782 356 C838 352 884 354 912 360" fill="none" stroke="#8e96a1" stroke-width="1.1" stroke-dasharray="4 3.2"/>
+            <path d="M590 391 C646 373 708 357 780 350 C840 345 890 348 920 355" fill="none" stroke="#fff" stroke-width="1.4" opacity=".85"/>
+            <g id="perfs" fill="#9aa2ad"></g>
+            <!-- strobel shadow line -->
+            <path d="M152 356 C200 367 300 380 450 386 C560 391 700 394 800 389 C850 387 890 379 920 365" fill="none" stroke="#5c646f" stroke-width="3" opacity=".35"/>
+          </g>
+          <path d="M152 352 C140 320 138 280 146 250 C150 228 158 212 170 200 C182 192 198 192 210 198 C240 214 272 236 304 240 C330 243 352 232 372 214 L388 202 C440 224 500 252 560 274 C620 294 670 306 720 316 C790 328 850 334 892 344 C914 350 926 357 920 365 C890 379 850 387 800 389 C700 394 560 391 450 386 C300 380 200 367 152 356 Z" fill="none" stroke="#8f97a2" stroke-opacity=".55" stroke-width="1.3" stroke-linejoin="round"/>
+          <!-- near eyestay -->
+          <path id="laceGuide" d="M394 214 C446 236 502 262 560 284 C618 304 668 316 718 326" fill="none" stroke="url(#overlayDark)" stroke-width="24" stroke-linecap="round"/>
+          <path d="M394 214 C446 236 502 262 560 284 C618 304 668 316 718 326" fill="none" stroke="#15181d" stroke-width="24" stroke-linecap="round" opacity=".55"/>
+          <path d="M391 205 C444 227 500 253 558 275 C616 295 666 307 716 317" fill="none" stroke="#6b737e" stroke-width="1" stroke-dasharray="3.5 3"/>
+          <path d="M397 224 C448 246 504 272 562 294 C620 314 670 326 720 336" fill="none" stroke="#6b737e" stroke-width="1" stroke-dasharray="3.5 3"/>
+          <!-- collar padding -->
+          <path d="M168 204 C182 194 198 194 210 200 C240 216 272 238 304 242 C330 245 352 234 372 216" fill="none" stroke="#cfd4da" stroke-width="12" stroke-linecap="round"/>
+          <path d="M168 202 C182 192 198 192 210 198 C240 214 272 236 304 240 C330 243 352 232 372 214" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+          <path d="M172 212 C186 204 200 206 212 210 C242 226 274 248 304 252 C330 255 352 246 370 230" fill="none" stroke="#8e96a1" stroke-width="1" stroke-dasharray="3.5 3"/>
+          <!-- heel pull tab -->
+          <path fill-rule="evenodd" class="acc" d="M156 222 C146 196 144 168 154 150 C162 136 182 136 190 150 C198 170 202 196 202 214 Z M166 204 C160 186 160 166 166 158 C172 150 180 154 182 164 C186 178 188 194 188 204 Z"/>
+          <path fill-rule="evenodd" fill="url(#gloss)" d="M156 222 C146 196 144 168 154 150 C162 136 182 136 190 150 C198 170 202 196 202 214 Z M166 204 C160 186 160 166 166 158 C172 150 180 154 182 164 C186 178 188 194 188 204 Z"/>
+          <!-- heel brand mark -->
+          <g transform="translate(196 300) rotate(-4)" fill="none" stroke="#15181d" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M-13 10 L0 -12 L13 10" stroke-width="3.2"/>
+            <path d="M-19 5 C-8 3 8 3 19 4" stroke-width="2" opacity=".6"/>
+          </g>
+          <!-- laces (generated) -->
+          <g id="laces"></g>
+          <!-- bow + dangling ends -->
+          <g id="bow" transform="translate(398 206) scale(.74) translate(-398 -206)">
+            <path d="M398 206 C372 180 336 176 340 196 C343 212 374 212 398 206 Z" fill="none" stroke="#9aa2ad" stroke-width="7.5" stroke-linejoin="round"/>
+            <path d="M398 206 C372 180 336 176 340 196 C343 212 374 212 398 206 Z" fill="none" stroke="#fbfbfc" stroke-width="5" stroke-linejoin="round"/>
+            <path d="M398 206 C420 172 462 170 458 194 C455 210 424 212 398 206 Z" fill="none" stroke="#9aa2ad" stroke-width="7.5" stroke-linejoin="round"/>
+            <path d="M398 206 C420 172 462 170 458 194 C455 210 424 212 398 206 Z" fill="none" stroke="#fbfbfc" stroke-width="5" stroke-linejoin="round"/>
+            <path d="M396 208 C386 240 392 276 408 300" fill="none" stroke="#9aa2ad" stroke-width="7.5" stroke-linecap="round"/>
+            <path d="M396 208 C386 240 392 276 408 300" fill="none" stroke="#fbfbfc" stroke-width="5" stroke-linecap="round"/>
+            <path d="M400 208 C416 236 438 256 470 272" fill="none" stroke="#9aa2ad" stroke-width="7.5" stroke-linecap="round"/>
+            <path d="M400 208 C416 236 438 256 470 272" fill="none" stroke="#fbfbfc" stroke-width="5" stroke-linecap="round"/>
+            <rect x="-4" y="-9" width="8" height="18" rx="3" class="acc" transform="translate(410 306) rotate(-32)"/>
+            <rect x="-4" y="-9" width="8" height="18" rx="3" class="acc" transform="translate(477 276) rotate(-62)"/>
+            <ellipse cx="398" cy="206" rx="9" ry="7" fill="#f4f5f7" stroke="#9aa2ad" stroke-width="1.5"/>
+          </g>
+        </g>
+
+        <!-- exploded-view markers -->
+        <g class="markers" aria-hidden="true">
+          <g class="marker" transform="translate(0 -104)">
+            <path d="M600 300 L640 208 H700" fill="none" stroke="#15181d" stroke-width="1.2"/>
+            <circle cx="600" cy="300" r="4" fill="#15181d"/>
+            <circle cx="716" cy="208" r="14" fill="#15181d"/><text x="716" y="212.5" text-anchor="middle" class="n">1</text>
+            <text class="marker-label" x="738" y="206">Upper</text>
+            <text class="marker-sub" x="738" y="222">AERO-MESH · IMAGINED</text>
+          </g>
+          <g class="marker">
+            <path d="M820 402 L860 470 H880" fill="none" stroke="#15181d" stroke-width="1.2"/>
+            <circle cx="820" cy="402" r="4" fill="#15181d"/>
+            <circle cx="896" cy="470" r="14" fill="#15181d"/><text x="896" y="474.5" text-anchor="middle" class="n">2</text>
+          </g>
+          <g class="marker" transform="translate(0 54)">
+            <path d="M210 462 L150 430 H122" fill="none" stroke="#15181d" stroke-width="1.2"/>
+            <circle cx="210" cy="462" r="4" fill="#15181d"/>
+            <circle cx="106" cy="430" r="14" fill="#15181d"/><text x="106" y="434.5" text-anchor="middle" class="n">3</text>
+          </g>
+        </g>
+      </g>
+      </g>
+    </svg>
+  </div>
+
+  <div>
+    <div class="controls">
+      <div class="ctl-group" role="group" aria-labelledby="cw-label">
+        <span class="ctl-label" id="cw-label">Accent colorway</span>
+        <div class="swatches">
+          <button class="swatch" type="button" data-cw="volt" aria-pressed="true" style="--c:#c9ef3a"><span class="dot"></span>Volt Drift</button>
+          <button class="swatch" type="button" data-cw="ember" aria-pressed="false" style="--c:#ff5a36"><span class="dot"></span>Ember Wake</button>
+          <button class="swatch" type="button" data-cw="ion" aria-pressed="false" style="--c:#4f7dff"><span class="dot"></span>Ion Tide</button>
+        </div>
+      </div>
+      <button class="explode" id="explodeBtn" type="button" aria-pressed="false" aria-controls="shoeSvg">
+        <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <g class="ic-a"><path d="M4 9 C8 6 16 6 20 9"/><path d="M7 6.5 L12 3.5 L17 6.5"/></g>
+          <g class="ic-b"><path d="M3 15 H21"/><path d="M4 18.5 H20"/></g>
+        </svg>
+        <span id="explodeLabel">Explode view</span>
+      </button>
+    </div>
+    <ol class="legend" id="legend" aria-live="polite">
+      <li><b>1</b>Upper <span>— engineered aero-mesh shell</span></li>
+      <li><b>2</b>Midsole <span>— dual-density cloud foam + heel air window</span></li>
+      <li><b>3</b>Outsole <span>— lattice traction rubber</span></li>
+    </ol>
+  </div>
+</section>
+
+<!-- ================= SLIDE 02 ================= -->
+<section class="slide" aria-labelledby="t-anatomy">
+  <div class="ghost" aria-hidden="true">Layers</div>
+  <div class="slide-head">
+    <div>
+      <div class="slide-no">02 / 04<span class="rule"></span>Anatomy</div>
+      <h2 id="t-anatomy">Three layers,<br>one breath.</h2>
+    </div>
+    <p>Aeroform is drawn as three stacked systems that read clearly when pulled apart. Every figure below is <strong>imagined</strong> for this speculative study — nothing has been built, tested or measured.</p>
+  </div>
+
+  <div class="anatomy">
+    <article class="layer">
+      <div class="num">01 — Upper</div>
+      <svg class="glyph" viewBox="0 0 300 86" aria-hidden="true">
+        <defs><clipPath id="gU"><path d="M20 70 C18 50 22 30 40 22 C70 30 110 36 150 40 C200 46 250 52 282 62 C286 66 284 72 280 74 L20 74 Z"/></clipPath></defs>
+        <g clip-path="url(#gU)"><rect width="300" height="86" fill="url(#mesh)"/><rect width="300" height="86" fill="url(#upperShade)"/></g>
+        <path d="M60 60 C120 52 170 44 214 44 C190 56 150 66 100 70 Z" class="acc" style="fill:var(--accent);transition:fill .6s"/>
+        <path d="M20 70 C18 50 22 30 40 22 C70 30 110 36 150 40 C200 46 250 52 282 62 C286 66 284 72 280 74 L20 74 Z" fill="none" stroke="#15181d" stroke-opacity=".25"/>
+      </svg>
+      <h3>Aero-mesh shell</h3>
+      <p>A single-layer engineered knit: tight cells around the heel for hold, open diamond cells over the forefoot where air should move. The swept fin locks the midfoot without extra layers.</p>
+      <dl class="specs">
+        <div><dt>Mesh zones</dt><dd>2 densities</dd><span class="tag">Imagined spec</span></div>
+        <div><dt>Monofilament</dt><dd>0.3 mm</dd><span class="tag">Imagined spec</span></div>
+        <div><dt>Upper mass</dt><dd>61 g</dd><span class="tag">Imagined spec</span></div>
+      </dl>
+    </article>
+    <article class="layer">
+      <div class="num">02 — Midsole</div>
+      <svg class="glyph" viewBox="0 0 300 86" aria-hidden="true">
+        <path d="M14 30 C80 40 180 46 286 36 C292 46 288 58 276 64 C200 72 90 72 20 64 C10 54 10 40 14 30 Z" fill="url(#foamTop)" stroke="#15181d" stroke-opacity=".2"/>
+        <path d="M14 50 C60 52 110 60 160 62 C210 62 250 54 288 46 C288 54 284 60 276 64 C200 72 90 72 20 64 C14 58 12 54 14 50 Z" fill="url(#foamLow)"/>
+        <rect x="34" y="44" width="70" height="14" rx="7" class="acc" style="fill:var(--accent);transition:fill .6s"/>
+      </svg>
+      <h3>Cloud-foam stack</h3>
+      <p>A soft upper foam over a firmer sculpted carrier, split by a flowing wave line. A heel window exposes an accent air pod; a clear heel clip cradles the rearfoot.</p>
+      <dl class="specs">
+        <div><dt>Stack, heel / fore</dt><dd>36 / 30 mm</dd><span class="tag">Imagined spec</span></div>
+        <div><dt>Heel-to-toe drop</dt><dd>6 mm</dd><span class="tag">Imagined spec</span></div>
+        <div><dt>Energy return</dt><dd>“High”</dd><span class="tag">Imagined spec</span></div>
+      </dl>
+    </article>
+    <article class="layer">
+      <div class="num">03 — Outsole</div>
+      <svg class="glyph" viewBox="0 0 300 86" aria-hidden="true">
+        <path d="M14 34 C100 40 200 42 286 30 C292 38 290 48 280 52 C200 60 100 60 20 54 C10 48 10 40 14 34 Z" fill="url(#rubber)"/>
+        <g fill="#1d2126"><rect x="30" y="54" width="10" height="6" rx="1.5"/><rect x="52" y="55" width="10" height="6" rx="1.5"/><rect x="74" y="56" width="10" height="6" rx="1.5"/><rect x="96" y="56" width="10" height="6" rx="1.5"/><rect x="118" y="56" width="10" height="6" rx="1.5"/><rect x="140" y="56" width="10" height="6" rx="1.5"/><rect x="162" y="56" width="10" height="6" rx="1.5"/><rect x="184" y="56" width="10" height="6" rx="1.5"/><rect x="206" y="55" width="10" height="6" rx="1.5"/><rect x="228" y="54" width="10" height="6" rx="1.5"/><rect x="250" y="52" width="10" height="6" rx="1.5"/></g>
+        <path d="M30 46 l6 -6 l6 6 M60 47 l6 -6 l6 6 M90 47 l6 -6 l6 6 M120 47 l6 -6 l6 6 M150 47 l6 -6 l6 6 M180 47 l6 -6 l6 6 M210 46 l6 -6 l6 6 M240 44 l6 -6 l6 6" fill="none" stroke="#15181d" stroke-width="1.6"/>
+      </svg>
+      <h3>Lattice traction</h3>
+      <p>A thin rubber skin with chevron sidewall grooves and square lugs placed only where the imagined pressure map says they’re needed, sweeping up into a toe bumper.</p>
+      <dl class="specs">
+        <div><dt>Lug depth</dt><dd>2.5 mm</dd><span class="tag">Imagined spec</span></div>
+        <div><dt>Rubber coverage</dt><dd>58 %</dd><span class="tag">Imagined spec</span></div>
+        <div><dt>Toe spring</dt><dd>11°</dd><span class="tag">Imagined spec</span></div>
+      </dl>
+    </article>
+  </div>
+
+  <div class="sheet" role="list" aria-label="Imagined headline specifications">
+    <div class="cell" role="listitem"><div class="k">Weight · US M9</div><div class="v">214<small>g</small></div><span class="tag">Imagined</span></div>
+    <div class="cell" role="listitem"><div class="k">Heel stack</div><div class="v">36<small>mm</small></div><span class="tag">Imagined</span></div>
+    <div class="cell" role="listitem"><div class="k">Drop</div><div class="v">6<small>mm</small></div><span class="tag">Imagined</span></div>
+    <div class="cell" role="listitem"><div class="k">Price · availability</div><div class="v">N/A<small>not for sale</small></div><span class="tag">Concept only</span></div>
+  </div>
+</section>
+
+<!-- ================= SLIDE 03 ================= -->
+<section class="slide" aria-labelledby="t-ways">
+  <div class="ghost" aria-hidden="true">Accent</div>
+  <div class="slide-head">
+    <div>
+      <div class="slide-no">03 / 04<span class="rule"></span>Colorways</div>
+      <h2 id="t-ways">Cloud gray,<br>one loud accent.</h2>
+    </div>
+    <p>The body stays in quiet cloud tones so a single accent can carry the fin, pull tab, heel air window and aglets. Choose a card to restyle the shoe on slide 01 — all three are live.</p>
+  </div>
+  <div class="ways" id="ways">
+    <button class="way" type="button" data-cw="volt" aria-pressed="true" style="--c:#c9ef3a">
+      <div class="pic" data-accent="#c9ef3a"><span class="big" aria-hidden="true">01</span></div>
+      <div class="body">
+        <div class="row"><h3>Volt Drift</h3><span class="hex">#C9EF3A</span></div>
+        <p>Electric lime against cloud gray — the launch accent, bright enough to read from across a track.</p>
+        <div class="row"><div class="chips" aria-hidden="true"><i style="background:#eef0f3"></i><i style="background:#c9ccd2"></i><i style="background:#2b3038"></i><i style="background:#c9ef3a"></i></div><span class="sel">Selected</span></div>
+      </div>
+    </button>
+    <button class="way" type="button" data-cw="ember" aria-pressed="false" style="--c:#ff5a36">
+      <div class="pic" data-accent="#ff5a36"><span class="big" aria-hidden="true">02</span></div>
+      <div class="body">
+        <div class="row"><h3>Ember Wake</h3><span class="hex">#FF5A36</span></div>
+        <p>A warm signal orange for dusk runs, pulling heat into the fin and the exposed heel pod.</p>
+        <div class="row"><div class="chips" aria-hidden="true"><i style="background:#eef0f3"></i><i style="background:#c9ccd2"></i><i style="background:#2b3038"></i><i style="background:#ff5a36"></i></div><span class="sel">Select</span></div>
+      </div>
+    </button>
+    <button class="way" type="button" data-cw="ion" aria-pressed="false" style="--c:#4f7dff">
+      <div class="pic" data-accent="#4f7dff"><span class="big" aria-hidden="true">03</span></div>
+      <div class="body">
+        <div class="row"><h3>Ion Tide</h3><span class="hex">#4F7DFF</span></div>
+        <p>A cool electric blue that sits closest to the gray — the calmest of the three accents.</p>
+        <div class="row"><div class="chips" aria-hidden="true"><i style="background:#eef0f3"></i><i style="background:#c9ccd2"></i><i style="background:#2b3038"></i><i style="background:#4f7dff"></i></div><span class="sel">Select</span></div>
+      </div>
+    </button>
+  </div>
+</section>
+
+<!-- ================= SLIDE 04 ================= -->
+<section class="slide" aria-labelledby="t-note">
+  <div class="ghost" aria-hidden="true">Concept</div>
+  <div class="slide-head">
+    <div>
+      <div class="slide-no">04 / 04<span class="rule"></span>Status</div>
+      <h2 id="t-note">A study,<br>not a product.</h2>
+    </div>
+  </div>
+  <div class="statement">
+    <blockquote>Aeroform exists only as a drawing — an argument for <mark>lighter layers</mark> and more air, rendered in gray and one accent.</blockquote>
+    <div class="notice" role="note" aria-label="Concept notice">
+      <span class="stamp">Not for sale</span>
+      <p>Aeroform is a speculative design concept. It is not a product, has no price, and cannot be ordered, reserved or pre-ordered.</p>
+      <ul>
+        <li>Every specification on this page is imagined.</li>
+        <li>Materials and names (aero-mesh, cloud foam) are fictional.</li>
+        <li>Colorways are illustrative renderings only.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer>
+  <span>Aeroform AF—01 · Speculative concept</span>
+  <span>Imagined specifications · Not for sale</span>
+</footer>
+
+<script>
+(function(){
+  "use strict";
+  var NS = "http://www.w3.org/2000/svg";
+  var body = document.body;
+  var stage = document.getElementById("stage");
+  var mqRM = window.matchMedia ? window.matchMedia("(prefers-reduced-motion: reduce)") : null;
+  function syncRM(){ body.classList.toggle("rm", !!(mqRM && mqRM.matches)); }
+  syncRM();
+  if (mqRM) { if (mqRM.addEventListener) mqRM.addEventListener("change", syncRM); else if (mqRM.addListener) mqRM.addListener(syncRM); }
+
+  function el(tag, attrs, parent){
+    var n = document.createElementNS(NS, tag);
+    for (var k in attrs) n.setAttribute(k, attrs[k]);
+    if (parent) parent.appendChild(n);
+    return n;
+  }
+  function f(n){ return Math.round(n*10)/10; }
+  function sample(path, s){ var L = path.getTotalLength(); s = Math.max(0, Math.min(L, s)); return path.getPointAtLength(s); }
+  function angleAt(path, s){
+    var a = sample(path, s - 1), b = sample(path, s + 1);
+    return Math.atan2(b.y - a.y, b.x - a.x);
+  }
+
+  /* ---- outsole tread: lugs along the bottom, chevrons on the sidewall ---- */
+  var gB = document.getElementById("guideBottom"), lugs = document.getElementById("lugs");
+  var LB = gB.getTotalLength();
+  for (var s = 14; s < LB - 10; s += 17) {
+    var p = sample(gB, s), a = angleAt(gB, s) * 180 / Math.PI;
+    var w = 10 + (s % 34 < 17 ? 0 : 2);
+    el("rect", { x: -w/2, y: -2.5, width: w, height: 7, rx: 1.6,
+      transform: "translate(" + f(p.x) + " " + f(p.y) + ") rotate(" + f(a) + ")" }, lugs);
+  }
+  var gS = document.getElementById("guideSideOut"), chev = document.getElementById("chevrons");
+  var LS = gS.getTotalLength(), d = "";
+  for (var t = 20; t < LS - 16; t += 21) {
+    var q = sample(gS, t), an = angleAt(gS, t);
+    var c = Math.cos(an), sn = Math.sin(an);
+    function pt(dx, dy){ return f(q.x + dx*c - dy*sn) + " " + f(q.y + dx*sn + dy*c); }
+    d += "M" + pt(-5, -4.5) + " L" + pt(2, 0) + " L" + pt(-5, 4.5) + " ";
+  }
+  el("path", { d: d }, chev);
+
+  /* ---- heel air pod ribs ---- */
+  var ribs = document.getElementById("podRibs"), rd = "";
+  for (var x = 196; x < 312; x += 11) rd += "M" + x + " 396 L" + (x - 6) + " 442 ";
+  el("path", { d: rd }, ribs);
+
+  /* ---- toe perforations ---- */
+  var perfs = document.getElementById("perfs");
+  for (var r = 0; r < 3; r++) {
+    for (var k = 0; k < 9; k++) {
+      var px = 700 + k * 20 + (r % 2) * 10;
+      var py = 368 - (px - 700) * 0.075 + r * 7 + Math.pow((px - 790) / 90, 2) * 3;
+      if (px > 880) continue;
+      el("circle", { cx: f(px), cy: f(py), r: 1.7 }, perfs);
+    }
+  }
+
+  /* ---- laces: near eyelets on the eyestay, far eyelets peeking over the vamp ---- */
+  var guide = document.getElementById("laceGuide");
+  var LL = guide.getTotalLength();
+  var N = 7, near = [], far = [];
+  for (var i = 0; i < N; i++) {
+    var u = 0.07 + i * (0.86 / (N - 1));
+    var gp = sample(guide, u * LL), ga = angleAt(guide, u * LL);
+    var nx = Math.sin(ga), ny = -Math.cos(ga); // normal pointing "up" from the lace line
+    near.push({ x: gp.x, y: gp.y + 1 });
+    var off = 26 - u * 12;                     // vamp narrows toward the toe
+    far.push({ x: gp.x + nx * off - 5, y: gp.y + ny * off });
+  }
+  var farSide = document.getElementById("farSide");
+  // tongue band between the two eyestays
+  var band = "M" + f(near[0].x - 6) + " " + f(near[0].y);
+  for (i = 0; i < N; i++) band += " L" + f(far[i].x) + " " + f(far[i].y - 7);
+  var endN = sample(guide, LL);
+  band += " L" + f(endN.x + 4) + " " + f(endN.y - 6) + " L" + f(endN.x) + " " + f(endN.y);
+  for (i = N - 1; i >= 0; i--) band += " L" + f(near[i].x) + " " + f(near[i].y);
+  band += " Z";
+  el("path", { d: band, fill: "url(#mesh)" }, farSide);
+  el("path", { d: band, fill: "#8a929d", opacity: ".28" }, farSide);
+  // far eyestay
+  var fd = "M" + f(far[0].x - 8) + " " + f(far[0].y + 2);
+  for (i = 0; i < N; i++) fd += " L" + f(far[i].x) + " " + f(far[i].y);
+  fd += " L" + f(endN.x + 2) + " " + f(endN.y - 4);
+  el("path", { d: fd, fill: "none", stroke: "#2a2e35", "stroke-width": 11, "stroke-linecap": "round", "stroke-linejoin": "round" }, farSide);
+  for (i = 0; i < N; i++) el("circle", { cx: f(far[i].x), cy: f(far[i].y), r: 2.6, fill: "#0f1115" }, farSide);
+
+  var laces = document.getElementById("laces");
+  function laceSeg(a, b, under){
+    var mx = (a.x + b.x) / 2 + 2, my = (a.y + b.y) / 2 - 3;
+    var dd = "M" + f(a.x) + " " + f(a.y) + " Q" + f(mx) + " " + f(my) + " " + f(b.x) + " " + f(b.y);
+    el("path", { d: dd, fill: "none", stroke: under ? "#8e96a1" : "#9aa2ad", "stroke-width": 8, "stroke-linecap": "round" }, laces);
+    el("path", { d: dd, fill: "none", stroke: under ? "#dfe2e6" : "#fbfbfc", "stroke-width": 5.4, "stroke-linecap": "round" }, laces);
+    el("path", { d: dd, fill: "none", stroke: "#b7bdc6", "stroke-width": 1, "stroke-dasharray": "2 2.4", "stroke-linecap": "round", opacity: ".8" }, laces);
+  }
+  for (i = N - 2; i >= 0; i--) {
+    laceSeg(near[i + 1], far[i], true);
+    laceSeg(near[i], far[i + 1], false);
+  }
+  // near eyelets (on top of laces' ends)
+  for (i = 0; i < N; i++) {
+    el("circle", { cx: f(near[i].x), cy: f(near[i].y), r: 5.6, fill: "#15181d", stroke: "#8e96a1", "stroke-width": 1.6 }, laces);
+    el("circle", { cx: f(near[i].x - 0.6), cy: f(near[i].y - 0.8), r: 2.2, fill: "#eef0f3" }, laces);
+  }
+
+  /* ---- colorway cards: clone the finished drawing, recolor per card ---- */
+  var art = document.getElementById("shoeArt");
+  var cards = document.querySelectorAll(".way .pic");
+  for (var ci = 0; ci < cards.length; ci++) {
+    var sv = el("svg", { viewBox: "90 70 880 470", "aria-hidden": "true", focusable: "false" });
+    sv.setAttribute("class", "shoe");
+    sv.style.setProperty("--accent", cards[ci].getAttribute("data-accent"));
+    el("ellipse", { cx: 500, cy: 520, rx: 360, ry: 20, fill: "url(#shadowGrad)", filter: "url(#soft)" }, sv);
+    var clone = art.cloneNode(true);
+    clone.removeAttribute("id");
+    var withId = clone.querySelectorAll("[id]");
+    for (var j = 0; j < withId.length; j++) withId[j].removeAttribute("id");
+    var strip = clone.querySelectorAll(".markers,.guides");
+    for (j = 0; j < strip.length; j++) strip[j].parentNode.removeChild(strip[j]);
+    sv.appendChild(clone);
+    cards[ci].appendChild(sv);
+  }
+
+  /* ---- colorway switching ---- */
+  var cwButtons = document.querySelectorAll("[data-cw]");
+  var names = { volt: "Volt Drift", ember: "Ember Wake", ion: "Ion Tide" };
+  function setCW(name){
+    body.setAttribute("data-colorway", name);
+    for (var b = 0; b < cwButtons.length; b++) {
+      var on = cwButtons[b].getAttribute("data-cw") === name;
+      cwButtons[b].setAttribute("aria-pressed", on ? "true" : "false");
+      var sel = cwButtons[b].querySelector(".sel");
+      if (sel) sel.textContent = on ? "Selected" : "Select";
+    }
+    live.textContent = "Colorway: " + names[name];
+  }
+  var live = document.createElement("div");
+  live.className = "sr"; live.setAttribute("aria-live", "polite");
+  body.appendChild(live);
+  for (var b = 0; b < cwButtons.length; b++) {
+    cwButtons[b].addEventListener("click", function(){ setCW(this.getAttribute("data-cw")); });
+  }
+
+  /* ---- exploded view ---- */
+  var btn = document.getElementById("explodeBtn"), lbl = document.getElementById("explodeLabel");
+  var legend = document.getElementById("legend"), figTag = document.querySelector(".stage-tags .t2");
+  function setExploded(on){
+    stage.classList.toggle("is-exploded", on);
+    btn.setAttribute("aria-pressed", on ? "true" : "false");
+    lbl.textContent = on ? "Assemble" : "Explode view";
+    legend.classList.toggle("on", on);
+    if (figTag) figTag.innerHTML = (on ? "Fig. B — exploded" : "Fig. A — assembled") + "<i></i>";
+  }
+  btn.addEventListener("click", function(){ setExploded(btn.getAttribute("aria-pressed") !== "true"); });
+  document.addEventListener("keydown", function(e){
+    if (e.target && /input|textarea|select/i.test(e.target.tagName)) return;
+    if (e.key === "e" || e.key === "E") { setExploded(btn.getAttribute("aria-pressed") !== "true"); }
+    if (e.key === "1") setCW("volt");
+    if (e.key === "2") setCW("ember");
+    if (e.key === "3") setCW("ion");
+  });
+})();
+</script>
+</body>
+</html>
