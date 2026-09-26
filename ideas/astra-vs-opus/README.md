@@ -82,7 +82,7 @@ GitHub Pages：`https://sunxiaoxi2039-star.github.io/website-showcase-sites/idea
 数据与授权：
 
 - **首尔**：建筑 / 道路 / 水系来自 Overture Maps（大部分源自 OSM），派生数据按 **ODbL 1.0** 相同方式共享；地形来自 AWS Terrain Tiles。详见 `works-v2/seoul-atlas/data/DATA-LICENSE.md`。
-- **勃兰登堡键盘**：用的是巴赫六首勃兰登堡协奏曲的**真实总谱**（斯坦福 CCARH 的 MuseData/Humdrum 电子版），但 CCARH 的授权条款限于个人单用户与学术研究、不得公开表演、不得嵌入对外分发的材料，所以作品文件**没有提交进仓库**，只在对照页公开心得与 prompt。待定方案：向 CCARH 申请许可，或改用 Mutopia 的公有领域乐章。
+- **勃兰登堡键盘**：用的是巴赫六首勃兰登堡协奏曲的**真实总谱**（斯坦福 CCARH 的 MuseData/Humdrum 电子版），但 CCARH 的授权条款限于个人单用户与学术研究、不得公开表演、不得嵌入对外分发的材料，所以作品文件**没有提交进仓库**，只在对照页公开心得、prompt 与一张注明出处的截图。仓库作者无法去申请 CCARH 的许可，因此这件**确定不公开发布**（对照页已写明原因）；如果以后要公开，只能换成 Mutopia 等公有领域乐谱重做。
 - 各件 `vendor/` 里的第三方库（three.js、字体、Salamander 钢琴采样等）附各自的 LICENSE。
 
 ## 最近更新
