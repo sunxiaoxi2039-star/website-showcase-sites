@@ -1,0 +1,318 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Astra × Opus 5.5 同题对打</title>
+<meta name="description" content="20 道 GPT-6 Astra 原题，一字不改交给 Opus 5.5 盲做，统一截图、盲评打分。">
+<style>
+  :root {
+    --bg: #07080b; --panel: #0e1016; --panel2: #13161e; --ink: #f2f4f7;
+    --dim: rgba(242,244,247,.64); --faint: rgba(242,244,247,.4); --line: rgba(242,244,247,.13);
+    --astra: #6ee7a5; --o55: #c3a6ff; --tie: #f5c46b;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink); line-height: 1.7;
+    font-family: "Inter", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: inherit; }
+  .wrap { max-width: 1320px; margin: 0 auto; padding: 0 24px; }
+  @media (max-width: 600px) { .wrap { padding: 0 16px; } }
+
+  header.hero {
+    padding: 42px 0 30px; border-bottom: 1px solid var(--line);
+    background:
+      radial-gradient(55% 130% at 6% -30%, rgba(110,231,165,.14), transparent 60%),
+      radial-gradient(55% 130% at 94% -30%, rgba(195,166,255,.16), transparent 60%);
+  }
+  .crumbs { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 12.5px; }
+  .crumbs a { color: var(--dim); text-decoration: none; }
+  .crumbs a:hover { color: var(--ink); }
+  h1 { margin: 16px 0 0; font-size: clamp(28px, 4.6vw, 48px); font-weight: 650; letter-spacing: -.02em; line-height: 1.12; }
+  h1 .a { color: var(--astra); } h1 .c { color: var(--o55); } h1 .x { color: var(--faint); font-weight: 400; padding: 0 .12em; }
+  .lede { margin: 14px 0 0; max-width: 860px; font-size: 14.5px; color: var(--dim); }
+
+  .rules { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 12px; margin-top: 26px; }
+  .rules div { padding: 14px 16px; border: 1px solid var(--line); border-radius: 12px; background: var(--panel); font-size: 12.5px; color: var(--dim); }
+  .rules b { display: block; margin-bottom: 4px; font-size: 13px; color: var(--ink); font-weight: 600; }
+  @media (max-width: 980px) { .rules { grid-template-columns: repeat(2, minmax(0,1fr)); } }
+  @media (max-width: 520px) { .rules { grid-template-columns: 1fr; } }
+
+  .caveat { margin-top: 14px; padding: 14px 18px; border: 1px solid rgba(245,196,107,.35); border-radius: 12px; background: rgba(245,196,107,.06); font-size: 12.5px; color: var(--dim); }
+  .caveat b { color: var(--tie); font-weight: 600; }
+  .caveat ul { margin: 6px 0 0; padding-left: 18px; }
+
+  /* 记分板 */
+  .board { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.4fr); gap: 16px; margin: 30px 0 8px; }
+  @media (max-width: 860px) { .board { grid-template-columns: 1fr; } }
+  .tally, .dims { border: 1px solid var(--line); border-radius: 16px; background: var(--panel); padding: 18px 20px; }
+  .tally h3, .dims h3 { margin: 0 0 12px; font-size: 12px; letter-spacing: .16em; text-transform: uppercase; color: var(--faint); font-weight: 600; }
+  .nums { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; text-align: center; }
+  .nums div { padding: 10px 4px; border-radius: 12px; background: var(--panel2); }
+  .nums strong { display: block; font-size: 34px; line-height: 1.1; font-weight: 650; font-variant-numeric: tabular-nums; }
+  .nums span { font-size: 11.5px; color: var(--dim); }
+  .nums .a strong { color: var(--astra); } .nums .c strong { color: var(--o55); } .nums .t strong { color: var(--tie); } .nums .p strong { color: var(--faint); }
+  .bar { display: flex; height: 8px; border-radius: 99px; overflow: hidden; margin-top: 14px; background: var(--panel2); }
+  .bar i { display: block; height: 100%; }
+  .dimrow { display: grid; grid-template-columns: 92px minmax(0,1fr) 88px; align-items: center; gap: 12px; font-size: 12.5px; padding: 5px 0; }
+  .dimrow .lab { color: var(--dim); }
+  .dimrow .tracks { display: grid; gap: 4px; }
+  .dimrow .track { height: 6px; border-radius: 99px; background: var(--panel2); overflow: hidden; }
+  .dimrow .track i { display: block; height: 100%; border-radius: 99px; }
+  .dimrow .v { font-variant-numeric: tabular-nums; text-align: right; font-size: 12px; }
+  .dimrow .v .a { color: var(--astra); } .dimrow .v .c { color: var(--o55); }
+  .legend { display: flex; gap: 16px; margin-top: 10px; font-size: 11.5px; color: var(--faint); }
+  .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
+
+  /* 题目网格 */
+  h2.sec { margin: 34px 0 14px; font-size: 13px; letter-spacing: .16em; text-transform: uppercase; color: var(--faint); font-weight: 600; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(236px, 1fr)); gap: 12px; }
+  .card { display: block; text-align: left; padding: 0; border: 1px solid var(--line); border-radius: 14px; overflow: hidden; background: var(--panel); color: inherit; font: inherit; cursor: pointer; transition: border-color .16s, transform .16s; }
+  .card:hover { border-color: rgba(242,244,247,.4); transform: translateY(-2px); }
+  .card.on { border-color: var(--ink); }
+  .thumbs { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; background: #000; aspect-ratio: 16 / 5; }
+  .thumbs img, .thumbs .wait { width: 100%; height: 100%; object-fit: cover; object-position: top left; display: block; }
+  .thumbs .wait { display: flex; align-items: center; justify-content: center; background: #0a0c12; color: var(--faint); font-size: 11px; }
+  .card .meta { padding: 10px 12px 12px; }
+  .card .t { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; }
+  .card .t small { font-weight: 400; font-size: 11px; color: var(--faint); }
+  .card .en { font-size: 11px; color: var(--faint); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .badge { margin-left: auto; flex: none; padding: 2px 9px; border-radius: 99px; font-size: 10.5px; font-weight: 700; letter-spacing: .04em; border: 1px solid currentColor; }
+  .badge.a { color: var(--astra); } .badge.c { color: var(--o55); } .badge.t { color: var(--tie); } .badge.p { color: var(--faint); font-weight: 500; }
+
+  /* 单题对决 */
+  #duel { scroll-margin-top: 12px; margin-top: 34px; padding-top: 26px; border-top: 1px solid var(--line); }
+  .dhead { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 18px; }
+  .dhead h2 { margin: 0; font-size: 26px; font-weight: 650; }
+  .dhead .en { font-size: 12px; letter-spacing: .1em; color: var(--faint); text-transform: uppercase; }
+  .dhead .nav { margin-left: auto; display: flex; gap: 6px; }
+  .pill { padding: 7px 14px; border: 1px solid var(--line); border-radius: 99px; background: transparent; color: var(--dim); font: inherit; font-size: 12px; cursor: pointer; text-decoration: none; white-space: nowrap; }
+  .pill:hover { color: var(--ink); border-color: rgba(242,244,247,.45); }
+  .tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; font-size: 11.5px; color: var(--dim); }
+  .tags span { padding: 2px 9px; border-radius: 6px; background: var(--panel2); }
+
+  .vs { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 14px; margin-top: 18px; }
+  @media (max-width: 820px) { .vs { grid-template-columns: 1fr; } }
+  .pane { border: 1px solid var(--line); border-radius: 16px; overflow: hidden; background: var(--panel); display: flex; flex-direction: column; }
+  .pane.a { border-top: 2px solid var(--astra); } .pane.c { border-top: 2px solid var(--o55); }
+  .ph { padding: 11px 14px 9px; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
+  .ph .who { font-size: 10.5px; letter-spacing: .2em; text-transform: uppercase; font-weight: 700; }
+  .pane.a .who { color: var(--astra); } .pane.c .who { color: var(--o55); }
+  .ph .sub { font-size: 11.5px; color: var(--faint); }
+  .ph .links { margin-left: auto; display: flex; gap: 12px; font-size: 11.5px; }
+  .ph .links a { color: var(--dim); text-decoration: none; white-space: nowrap; }
+  .ph .links a:hover { color: var(--ink); }
+  .stage { position: relative; aspect-ratio: 16 / 10; background: #04060a; }
+  .stage img { width: 100%; height: 100%; object-fit: cover; object-position: top left; display: block; }
+  .stage iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; background: #04060a; }
+  .stage .load { position: absolute; left: 12px; bottom: 12px; padding: 7px 13px; border-radius: 99px; border: 1px solid rgba(242,244,247,.25); background: rgba(6,8,12,.75); backdrop-filter: blur(8px); color: var(--ink); font: inherit; font-size: 12px; cursor: pointer; }
+  .stage .load:hover { background: var(--ink); color: #07080b; }
+  .stage .blank { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; text-align: center; padding: 20px; color: var(--faint); font-size: 13px; background: radial-gradient(90% 80% at 50% 40%, rgba(195,166,255,.10), transparent 70%), #06080c; }
+  .pf { padding: 10px 14px 12px; border-top: 1px solid var(--line); font-size: 11.5px; color: var(--faint); }
+
+  .cols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px; margin-top: 14px; }
+  @media (max-width: 980px) { .cols { grid-template-columns: 1fr; } }
+  .box { border: 1px solid var(--line); border-radius: 16px; background: var(--panel); padding: 16px 18px; min-width: 0; }
+  .box h3 { margin: 0 0 10px; font-size: 12px; letter-spacing: .16em; text-transform: uppercase; color: var(--faint); font-weight: 600; display: flex; align-items: center; gap: 10px; }
+  .box h3 .pill { margin-left: auto; letter-spacing: 0; text-transform: none; padding: 4px 11px; }
+  pre.prompt { margin: 0; white-space: pre-wrap; word-break: break-word; font: 12.5px/1.75 ui-monospace, "SF Mono", Menlo, Consolas, monospace; color: var(--ink); max-height: 340px; overflow: auto; }
+  .refine { margin-top: 12px; padding: 10px 12px; border-left: 2px solid var(--tie); background: rgba(245,196,107,.06); border-radius: 0 8px 8px 0; }
+  .refine small { display: block; font-size: 11px; color: var(--tie); margin-bottom: 4px; }
+
+  table.score { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .score th, .score td { padding: 7px 6px; border-bottom: 1px solid var(--line); text-align: left; }
+  .score th { font-size: 11px; font-weight: 600; color: var(--faint); letter-spacing: .08em; }
+  .score td.n { text-align: center; font-variant-numeric: tabular-nums; width: 76px; }
+  .score th.n { text-align: center; }
+  .score .a { color: var(--astra); } .score .c { color: var(--o55); }
+  .score td.win { font-weight: 700; }
+  .score tr.total td { border-bottom: 0; font-weight: 700; }
+  .verdict { margin-top: 12px; font-size: 13px; color: var(--dim); }
+  .verdict b.a { color: var(--astra); } .verdict b.c { color: var(--o55); } .verdict b.t { color: var(--tie); }
+  .verdict ul { margin: 6px 0 0; padding-left: 18px; }
+  .judgeby { margin-top: 10px; font-size: 11px; color: var(--faint); }
+
+  details.notes { margin-top: 14px; border: 1px solid var(--line); border-radius: 16px; background: var(--panel); }
+  details.notes summary { cursor: pointer; padding: 14px 18px; font-size: 13px; color: var(--dim); }
+  details.notes summary:hover { color: var(--ink); }
+  .md { padding: 0 20px 18px; font-size: 13.5px; color: var(--dim); overflow-wrap: anywhere; }
+  .md h1, .md h2, .md h3 { color: var(--ink); font-size: 15px; margin: 18px 0 6px; }
+  .md code { font-size: 12px; background: var(--panel2); padding: 1px 5px; border-radius: 4px; }
+  .md pre { overflow: auto; background: var(--panel2); padding: 10px 12px; border-radius: 8px; }
+  .md pre code { background: none; padding: 0; }
+  .md table { border-collapse: collapse; display: block; overflow-x: auto; }
+  .md th, .md td { border: 1px solid var(--line); padding: 4px 8px; }
+  .md strong { color: var(--ink); }
+
+  footer { margin: 40px 0 0; padding: 22px 0 40px; border-top: 1px solid var(--line); font-size: 12px; color: var(--faint); }
+  footer p { margin: 4px 0; }
+</style>
+</head>
+<body>
+<header class="hero">
+  <div class="wrap">
+    <nav class="crumbs">
+      <a href="../index.html">← Astra vs Opus 总览</a>
+      <a href="../compare/index.html">三方对照（第二轮）</a>
+      <a href="../cases/index.html">Astra 案例索引</a>
+    </nav>
+    <h1><span class="a">GPT-6 Astra</span><span class="x">×</span><span class="c">Opus 5.5</span><br>同题对打 · <span id="h-n">20</span> 道</h1>
+    <p class="lede">从公开仓库里挑出 20 件 Astra 作品（带原始 prompt 的），把 prompt <b>一字不改</b>交给 Opus 5.5 的独立子代理，让它在看不到原作的情况下重新做一遍。之后两边用同一套脚本截图，再由看不到出处的评审代理盲评打分。</p>
+    <div class="rules">
+      <div><b>① 同一道题</b>原 prompt 原封不动；原作者追加过反馈的，也原样补给 5.5。格式约束跟原作一致（单文件就单文件）。</div>
+      <div><b>② 盲做</b>每道题一个全新子代理、记忆隔离，明令禁止查看 / 搜索原作的代码、截图、仓库与在线页。</div>
+      <div><b>③ 统一截图</b>两边都在同一台机器、同一个无头 Chromium（软件 WebGL）、1400×875、加载后等 4 秒截图。</div>
+      <div><b>④ 盲评</b>评审代理只看到「作品 A / 作品 B」，A/B 随机分配，按五项各 10 分打分并写理由；合计高者胜，相差 ≤ 1 分记平局。盲评副本里「Created with …」之类的署名字样已抹掉。</div>
+    </div>
+    <div class="caveat">
+      <b>先说清楚这场比赛哪里不公平：</b>
+      <ul>
+        <li><b>投入不对等，偏向 5.5。</b>17 件 MiaAI 作品是一次性批量生成的 100 件之一，单件只有 2–5 KB；5.5 每道题独占一个代理，还能自己开浏览器截图、反复修改。等于拿「一口气写 100 篇的随堂作文」对「单篇精修」。</li>
+        <li><b>评委也是 Claude。</b>我们没有第三方模型可用，盲评代理同样是 Opus 5.5。A/B 虽然匿名，但它可能认得出自家风格——这一偏差没法完全消除，请把分数当参考。</li>
+        <li><b>雷霆战机的原作是多轮迭代</b>（原作者说明用了协作代理、审阅与造型返工），不是 one-shot；5.5 这边拿到了原题 + 那条返工反馈，但只做一轮任务。</li>
+        <li>截图用的是软件渲染，重型 WebGL 在真机上会更流畅；两边吃的是同一个亏。</li>
+      </ul>
+    </div>
+
+    <section class="board" aria-label="记分板">
+      <div class="tally">
+        <h3>胜负</h3>
+        <div class="nums">
+          <div class="a"><strong id="n-a">0</strong><span>Astra 胜</span></div>
+          <div class="t"><strong id="n-t">0</strong><span>平局</span></div>
+          <div class="c"><strong id="n-c">0</strong><span>5.5 胜</span></div>
+          <div class="p"><strong id="n-p">0</strong><span>待赛</span></div>
+        </div>
+        <div class="bar" id="bar"></div>
+      </div>
+      <div class="dims">
+        <h3>五项平均分（已评 <span id="n-j">0</span> 道）</h3>
+        <div id="dimrows"></div>
+        <div class="legend"><span><i style="background:var(--astra)"></i>Astra</span><span><i style="background:var(--o55)"></i>Opus 5.5</span></div>
+      </div>
+    </section>
+  </div>
+</header>
+
+<main class="wrap">
+  <h2 class="sec">20 道题 · 点开看对决</h2>
+  <div class="grid" id="grid"></div>
+
+  <section id="duel" aria-live="polite"></section>
+
+  <footer>
+    <p>原作版权归原作者：17 件出自 <a href="https://github.com/MiaAI-Lab/GPT-6-Astra-100-HTML-Files">MiaAI-Lab/GPT-6-Astra-100-HTML-Files</a>，瓜体实验室与苔翼出自 <a href="https://github.com/Ayi1337/gpt6-astra-one-shot-games">Ayi1337/gpt6-astra-one-shot-games</a>（这两个仓库未声明许可证，本页只放我们自己跑出来的截图用于对比评论，不复制其代码；请点链接看原作），雷霆战机出自 <a href="https://github.com/MartinDelophy/awesome-gpt-6-astra/tree/main/works/thunderfall">MartinDelophy/awesome-gpt-6-astra</a>（CC0）。</p>
+    <p>Opus 5.5 一方的全部代码、笔记在本仓库 <code>ideas/astra-vs-opus/battle/works/</code>。</p>
+  </footer>
+</main>
+
+<script>
+const DATA = [{"slug": "form-editorial", "zh": "FORM 编辑排版", "title": "FORM — The Shape Issue", "prompt": "Handcraft an offline HTML5 independent design magazine cover called FORM. Use warm newsprint, vermilion red, black rules, huge tightly tracked sans-serif masthead, literary serif headlines, an asymmetrical three-column editorial spread and a CSS geometric sculpture. The headline is “Nothing is ever just a circle.” Give the sculpture a hover transformation and make an editor's-letter button reveal an actual thoughtful article with accessible expanded state. Collapse beautifully on mobile. Inline all assets, styles and scripts.", "refine": "", "author": "MiaAI-Lab", "format": "single-html", "orig_live": "https://miaai-lab.github.io/GPT-6-Astra-100-HTML-Files/002-form-editorial.html", "orig_repo": "https://github.com/MiaAI-Lab/GPT-6-Astra-100-HTML-Files", "note": ""}, {"slug": "abyss-sonar", "zh": "深海声呐", "title": "Abyss — Listen to the Deep", "prompt": "Create a cinematic deep-ocean sonar research interface called Abyss in one offline HTML file. Navy-black graph-paper background, pale cyan telemetry, large circular radar with rings, crosshairs and a rotating conic-gradient sweep. Arrange mission copy and depth on the left, radar in the center, contact analysis on the right. Three keyboard-accessible signal buttons should reveal different fictional ocean contacts, bearings and frequencies. Add a hold/resume scan control, responsive layout and reduced-motion styling. Label this artistic simulation clearly. Inline everything.", "refine": "", "author": "MiaAI-Lab", "format": "single-html", "orig_live": "https://miaai-lab.github.io/GPT-6-Astra-100-HTML-Files/005-abyss-sonar.html", "orig_repo": "https://github.com/MiaAI-Lab/GPT-6-Astra-100-HTML-Files", "note": ""}, {"slug": "jellyfish-ballet", "zh": "水母芭蕾", "title": "Pelagia — A Ballet Without Gravity", "prompt": "Create an immersive CSS jellyfish artwork called Pelagia with midnight indigo, bioluminescent lavender and sparse suspended particles. Three differently scaled translucent jellyfish should drift at different phases, with domed bells, luminous inner organs and gently swaying tentacles. Place an elegant serif poem-like headline on the left and subtle controls beneath. Provide a bioluminescence hue shift and a pause/resume control. Responsive, offline, inline-only HTML and motion-safe CSS.", "refine": "", "author": "MiaAI-Lab", "format": "single-html", "orig_live": "https://miaai-lab.github.io/GPT-6-Astra-100-HTML-Files/017-jellyfish-ballet.html", "orig_repo": "https://github.com/MiaAI-Lab/GPT-6-Astra-100-HTML-Files", "note": ""}, {"slug": "chroma-field", "zh": "色彩场", "title": "Chroma Field — Soft Collisions", "prompt": "Build a sophisticated gradient-mesh art workspace with charcoal chrome, a huge warm coral/periwinkle/magenta living field and translucent oversized serif words “Soft collisions.” Use blurred radial gradients, an embedded data-URI SVG turbulence texture and a movable light reticle. A right inspector should expose three native color controls, grain intensity and an accessible light-position slider. Support pointer dragging within the field and a full reset. Responsive, self-contained HTML; no external assets or libraries.", "refine": "", "author": "MiaAI-Lab", "format": "single-html", "orig_live": "https://miaai-lab.github.io/GPT-6-Astra-100-HTML-Files/020-chroma-field.html", "orig_repo": "https://github.com/MiaAI-Lab/GPT-6-Astra-100-HTML-Files", "note": ""}, {"slug": "aero-form", "zh": "气动造型", "title": "Aeroform — Built for What's Next", "prompt": "Create a premium speculative sneaker design presentation called Aeroform. Use cool cloud gray, enormous low-contrast italic backdrop type and an original detailed inline SVG sneaker with a mesh upper, laces, accent panel, sculptural layered sole and tread marks. Angle it dynamically with a soft grounding shadow. Include three working accent colorways and a button that separates upper and sole into an exploded view. Label all specs as imagined and the concept as not for sale. Responsive standalone HTML with inline code and reduced-motion support.", "refine": "", "author": "MiaAI-Lab", "format": "single-html", "orig_live": "https://miaai-lab.github.io/GPT-6-Astra-100-HTML-Files/025-aero-form.html", "orig_repo": "https://github.com/MiaAI-Lab/GPT-6-Astra-100-HTML-Files", "note": ""}, {"slug": "pollen-atlas", "zh": "花粉图谱", "title": "Small Is Spectacular", "prompt": "Create a bold botanical microscopy art page in a single offline HTML. Use marigold orange, giant tightly tracked solid and outlined sans-serif type, a circular microscope stage, and an inline SVG sunflower-inspired pollen sculpture with protruding spikes and dotted surface. Add a functioning magnification slider and rotate-specimen control, microscope scale annotation and concise curatorial copy. Clearly treat the image as an art study. Make the composition responsive and polished.", "refine": "Keep the full headline within a 390-pixel mobile viewport by reducing its mobile type size and tightening the navigation. Disable specimen transitions when reduced motion is requested.", "author": "MiaAI-Lab", "format": "single-html", "orig_live": "https://miaai-lab.github.io/GPT-6-Astra-100-HTML-Files/029-pollen-atlas.html", "orig_repo": "https://github.com/MiaAI-Lab/GPT-6-Astra-100-HTML-Files", "note": ""}, {"slug": "eclipse-chamber", "zh": "日全食", "title": "Totality", "prompt": "Create a cinematic solar-eclipse art chamber in one offline responsive HTML. Use an almost black field, a centered glowing amber sun and movable dark moon, blurred conic corona rays, extremely spacious uppercase TOTALITY typography and tiny celestial metadata. Let a horizontal alignment slider move the moon through the eclipse and report alignment state. Keep the page minimal, dramatic and explicitly artistic rather than scientifically to scale.", "refine": "", "author": "MiaAI-Lab", "format": "single-html", "orig_live": "https://miaai-lab.github.io/GPT-6-Astra-100-HTML-Files/034-eclipse-chamber.html", "orig_repo": "https://github.com/MiaAI-Lab/GPT-6-Astra-100-HTML-Files", "note": ""}, {"slug": "prism-studio", "zh": "棱镜工作室", "title": "One Light, Infinite Color", "prompt": "Make a cinematic optical art study in a standalone HTML. Show a white beam entering a translucent triangular prism and exiting as a broad six-color spectrum on a near-black stage. Use CSS clip paths, gradients and subtle bloom, large thin modern typography and a minimal labelled incidence-angle slider. The slider must rotate incoming and outgoing light and show the angle. Call the scene an artistic interpretation, keep it offline and mobile responsive.", "refine": "", "author": "MiaAI-Lab", "format": "single-html", "orig_live": "https://miaai-lab.github.io/GPT-6-Astra-100-HTML-Files/038-prism-studio.html", "orig_repo": "https://github.com/MiaAI-Lab/GPT-6-Astra-100-HTML-Files", "note": ""}, {"slug": "solar-garden", "zh": "黄金角花园", "title": "Follow the Golden Angle", "prompt": "Build a premium mathematical botanical art page in one offline HTML called Solar Garden. Use forest-black background, pale chartreuse typography and an intricate radial sunflower seed arrangement in inline SVG. Let a divergence-angle slider reshape hundreds of individually positioned elliptical seeds between 130 and 145 degrees, with a golden-angle reset and changing explanation. Create a balanced editorial and visualization layout that stacks on mobile.", "refine": "", "author": "MiaAI-Lab", "format": "single-html", "orig_live": "https://miaai-lab.github.io/GPT-6-Astra-100-HTML-Files/040-solar-garden.html", "orig_repo": "https://github.com/MiaAI-Lab/GPT-6-Astra-100-HTML-Files", "note": ""}, {"slug": "ink-diffusion", "zh": "墨水扩散", "title": "Where Ink Goes", "prompt": "Create an interactive watercolor-ink art page in one offline HTML. Use warm ivory paper, large spare black modern and italic serif typography, and layered organic translucent pigment blooms on a full-screen canvas. Start with two elegant indigo blooms at right. Clicking or touching should add a bloom that expands into a wavy irregular edge. Provide indigo, rose and jade swatches with active states and a fresh-paper reset. Make the interface responsive and dependency-free.", "refine": "Open with two visibly developed ink blooms so the artwork has a composed initial state. Honor reduced-motion preferences by placing new blooms at their final radius.", "author": "MiaAI-Lab", "format": "single-html", "orig_live": "https://miaai-lab.github.io/GPT-6-Astra-100-HTML-Files/049-ink-diffusion.html", "orig_repo": "https://github.com/MiaAI-Lab/GPT-6-Astra-100-HTML-Files", "note": ""}, {"slug": "hydraulic-balance", "zh": "液压平衡", "title": "Equal — A Study in Pressure", "prompt": "Create a calm industrial science exhibit about a water-filled U-tube. Use pale laboratory mint, teal liquid, symmetrical pressure and height gauges, a centered serif title, a finely ruled SVG apparatus and a broad bottom control dock. A signed pressure slider must calculate the hydrostatic height difference using water density 1000 kg/m³ and gravity 9.81 m/s², updating both liquid levels and numeric readouts. Include reset and a schematic-model disclosure. Self-contained responsive HTML5, inline CSS/JS, no dependencies.", "refine": "", "author": "MiaAI-Lab", "format": "single-html", "orig_live": "https://miaai-lab.github.io/GPT-6-Astra-100-HTML-Files/052-hydraulic-balance.html", "orig_repo": "https://github.com/MiaAI-Lab/GPT-6-Astra-100-HTML-Files", "note": ""}, {"slug": "fourth-dimension", "zh": "第四维", "title": "Beyond — Think Outside the Cube", "prompt": "Build an immersive four-dimensional geometry exhibit on near-black with phosphor-green wireframes. Render all 16 tesseract vertices and 32 edges in canvas, rotate in the XW plane, and project first from 4D to 3D then onto the screen. Use a large outlined sans-serif title at upper left, small matrix-like object statistics at upper right and a bottom rotation dock. Provide a manual angle slider and optional autorotation, initially still. Responsive high-DPI canvas, inline CSS/JS, offline HTML5 only.", "refine": "", "author": "MiaAI-Lab", "format": "single-html", "orig_live": "https://miaai-lab.github.io/GPT-6-Astra-100-HTML-Files/064-fourth-dimension.html", "orig_repo": "https://github.com/MiaAI-Lab/GPT-6-Astra-100-HTML-Files", "note": ""}, {"slug": "kinetic-balance", "zh": "悬挂平衡", "title": "Equilibrium / Mobile Study", "prompt": "Design a midcentury kinetic sculpture study on warm gallery white. Render an inline SVG hanging mobile with thin dark wires, a terracotta ellipse, ocher triangle, teal semicircle, and deep olive disc. Pair it with refined serif text and a slider rotating the beam around its suspension point, updating angle and state. Describe it as artistic rather than a physics model. Fully inline, responsive, offline, with reduced-motion support.", "refine": "", "author": "MiaAI-Lab", "format": "single-html", "orig_live": "https://miaai-lab.github.io/GPT-6-Astra-100-HTML-Files/070-kinetic-balance.html", "orig_repo": "https://github.com/MiaAI-Lab/GPT-6-Astra-100-HTML-Files", "note": ""}, {"slug": "golden-repair", "zh": "金继", "title": "Tsugi — The Beauty of Repair", "prompt": "Design an original kintsugi-inspired digital art object on charcoal green. Center a large top-down ceramic bowl with concentric glaze gradients, a soft cast shadow and hand-authored branching SVG fracture paths. Place a quiet serif headline in the upper-left corner and a gold character with reflective copy in the lower-right. A repair button traces the fractures in luminous gold using stroke dashes and changes the two-stage caption. Label it as a tribute, not a craft tutorial. Responsive, reduced-motion aware, offline HTML5 with all code inline.", "refine": "", "author": "MiaAI-Lab", "format": "single-html", "orig_live": "https://miaai-lab.github.io/GPT-6-Astra-100-HTML-Files/077-golden-repair.html", "orig_repo": "https://github.com/MiaAI-Lab/GPT-6-Astra-100-HTML-Files", "note": ""}, {"slug": "ring-world", "zh": "环之世界", "title": "Ringworld — The Geometry of Saturn", "prompt": "Create a spacious planetary portrait of Saturn on ink navy with sparse stars. Center a shaded, banded gas giant within layered elliptical ring planes made with repeating radial gradients and a Cassini-like gap. Use an elegant centered serif headline above, small scientific callouts around the planet and a three-part instrument dock below. A viewing-angle slider should tilt the ring plane interactively. Label the artwork stylized and not to scale. Responsive, self-contained offline HTML5, inline CSS and JavaScript only.", "refine": "", "author": "MiaAI-Lab", "format": "single-html", "orig_live": "https://miaai-lab.github.io/GPT-6-Astra-100-HTML-Files/084-ring-world.html", "orig_repo": "https://github.com/MiaAI-Lab/GPT-6-Astra-100-HTML-Files", "note": ""}, {"slug": "ink-mountains", "zh": "水墨山", "title": "Between Mountains", "prompt": "Compose a wide contemplative East Asian ink-inspired landscape using only CSS silhouettes: layered desaturated green mountains, a muted red sun, fine water reflections, a tiny drifting boat, vertical poetry and a vermilion seal. Frame it with warm paper and a restrained three-column caption beneath. Add a mist slider that changes the atmosphere. Respect reduced motion. Deliver responsive standalone offline HTML5 with inline CSS and JavaScript.", "refine": "", "author": "MiaAI-Lab", "format": "single-html", "orig_live": "https://miaai-lab.github.io/GPT-6-Astra-100-HTML-Files/091-ink-mountains.html", "orig_repo": "https://github.com/MiaAI-Lab/GPT-6-Astra-100-HTML-Files", "note": ""}, {"slug": "magnetic-matter", "zh": "磁性物质", "title": "Ferro — Invisible Forces", "prompt": "Create a bold interactive magnetic direction field in burnt orange, ochre and dark graphite. Use a narrow orange left control rail with dense sans-serif display text “Feel the pull.” and a huge pale-ochre canvas full of individually oriented short compass needles. Calculate the direction from a source/sink point-pole approximation, draw labeled poles, and allow pointer dragging of one pole. Include keyboard-accessible horizontal position and visual-strength sliders plus polarity reversal. Explain that this is a visual approximation. Responsive, high-DPI, fully inline offline HTML5.", "refine": "", "author": "MiaAI-Lab", "format": "single-html", "orig_live": "https://miaai-lab.github.io/GPT-6-Astra-100-HTML-Files/096-magnetic-matter.html", "orig_repo": "https://github.com/MiaAI-Lab/GPT-6-Astra-100-HTML-Files", "note": ""}, {"slug": "melon-lab", "zh": "瓜体实验室", "title": "瓜体实验室", "prompt": "用最短的时间设计一款全新概念（物理性质）的半流体西瓜游戏（html游戏）", "refine": "", "author": "Ayi1337", "format": "single-html", "orig_live": "https://melon-game.jack-514.chatgpt.site", "orig_repo": "https://github.com/Ayi1337/gpt6-astra-one-shot-games", "note": "One Shot；原作者说明 prompt 里带了时间限定词（用最短的时间）"}, {"slug": "mosswing", "zh": "苔翼", "title": "Mosswing", "prompt": "Remaster the classic \"tap-to-flap\" game — the one where you tap to keep a small creature airborne while gliding through an endless series of gaps — as a 3D game playable in a mobile browser. One index.html, opens and plays instantly, no external assets (CDN libraries are allowed; your call).  Keep the core exactly as everyone remembers it: one-tap control, gravity, gaps that scroll toward you, one hit and you're done, score is gaps passed. Everything else is yours to decide: what the creature is, what the obstacles are, the world, the camera, the feel of the flap, how far to take the visuals. Design an original character and style rather than copying the original's art. I won't answer clarifying questions.  I'm judging a complete, elegant, great-feeling piece of work — not a feature list. Small and finished beats big and rough.", "refine": "", "author": "Ayi1337", "format": "single-html", "orig_live": "https://mosswing-quiet-flight.jack-514.chatgpt.site/", "orig_repo": "https://github.com/Ayi1337/gpt6-astra-one-shot-games", "note": "One Shot，Xhigh，用时 21 分钟"}, {"slug": "thunderfall", "zh": "雷霆战机", "title": "雷霆战机 · 天穹远征 / THUNDERFALL", "prompt": "好，现在你看下这个开源项目[https://github.com/MartinDelophy/awesome-gpt-6-astra](https://github.com/MartinDelophy/awesome-gpt-6-astra)，我觉得里面的游戏还是太少了，也不够丰富，你现在帮我生成一款雷霆战机游戏（玩法要丰富，敌人子弹会有激光，子弹会漂移等等，击杀敌机有概率爆蓝色绿色紫色金色武器，会在屏幕内一直飘荡10s左右，开局可以选择3种战斗机，最少要有5关，通关时长要10分钟等等等等），就是手机也能玩，你知道吧？你可以github或小时候的游戏厅查一下这种比较丰富的玩法", "refine": "战斗机建模有点拉胯，要更酷炫一点，我觉得你可以完全按照 雷电 来，就当是儿时记忆", "author": "jackroc", "format": "multi-file", "orig_live": "https://thunderfall.vercel.app/", "orig_repo": "https://github.com/MartinDelophy/awesome-gpt-6-astra/tree/main/works/thunderfall", "note": "GPT-6 Astra ultra，多轮迭代（含协作代理、审阅与造型返工），不是 one-shot；CC0"}];
+const DIMS = ['需求符合度', '视觉完成度', '交互手感', '技术深度', '稳定性'];
+const $ = (s, r = document) => r.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const sum = a => a.reduce((x, y) => x + y, 0);
+const RES = { a: 'Astra 胜', c: '5.5 胜', t: '平局', p: '待赛' };
+const resOf = d => d.judge ? d.judge.winner : (d.done ? 'p' : 'p');
+const badgeTxt = d => d.judge ? RES[d.judge.winner] : (d.done ? '待评' : '对打中');
+
+function board() {
+  const n = { a: 0, c: 0, t: 0, p: 0 };
+  DATA.forEach(d => n[resOf(d)]++);
+  for (const k in n) $('#n-' + k).textContent = n[k];
+  $('#h-n').textContent = DATA.length;
+  $('#bar').innerHTML = [['a', 'var(--astra)'], ['t', 'var(--tie)'], ['c', 'var(--o55)'], ['p', 'transparent']]
+    .map(([k, c]) => `<i style="width:${(n[k] / DATA.length) * 100}%;background:${c}"></i>`).join('');
+  const J = DATA.filter(d => d.judge);
+  $('#n-j').textContent = J.length;
+  $('#dimrows').innerHTML = DIMS.map((lab, i) => {
+    const a = J.length ? sum(J.map(d => d.judge.astra[i])) / J.length : 0;
+    const c = J.length ? sum(J.map(d => d.judge.opus[i])) / J.length : 0;
+    return `<div class="dimrow"><span class="lab">${lab}</span><span class="tracks">
+      <span class="track"><i style="width:${a * 10}%;background:var(--astra)"></i></span>
+      <span class="track"><i style="width:${c * 10}%;background:var(--o55)"></i></span></span>
+      <span class="v">${J.length ? `<span class="a">${a.toFixed(1)}</span> / <span class="c">${c.toFixed(1)}</span>` : '—'}</span></div>`;
+  }).join('');
+}
+
+function grid(cur) {
+  $('#grid').innerHTML = DATA.map(d => `
+    <button class="card${d.slug === cur ? ' on' : ''}" data-slug="${d.slug}">
+      <div class="thumbs"><img src="originals/${d.slug}.jpg" alt="Astra 原作截图：${esc(d.zh)}" loading="lazy">${d.shot ? `<img src="shots/${d.slug}.jpg" alt="Opus 5.5 截图：${esc(d.zh)}" loading="lazy">` : '<span class="wait">5.5 对打中</span>'}</div>
+      <div class="meta"><div class="t">${esc(d.zh)} <span class="badge ${resOf(d)}">${badgeTxt(d)}</span></div><div class="en">${esc(d.title)}</div></div>
+    </button>`).join('');
+}
+
+function copyBtn(id) { return `<button class="pill" data-copy="${id}">复制</button>`; }
+
+function duel(slug, scroll) {
+  const i = Math.max(0, DATA.findIndex(d => d.slug === slug));
+  const d = DATA[i], prev = DATA[(i + DATA.length - 1) % DATA.length], next = DATA[(i + 1) % DATA.length];
+  const J = d.judge;
+  const tA = J ? sum(J.astra) : 0, tC = J ? sum(J.opus) : 0;
+  const cell = (v, o, k) => `<td class="n ${k}${v > o ? ' win' : ''}">${v}</td>`;
+  $('#duel').innerHTML = `
+    <div class="dhead">
+      <h2>${esc(d.zh)}</h2><span class="en">${esc(d.title)}</span>
+      <div class="nav"><a class="pill" href="#${prev.slug}">← ${esc(prev.zh)}</a><a class="pill" href="#${next.slug}">${esc(next.zh)} →</a></div>
+    </div>
+    <div class="tags"><span>原作者 ${esc(d.author)}</span><span>${d.format === 'single-html' ? '单文件 HTML' : '多文件静态站'}</span>${d.refine ? '<span>含追加反馈</span>' : ''}${d.note ? `<span>${esc(d.note)}</span>` : ''}${d.size ? `<span>体积：Astra ${d.origSize} · 5.5 ${d.size}</span>` : ''}</div>
+    <div class="vs">
+      <div class="pane a">
+        <div class="ph"><span class="who">GPT-6 Astra</span><span class="sub">原作</span>
+          <span class="links"><a href="${esc(d.orig_live)}" target="_blank" rel="noopener">打开原作 ↗</a><a href="${esc(d.orig_repo)}" target="_blank" rel="noopener">仓库 ↗</a></span></div>
+        <div class="stage"><img src="originals/${d.slug}.jpg" alt="Astra 原作截图"></div>
+        <div class="pf">我们在本地运行原作截的图（1400×875）。原作请点「打开原作」。</div>
+      </div>
+      <div class="pane c">
+        <div class="ph"><span class="who">Opus 5.5</span><span class="sub">盲做</span>
+          ${d.done ? `<span class="links"><a href="works/${d.slug}/index.html" target="_blank" rel="noopener">新窗口运行 ↗</a><a href="works/${d.slug}/NOTES.md" target="_blank" rel="noopener">笔记 ↗</a></span>` : ''}</div>
+        <div class="stage">${d.shot ? `<img src="shots/${d.slug}.jpg" alt="Opus 5.5 截图"><button class="load" data-run="${d.slug}">▶ 在这里试玩</button>` : '<div class="blank">这一题还在对打中……</div>'}</div>
+        <div class="pf">${d.done ? `同一脚本、同一参数截图。${d.rounds ? '自测迭代 ' + esc(d.rounds) + '。' : ''}` : '完成后这里会出现截图与可运行版本。'}</div>
+      </div>
+    </div>
+    <div class="cols">
+      <div class="box">
+        <h3>原题（一字不改）${copyBtn('p-' + d.slug)}</h3>
+        <pre class="prompt" id="p-${d.slug}">${esc(d.prompt)}</pre>
+        ${d.refine ? `<div class="refine"><small>原作者看过第一版后追加的反馈（同样给了 5.5）</small><pre class="prompt">${esc(d.refine)}</pre></div>` : ''}
+      </div>
+      <div class="box">
+        <h3>盲评</h3>
+        ${J ? `
+        <table class="score"><thead><tr><th>维度</th><th class="n a">Astra</th><th class="n c">Opus 5.5</th></tr></thead><tbody>
+          ${DIMS.map((lab, k) => `<tr><td>${lab}</td>${cell(J.astra[k], J.opus[k], 'a')}${cell(J.opus[k], J.astra[k], 'c')}</tr>`).join('')}
+          <tr class="total"><td>合计 / 50</td>${cell(tA, tC, 'a')}${cell(tC, tA, 'c')}</tr>
+        </tbody></table>
+        <div class="verdict">判定：<b class="${J.winner}">${RES[J.winner]}</b>${J.reason ? ` —— ${esc(J.reason)}` : ''}
+          ${J.astraBest || J.opusBest ? `<ul>${J.astraBest ? `<li><b class="a">Astra 强在</b>：${esc(J.astraBest)}</li>` : ''}${J.opusBest ? `<li><b class="c">5.5 强在</b>：${esc(J.opusBest)}</li>` : ''}</ul>` : ''}
+        </div>
+        <div class="judgeby">评审：独立的 Opus 5.5 子代理，只看到随机的「作品 A / 作品 B」，可以运行并操作两件作品。本题 Astra = 作品 ${esc(J.astraLabel)}。</div>`
+        : `<p style="margin:0;font-size:13px;color:var(--faint)">${d.done ? '作品已交，等待盲评。' : '双方作品齐了之后才开始盲评。'}</p>`}
+      </div>
+    </div>
+    ${d.notes ? `<details class="notes"><summary>Opus 5.5 的创作笔记（理解、取舍、自测修掉的问题、自评）</summary><div class="md">${d.notes}</div></details>` : ''}`;
+  document.querySelectorAll('.card').forEach(c => c.classList.toggle('on', c.dataset.slug === d.slug));
+  if (scroll) $('#duel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+document.addEventListener('click', e => {
+  const card = e.target.closest('.card');
+  if (card) { history.replaceState(null, '', '#' + card.dataset.slug); duel(card.dataset.slug, true); return; }
+  const run = e.target.closest('[data-run]');
+  if (run) { const st = run.parentElement; st.innerHTML = `<iframe src="works/${run.dataset.run}/index.html" title="Opus 5.5 作品" allow="autoplay; fullscreen; accelerometer; gyroscope"></iframe>`; return; }
+  const cp = e.target.closest('[data-copy]');
+  if (cp) { navigator.clipboard?.writeText($('#' + cp.dataset.copy).textContent).then(() => { cp.textContent = '已复制'; setTimeout(() => cp.textContent = '复制', 1400); }); }
+});
+addEventListener('hashchange', () => duel(location.hash.slice(1), true));
+
+board();
+const start = location.hash.slice(1);
+grid(start);
+duel(DATA.some(d => d.slug === start) ? start : (DATA.find(d => d.judge) || DATA.find(d => d.done) || DATA[0]).slug, false);
+</script>
+</body>
+</html>
