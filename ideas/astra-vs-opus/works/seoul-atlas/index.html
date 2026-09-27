@@ -3,9 +3,46 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>首尔立体地图 · Opus 临摹</title>
-<meta name="description" content="对 @synabreu 用 GPT-6 Astra 做的 Seoul 3D Atlas 的临摹重写：微缩首尔、地标飞行与昼夜切换。">
+<title data-en="Seoul 3D Atlas · Opus copy">首尔立体地图 · Opus 临摹</title>
+<meta name="description" data-en="An Opus rewrite of Seoul 3D Atlas, which @synabreu made with GPT-6 Astra: a miniature Seoul with landmark fly-throughs and a day–night cycle." content="对 @synabreu 用 GPT-6 Astra 做的 Seoul 3D Atlas 的临摹重写：微缩首尔、地标飞行与昼夜切换。">
 <link rel="stylesheet" href="../../assets/work.css">
+<script>
+/* 中英切换：?lang= → localStorage['avo-lang'] → navigator.language */
+(function () {
+  var d = document, h = d.documentElement, L, fns = [];
+  try { L = new URLSearchParams(location.search).get('lang'); } catch (e) {}
+  if (L !== 'zh' && L !== 'en') { try { L = localStorage.getItem('avo-lang'); } catch (e) {} }
+  if (L !== 'zh' && L !== 'en') L = /^zh/i.test(navigator.language || '') ? 'zh' : 'en';
+  var tt = d.querySelector('title'), md = d.querySelector('meta[name="description"]');
+  var M = { zh: { t: tt.textContent, d: md && md.content }, en: { t: tt.getAttribute('data-en'), d: md && md.getAttribute('data-en') } };
+  function head() { h.lang = L === 'zh' ? 'zh-CN' : 'en'; d.title = M[L].t; if (md) md.content = M[L].d; }
+  function apply() {
+    head();
+    var b = d.getElementById('langbtn');
+    if (b) { b.textContent = L === 'zh' ? 'EN' : '中'; b.setAttribute('aria-label', L === 'zh' ? 'Switch to English' : '切换到中文'); }
+    var as = d.querySelectorAll('a[href]:not([target])');
+    for (var i = 0; i < as.length; i++) {
+      var a = as[i], o = a.getAttribute('data-href') || a.getAttribute('href');
+      if (/^(https?:|#|mailto:)/.test(o)) continue;
+      a.setAttribute('data-href', o);
+      var p = o.split('#');
+      a.setAttribute('href', p[0] + (p[0].indexOf('?') < 0 ? '?' : '&') + 'lang=' + L + (p[1] ? '#' + p[1] : ''));
+    }
+    for (var j = 0; j < fns.length; j++) fns[j](L);
+  }
+  window.AVO = {
+    lang: function () { return L; },
+    t: function (o) { return o == null || typeof o !== 'object' ? o : o[L]; },
+    on: function (fn) { fns.push(fn); },
+    set: function (n) { L = n; try { localStorage.setItem('avo-lang', L); } catch (e) {} apply(); }
+  };
+  head();
+  d.addEventListener('DOMContentLoaded', apply);
+  d.addEventListener('click', function (e) {
+    if (e.target.closest && e.target.closest('#langbtn')) AVO.set(L === 'zh' ? 'en' : 'zh');
+  });
+})();
+</script>
 <style>
   body { background: #070b12; }
   .card {
@@ -31,36 +68,37 @@
 </style>
 </head>
 <body>
+<button type="button" class="lang-toggle" id="langbtn" aria-label="Switch to English">EN</button>
 
-<div class="loading" id="loading">正在铺设城市 · BUILDING SEOUL</div>
+<div class="loading" id="loading"><span data-zh>正在铺设城市 · BUILDING SEOUL</span><span data-en>Building Seoul</span></div>
 
 <div class="topbar">
-  <a href="../../index.html">← 对照总览</a>
-  <div class="ttl">首尔立体地图<span>OPUS 临摹</span></div>
+  <a href="../../index.html">← <span data-zh>对照总览</span><span data-en>Overview</span></a>
+  <div class="ttl"><span data-zh>首尔立体地图</span><span data-en>Seoul 3D Atlas</span><em class="tag"><span data-zh>OPUS 临摹</span><span data-en>OPUS COPY</span></em></div>
   <div class="spacer"></div>
-  <a href="https://x.com/synabreu/status/2096557555086725159" target="_blank" rel="noopener">原作 @synabreu ↗</a>
+  <a href="https://x.com/synabreu/status/2096557555086725159" target="_blank" rel="noopener"><span data-zh>原作</span><span data-en>Original by</span> @synabreu ↗</a>
 </div>
 
 <div class="card" id="card">
   <div class="en" id="cardEn">SEOUL</div>
-  <h3 id="cardZh">首尔全景</h3>
-  <p id="cardDesc">汉江把城市分成南北两半，北岸是旧王城与南山，南岸是江南的高层区。点下面的地标，镜头会飞过去。</p>
-  <div class="meta"><span>高度 <b id="cardH">—</b></span><span>建成 <b id="cardY">—</b></span></div>
+  <h3 id="cardZh"><span data-zh>首尔全景</span><span data-en>Seoul Overview</span></h3>
+  <p id="cardDesc"><span data-zh>汉江把城市分成南北两半，北岸是旧王城与南山，南岸是江南的高层区。点下面的地标，镜头会飞过去。</span><span data-en>The Han River splits the city in two: the old royal quarter and Namsan lie to the north, the Gangnam high-rises to the south. Tap a landmark below and the camera flies there.</span></p>
+  <div class="meta"><span><span data-zh>高度</span><span data-en>Height</span> <b id="cardH">—</b></span><span><span data-zh>建成</span><span data-en>Completed</span> <b id="cardY">—</b></span></div>
 </div>
 
 <div class="chips" id="chips"></div>
 
 <div class="panel">
-  <h2>城市参数</h2>
-  <label>时间 <b id="timev">20:30</b></label>
+  <h2><span data-zh>城市参数</span><span data-en>City settings</span></h2>
+  <label><span data-zh>时间</span><span data-en>Time of day</span> <b id="timev">20:30</b></label>
   <input type="range" id="time" min="0" max="1" step="0.005" value="0.86">
   <div class="btnrow">
-    <button class="btn on" id="tour">自动巡游</button>
-    <button class="btn" id="reset">全景视角</button>
+    <button class="btn on" id="tour"><span data-zh>自动巡游</span><span data-en>Auto tour</span></button>
+    <button class="btn" id="reset"><span data-zh>全景视角</span><span data-en>Overview</span></button>
   </div>
 </div>
 
-<div class="hint" id="hint">拖拽旋转 · 滚轮缩放 · 点地标飞过去</div>
+<div class="hint" id="hint"><span data-zh>拖拽旋转 · 滚轮缩放 · 点地标飞过去</span><span data-en>Drag to rotate · Scroll to zoom · Tap a landmark to fly there</span></div>
 
 <script src="../../assets/vendor/three.min.js"></script>
 <script>
@@ -235,8 +273,9 @@
     var tip = new THREE.Mesh(new THREE.SphereGeometry(0.3, 8, 6), new THREE.MeshBasicMaterial({ color: 0xff5a4a }));
     tip.position.y = 38; g.add(tip); roofLights.push(tip);
     landmark(g, {
-      x: 8, z: -34, zh: 'N 首尔塔', en: 'N Seoul Tower', h: '236 m', y: '1971',
+      x: 8, z: -34, zh: 'N 首尔塔', en: 'N Seoul Tower', ko: 'N서울타워', h: '236 m', y: '1971',
       desc: '架在南山顶上的电波塔，山高塔高加起来是首尔夜景里最容易认出来的一根竖线。',
+      descEn: 'A broadcast tower perched on top of Namsan. Mountain plus mast make it the easiest vertical line to pick out in Seoul at night.',
       view: { yaw: 0.6, pitch: 0.32, dist: 78, tx: 8, ty: 16, tz: -34 }
     });
   })();
@@ -254,8 +293,9 @@
     var tip2 = new THREE.Mesh(new THREE.SphereGeometry(0.28, 8, 6), new THREE.MeshBasicMaterial({ color: 0xff5a4a }));
     tip2.position.y = 51.4; g.add(tip2); roofLights.push(tip2);
     landmark(g, {
-      x: 88, z: -20, zh: '乐天世界塔', en: 'Lotte World Tower', h: '555 m', y: '2017',
+      x: 88, z: -20, zh: '乐天世界塔', en: 'Lotte World Tower', ko: '롯데월드타워', h: '555 m', y: '2017',
       desc: '蚕室的那根锥子。四个面缓缓收束到顶，玻璃幕墙在日落时会整根变成橙色。',
+      descEn: 'The spike over Jamsil. Its four faces taper gently to the tip, and at sunset the whole glass curtain wall turns orange.',
       view: { yaw: -0.5, pitch: 0.26, dist: 96, tx: 88, ty: 24, tz: -20 }
     });
   })();
@@ -288,8 +328,9 @@
     var gateRoof = new THREE.Mesh(new THREE.ConeGeometry(6.6, 1.8, 4), roofMat);
     gateRoof.rotation.y = Math.PI / 4; gateRoof.position.set(0, 3.9, 12.5); gateRoof.scale.set(1, 1, 0.55); g.add(gateRoof);
     landmark(g, {
-      x: -22, z: 52, zh: '景福宫', en: 'Gyeongbokgung', h: '—', y: '1395',
+      x: -22, z: 52, zh: '景福宫', en: 'Gyeongbokgung', ko: '경복궁', h: '—', y: '1395',
       desc: '朝鲜王朝的正宫，被现代楼群围在中间的一片低矮瓦顶，正殿勤政殿是两重屋檐。',
+      descEn: 'The main palace of the Joseon dynasty: a patch of low tiled roofs hemmed in by modern towers. Its throne hall, Geunjeongjeon, has a double-tiered roof.',
       view: { yaw: 0.1, pitch: 0.5, dist: 62, tx: -22, ty: 6, tz: 52 }
     });
   })();
@@ -305,8 +346,9 @@
     var ramp = new THREE.Mesh(new THREE.TorusGeometry(7.4, 0.5, 8, 30, Math.PI * 1.2), skin);
     ramp.rotation.x = -Math.PI / 2; ramp.rotation.z = 0.6; ramp.position.y = 4.6; g.add(ramp);
     landmark(g, {
-      x: 34, z: 46, zh: '东大门 DDP', en: 'Dongdaemun Design Plaza', h: '29 m', y: '2014',
+      x: 34, z: 46, zh: '东大门 DDP', en: 'Dongdaemun Design Plaza', short: 'DDP', ko: '동대문디자인플라자', h: '29 m', y: '2014',
       desc: '扎哈那只银色的「飞船」，没有一条直边，夜里整个壳面会被打成一片冷光。',
+      descEn: 'Zaha Hadid\'s silver "spaceship", without a single straight edge. At night the whole shell is washed in cool light.',
       view: { yaw: -0.9, pitch: 0.42, dist: 52, tx: 34, ty: 4, tz: 46 }
     });
   })();
@@ -321,8 +363,9 @@
     var top = new THREE.Mesh(new THREE.BoxGeometry(6.4, 3, 3.6), goldMat);
     top.position.y = 31; g.add(top);
     landmark(g, {
-      x: -46, z: -14, zh: '63 大厦', en: '63 Building', h: '250 m', y: '1985',
+      x: -46, z: -14, zh: '63 大厦', en: '63 Building', ko: '63빌딩', h: '250 m', y: '1985',
       desc: '汝矣岛江边的金色薄片，曾经是首尔最高的楼，现在是日落时最亮的那一块。',
+      descEn: 'The golden sliver on the Yeouido riverbank. Once the tallest building in Seoul, now the brightest thing on the skyline at sunset.',
       view: { yaw: 1.5, pitch: 0.3, dist: 66, tx: -46, ty: 14, tz: -14 }
     });
   })();
@@ -370,14 +413,28 @@
   function select(i) {
     activeIdx = i;
     Array.prototype.forEach.call(chips.children, function (b, bi) { b.classList.toggle('on', bi === i); });
-    var L = LANDMARKS[i];
-    cardEn.textContent = L.en;
-    cardZh.textContent = L.zh;
-    cardDesc.textContent = L.desc;
+    renderCard();
+    flyTo(LANDMARKS[i].view);
+  }
+  function renderCard() {
+    var en = AVO.lang() === 'en', L = LANDMARKS[activeIdx];
+    if (!L) {
+      cardEn.textContent = en ? '서울' : 'SEOUL'; cardZh.textContent = en ? 'Seoul Overview' : '首尔全景';
+      cardDesc.textContent = en ? 'The Han River splits the city in two: the old royal quarter and Namsan lie to the north, the Gangnam high-rises to the south. Tap a landmark below and the camera flies there.' : '汉江把城市分成南北两半，北岸是旧王城与南山，南岸是江南的高层区。点下面的地标，镜头会飞过去。';
+      cardH.textContent = '—'; cardY.textContent = '—';
+      return;
+    }
+    cardEn.textContent = en ? L.ko : L.en;
+    cardZh.textContent = en ? L.en : L.zh;
+    cardDesc.textContent = en ? L.descEn : L.desc;
     cardH.textContent = L.h;
     cardY.textContent = L.y;
-    flyTo(L.view);
   }
+  function renderChips() {
+    var en = AVO.lang() === 'en';
+    Array.prototype.forEach.call(chips.children, function (b, i) { var L = LANDMARKS[i]; b.textContent = en ? (L.short || L.en) : L.zh; });
+  }
+  AVO.on(function () { renderChips(); renderCard(); });
   LANDMARKS.forEach(function (L, i) {
     var b = document.createElement('button');
     b.textContent = L.zh;
@@ -401,9 +458,7 @@
   document.getElementById('reset').onclick = function () {
     setTour(false); activeIdx = -1;
     Array.prototype.forEach.call(chips.children, function (b) { b.classList.remove('on'); });
-    cardEn.textContent = 'SEOUL'; cardZh.textContent = '首尔全景';
-    cardDesc.textContent = '汉江把城市分成南北两半，北岸是旧王城与南山，南岸是江南的高层区。点下面的地标，镜头会飞过去。';
-    cardH.textContent = '—'; cardY.textContent = '—';
+    renderCard();
     flyTo(OVERVIEW);
   };
 

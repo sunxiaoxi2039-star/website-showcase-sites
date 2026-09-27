@@ -3,9 +3,46 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>深渊：活着的深海 · Opus 临摹</title>
-<meta name="description" content="对 @emollick 用 GPT-6 Astra 生成的 ABYSSAL: The Living Deep 的临摹重写：一个可下潜 1400 米的程序化海洋。">
+<title data-en="ABYSSAL: The Living Deep · Opus copy">深渊：活着的深海 · Opus 临摹</title>
+<meta name="description" data-en="An Opus rewrite of ABYSSAL: The Living Deep, which @emollick made with GPT-6 Astra: a procedural ocean you can dive 1,400 m into." content="对 @emollick 用 GPT-6 Astra 生成的 ABYSSAL: The Living Deep 的临摹重写：一个可下潜 1400 米的程序化海洋。">
 <link rel="stylesheet" href="../../assets/work.css">
+<script>
+/* 中英切换：?lang= → localStorage['avo-lang'] → navigator.language */
+(function () {
+  var d = document, h = d.documentElement, L, fns = [];
+  try { L = new URLSearchParams(location.search).get('lang'); } catch (e) {}
+  if (L !== 'zh' && L !== 'en') { try { L = localStorage.getItem('avo-lang'); } catch (e) {} }
+  if (L !== 'zh' && L !== 'en') L = /^zh/i.test(navigator.language || '') ? 'zh' : 'en';
+  var tt = d.querySelector('title'), md = d.querySelector('meta[name="description"]');
+  var M = { zh: { t: tt.textContent, d: md && md.content }, en: { t: tt.getAttribute('data-en'), d: md && md.getAttribute('data-en') } };
+  function head() { h.lang = L === 'zh' ? 'zh-CN' : 'en'; d.title = M[L].t; if (md) md.content = M[L].d; }
+  function apply() {
+    head();
+    var b = d.getElementById('langbtn');
+    if (b) { b.textContent = L === 'zh' ? 'EN' : '中'; b.setAttribute('aria-label', L === 'zh' ? 'Switch to English' : '切换到中文'); }
+    var as = d.querySelectorAll('a[href]:not([target])');
+    for (var i = 0; i < as.length; i++) {
+      var a = as[i], o = a.getAttribute('data-href') || a.getAttribute('href');
+      if (/^(https?:|#|mailto:)/.test(o)) continue;
+      a.setAttribute('data-href', o);
+      var p = o.split('#');
+      a.setAttribute('href', p[0] + (p[0].indexOf('?') < 0 ? '?' : '&') + 'lang=' + L + (p[1] ? '#' + p[1] : ''));
+    }
+    for (var j = 0; j < fns.length; j++) fns[j](L);
+  }
+  window.AVO = {
+    lang: function () { return L; },
+    t: function (o) { return o == null || typeof o !== 'object' ? o : o[L]; },
+    on: function (fn) { fns.push(fn); },
+    set: function (n) { L = n; try { localStorage.setItem('avo-lang', L); } catch (e) {} apply(); }
+  };
+  head();
+  d.addEventListener('DOMContentLoaded', apply);
+  d.addEventListener('click', function (e) {
+    if (e.target.closest && e.target.closest('#langbtn')) AVO.set(L === 'zh' ? 'en' : 'zh');
+  });
+})();
+</script>
 <style>
   body { background: #021019; }
   .biome {
@@ -27,30 +64,31 @@
 </style>
 </head>
 <body>
+<button type="button" class="lang-toggle" id="langbtn" aria-label="Switch to English">EN</button>
 
-<div class="loading" id="loading">正在播种海洋 · SEEDING THE OCEAN</div>
+<div class="loading" id="loading"><span data-zh>正在播种海洋 · SEEDING THE OCEAN</span><span data-en>Seeding the ocean</span></div>
 
 <div class="topbar">
-  <a href="../../index.html">← 对照总览</a>
-  <div class="ttl">深渊：活着的深海<span>OPUS 临摹</span></div>
+  <a href="../../index.html">← <span data-zh>对照总览</span><span data-en>Overview</span></a>
+  <div class="ttl"><span data-zh>深渊：活着的深海</span><span data-en>ABYSSAL: The Living Deep</span><em class="tag"><span data-zh>OPUS 临摹</span><span data-en>OPUS COPY</span></em></div>
   <div class="spacer"></div>
-  <a href="https://x.com/emollick/status/2095673885605630429" target="_blank" rel="noopener">原作 @emollick ↗</a>
+  <a href="https://x.com/emollick/status/2095673885605630429" target="_blank" rel="noopener"><span data-zh>原作</span><span data-en>Original by</span> @emollick ↗</a>
 </div>
 
-<div class="biome" id="biome">DEPTH ZONE<b>表层水柱</b></div>
+<div class="biome" id="biome">DEPTH ZONE<b><span data-zh>表层水柱</span><span data-en>Surface Waters</span></b></div>
 <div class="depthbar"><i id="marker"></i></div>
 
 <div class="panel">
-  <h2>世界参数</h2>
-  <label>种子 SEED</label>
+  <h2><span data-zh>世界参数</span><span data-en>World settings</span></h2>
+  <label><span data-zh>种子 SEED</span><span data-en>Seed</span></label>
   <input type="text" id="seed" value="abyssal-01" spellcheck="false">
-  <label>洋流强度 <b id="curv">0.45</b></label>
+  <label><span data-zh>洋流强度</span><span data-en>Current strength</span> <b id="curv">0.45</b></label>
   <input type="range" id="cur" min="0" max="1" step="0.01" value="0.45">
-  <label>生物密度 <b id="lifev">0.70</b></label>
+  <label><span data-zh>生物密度</span><span data-en>Marine life density</span> <b id="lifev">0.70</b></label>
   <input type="range" id="life" min="0.1" max="1" step="0.01" value="0.7">
   <div class="btnrow">
-    <button class="btn" id="regen">重新生成世界</button>
-    <button class="btn on" id="auto">自动下潜</button>
+    <button class="btn" id="regen"><span data-zh>重新生成世界</span><span data-en>Regenerate world</span></button>
+    <button class="btn on" id="auto"><span data-zh>自动下潜</span><span data-en>Auto-dive</span></button>
   </div>
 </div>
 
@@ -59,7 +97,7 @@
   <div class="sub">meters below surface</div>
 </div>
 
-<div class="hint" id="hint">拖拽环视 · 滚轮或 W/S 控制深度</div>
+<div class="hint" id="hint"><span data-zh>拖拽环视 · 滚轮或 W/S 控制深度</span><span data-en>Drag to look around · Scroll or W/S to change depth</span></div>
 
 <script src="../../assets/vendor/three.min.js"></script>
 <script>
@@ -110,12 +148,13 @@
   function metersAt(d) { return d <= 30 ? d * 2 : 60 + (d - 30) * 12.182; }
   function depthAtMeters(m) { return m <= 60 ? m / 2 : 30 + (m - 60) / 12.182; }
 
+  function bi(zh, en) { return '<span data-zh>' + zh + '</span><span data-en>' + en + '</span>'; }
   var ZONES = [
-    { to: 20,   name: '表层水柱',   fog: 0x1d87ad, dens: 0.0105, light: 1.05 },
-    { to: 60,   name: '阳光珊瑚礁', fog: 0x11708f, dens: 0.0125, light: 0.85 },
-    { to: 180,  name: '海藻林',     fog: 0x0a5872, dens: 0.0155, light: 0.5 },
-    { to: 650,  name: '大陆坡',     fog: 0x05364c, dens: 0.019,  light: 0.2 },
-    { to: 1e9,  name: '深渊热液区', fog: 0x01121d, dens: 0.026,  light: 0.04 }
+    { to: 20,   name: bi('表层水柱', 'Surface Waters'), fog: 0x1d87ad, dens: 0.0105, light: 1.05 },
+    { to: 60,   name: bi('阳光珊瑚礁', 'Sunlit Coral Reef'), fog: 0x11708f, dens: 0.0125, light: 0.85 },
+    { to: 180,  name: bi('海藻林', 'Kelp Forest'), fog: 0x0a5872, dens: 0.0155, light: 0.5 },
+    { to: 650,  name: bi('大陆坡', 'Continental Slope'), fog: 0x05364c, dens: 0.019,  light: 0.2 },
+    { to: 1e9,  name: bi('深渊热液区', 'Abyssal Vent Field'), fog: 0x01121d, dens: 0.026,  light: 0.04 }
   ];
   function zoneAt(m) { for (var i = 0; i < ZONES.length; i++) if (m < ZONES[i].to) return ZONES[i]; }
 

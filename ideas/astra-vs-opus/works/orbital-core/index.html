@@ -3,9 +3,46 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>轨道核心 · Opus 临摹</title>
-<meta name="description" content="对 @oneruofeng 用 GPT-6 Astra + Blender 做的 Orbital Core Showcase 的临摹重写：双环能量核心产品展示页。">
+<title data-en="Orbital Core Showcase · Opus copy">轨道核心 · Opus 临摹</title>
+<meta name="description" data-en="An Opus rewrite of Orbital Core Showcase, which @oneruofeng made with GPT-6 Astra + Blender: a product showcase for a twin-ring energy core." content="对 @oneruofeng 用 GPT-6 Astra + Blender 做的 Orbital Core Showcase 的临摹重写：双环能量核心产品展示页。">
 <link rel="stylesheet" href="../../assets/work.css">
+<script>
+/* 中英切换：?lang= → localStorage['avo-lang'] → navigator.language */
+(function () {
+  var d = document, h = d.documentElement, L, fns = [];
+  try { L = new URLSearchParams(location.search).get('lang'); } catch (e) {}
+  if (L !== 'zh' && L !== 'en') { try { L = localStorage.getItem('avo-lang'); } catch (e) {} }
+  if (L !== 'zh' && L !== 'en') L = /^zh/i.test(navigator.language || '') ? 'zh' : 'en';
+  var tt = d.querySelector('title'), md = d.querySelector('meta[name="description"]');
+  var M = { zh: { t: tt.textContent, d: md && md.content }, en: { t: tt.getAttribute('data-en'), d: md && md.getAttribute('data-en') } };
+  function head() { h.lang = L === 'zh' ? 'zh-CN' : 'en'; d.title = M[L].t; if (md) md.content = M[L].d; }
+  function apply() {
+    head();
+    var b = d.getElementById('langbtn');
+    if (b) { b.textContent = L === 'zh' ? 'EN' : '中'; b.setAttribute('aria-label', L === 'zh' ? 'Switch to English' : '切换到中文'); }
+    var as = d.querySelectorAll('a[href]:not([target])');
+    for (var i = 0; i < as.length; i++) {
+      var a = as[i], o = a.getAttribute('data-href') || a.getAttribute('href');
+      if (/^(https?:|#|mailto:)/.test(o)) continue;
+      a.setAttribute('data-href', o);
+      var p = o.split('#');
+      a.setAttribute('href', p[0] + (p[0].indexOf('?') < 0 ? '?' : '&') + 'lang=' + L + (p[1] ? '#' + p[1] : ''));
+    }
+    for (var j = 0; j < fns.length; j++) fns[j](L);
+  }
+  window.AVO = {
+    lang: function () { return L; },
+    t: function (o) { return o == null || typeof o !== 'object' ? o : o[L]; },
+    on: function (fn) { fns.push(fn); },
+    set: function (n) { L = n; try { localStorage.setItem('avo-lang', L); } catch (e) {} apply(); }
+  };
+  head();
+  d.addEventListener('DOMContentLoaded', apply);
+  d.addEventListener('click', function (e) {
+    if (e.target.closest && e.target.closest('#langbtn')) AVO.set(L === 'zh' ? 'en' : 'zh');
+  });
+})();
+</script>
 <style>
   body { background: radial-gradient(120% 90% at 50% 42%, #14202e 0%, #080c12 55%, #04060a 100%); }
   .lede {
@@ -15,6 +52,7 @@
   .lede .kicker { font-size: 11px; letter-spacing: .38em; color: rgba(124, 215, 255, .8); text-transform: uppercase; }
   .lede h1 { margin: 14px 0 10px; font-size: 46px; line-height: 1.02; font-weight: 300; letter-spacing: -.015em; }
   .lede h1 b { display: block; font-weight: 600; }
+  html[lang="en"] .lede h1 b { white-space: nowrap; font-size: .87em; }
   .lede p { margin: 0 0 22px; font-size: 13px; line-height: 1.85; color: var(--dim); }
   .specs { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 10px; border-top: 1px solid var(--line); padding-top: 16px; }
   .specs div span { display: block; font-size: 10.5px; letter-spacing: .16em; color: rgba(242,245,248,.42); text-transform: uppercase; }
@@ -33,20 +71,21 @@
 </style>
 </head>
 <body>
+<button type="button" class="lang-toggle" id="langbtn" aria-label="Switch to English">EN</button>
 
-<div class="loading" id="loading">装配核心 · ASSEMBLING CORE</div>
+<div class="loading" id="loading"><span data-zh>装配核心 · ASSEMBLING CORE</span><span data-en>Assembling the core</span></div>
 
 <div class="topbar">
-  <a href="../../index.html">← 对照总览</a>
-  <div class="ttl">轨道核心<span>OPUS 临摹</span></div>
+  <a href="../../index.html">← <span data-zh>对照总览</span><span data-en>Overview</span></a>
+  <div class="ttl"><span data-zh>轨道核心</span><span data-en>Orbital Core Showcase</span><em class="tag"><span data-zh>OPUS 临摹</span><span data-en>OPUS COPY</span></em></div>
   <div class="spacer"></div>
-  <a href="https://x.com/oneruofeng/status/2096551010089263181" target="_blank" rel="noopener">原作 @oneruofeng ↗</a>
+  <a href="https://x.com/oneruofeng/status/2096551010089263181" target="_blank" rel="noopener"><span data-zh>原作</span><span data-en>Original by</span> @oneruofeng ↗</a>
 </div>
 
 <div class="lede">
   <div class="kicker">Orbital Core</div>
-  <h1>双环<b>能量核心</b></h1>
-  <p>两组反向自转的悬浮环、十二枚约束模块，与被锁在中心的等离子体。拖拽可绕着它转一圈，滚轮推近看细节。</p>
+  <h1><span data-zh>双环</span><span data-en>Twin-Ring</span><b><span data-zh>能量核心</span><span data-en>Energy Core</span></b></h1>
+  <p><span data-zh>两组反向自转的悬浮环、十二枚约束模块，与被锁在中心的等离子体。拖拽可绕着它转一圈，滚轮推近看细节。</span><span data-en>Two counter-rotating levitating rings, twelve containment modules and a plasma locked at the center. Drag to walk around it; scroll to move in for detail.</span></p>
   <div class="specs">
     <div><span>Output</span><b id="sOut">2.4 PW</b></div>
     <div><span>Ring RPM</span><b id="sRpm">840</b></div>
@@ -58,18 +97,18 @@
 <div class="modlabel" id="modlabel"></div>
 
 <div class="panel">
-  <h2>控制台</h2>
-  <label>能量输出 <b id="powv">0.70</b></label>
+  <h2><span data-zh>控制台</span><span data-en>Controls</span></h2>
+  <label><span data-zh>能量输出</span><span data-en>Power output</span> <b id="powv">0.70</b></label>
   <input type="range" id="pow" min="0.05" max="1" step="0.01" value="0.7">
-  <label>环转速 <b id="spdv">1.00</b></label>
+  <label><span data-zh>环转速</span><span data-en>Ring speed</span> <b id="spdv">1.00</b></label>
   <input type="range" id="spd" min="0" max="2.4" step="0.01" value="1">
   <div class="btnrow">
-    <button class="btn" id="explode">爆炸视图</button>
-    <button class="btn on" id="spin">自动旋转</button>
+    <button class="btn" id="explode"><span data-zh>爆炸视图</span><span data-en>Exploded view</span></button>
+    <button class="btn on" id="spin"><span data-zh>自动旋转</span><span data-en>Auto-rotate</span></button>
   </div>
 </div>
 
-<div class="hint" id="hint">拖拽旋转 · 滚轮缩放 · 点击模块查看</div>
+<div class="hint" id="hint"><span data-zh>拖拽旋转 · 滚轮缩放 · 点击模块查看</span><span data-en>Drag to rotate · Scroll to zoom · Click a module to inspect it</span></div>
 
 <script src="../../assets/vendor/three.min.js"></script>
 <script>
@@ -143,10 +182,10 @@
 
   // ---------- 双环 + 约束模块 ----------
   var MODULES = [
-    { name: '约束线圈 A', spec: '超导磁笼 · 4.2 K' },
-    { name: '注入口 B', spec: 'He-3 冷却剂注入' },
-    { name: '取能栅 C', spec: '直接能量转换' },
-    { name: '诊断阵 D', spec: '中子能谱监测' }
+    { name: '约束线圈 A', spec: '超导磁笼 · 4.2 K', nameEn: 'Containment Coil A', specEn: 'Superconducting cage · 4.2 K' },
+    { name: '注入口 B', spec: 'He-3 冷却剂注入', nameEn: 'Injector Port B', specEn: 'He-3 coolant feed' },
+    { name: '取能栅 C', spec: '直接能量转换', nameEn: 'Extraction Grid C', specEn: 'Direct energy conversion' },
+    { name: '诊断阵 D', spec: '中子能谱监测', nameEn: 'Diagnostic Array D', specEn: 'Neutron spectrum monitoring' }
   ];
   var ringA = new THREE.Group(), ringB = new THREE.Group();
   rig.add(ringA); rig.add(ringB);
@@ -274,7 +313,7 @@
     }
     if (obj) {
       var info = obj.userData.mod.userData.info;
-      labelEl.textContent = info.name + ' · ' + info.spec;
+      labelEl.textContent = AVO.lang() === 'en' ? info.nameEn + ' · ' + info.specEn : info.name + ' · ' + info.spec;
       labelEl.style.left = cx + 'px';
       labelEl.style.top = (cy - 26) + 'px';
       labelEl.style.opacity = 1;
@@ -293,7 +332,7 @@
   document.getElementById('explode').onclick = function () {
     exploded = !exploded;
     this.classList.toggle('on', exploded);
-    this.textContent = exploded ? '合拢' : '爆炸视图';
+    this.innerHTML = exploded ? '<span data-zh>合拢</span><span data-en>Reassemble</span>' : '<span data-zh>爆炸视图</span><span data-en>Exploded view</span>';
   };
   powEl.oninput = function () { document.getElementById('powv').textContent = (+powEl.value).toFixed(2); };
   spdEl.oninput = function () { document.getElementById('spdv').textContent = (+spdEl.value).toFixed(2); };

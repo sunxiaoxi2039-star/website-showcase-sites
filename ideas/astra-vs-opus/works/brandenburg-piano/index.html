@@ -3,16 +3,53 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>勃兰登堡键盘 · Opus 临摹</title>
-<meta name="description" content="对 @DeryaTR_ 用 GPT-6 Astra 做的 Brandenburg Piano 的临摹重写：会自己演奏巴赫式织体的 3D 键盘。">
+<title data-en="Brandenburg Piano · Opus copy">勃兰登堡键盘 · Opus 临摹</title>
+<meta name="description" data-en="An Opus rewrite of Brandenburg Piano, which @DeryaTR_ made with GPT-6 Astra: a 3D keyboard that plays Bach-style textures by itself." content="对 @DeryaTR_ 用 GPT-6 Astra 做的 Brandenburg Piano 的临摹重写：会自己演奏巴赫式织体的 3D 键盘。">
 <link rel="stylesheet" href="../../assets/work.css">
+<script>
+/* 中英切换：?lang= → localStorage['avo-lang'] → navigator.language */
+(function () {
+  var d = document, h = d.documentElement, L, fns = [];
+  try { L = new URLSearchParams(location.search).get('lang'); } catch (e) {}
+  if (L !== 'zh' && L !== 'en') { try { L = localStorage.getItem('avo-lang'); } catch (e) {} }
+  if (L !== 'zh' && L !== 'en') L = /^zh/i.test(navigator.language || '') ? 'zh' : 'en';
+  var tt = d.querySelector('title'), md = d.querySelector('meta[name="description"]');
+  var M = { zh: { t: tt.textContent, d: md && md.content }, en: { t: tt.getAttribute('data-en'), d: md && md.getAttribute('data-en') } };
+  function head() { h.lang = L === 'zh' ? 'zh-CN' : 'en'; d.title = M[L].t; if (md) md.content = M[L].d; }
+  function apply() {
+    head();
+    var b = d.getElementById('langbtn');
+    if (b) { b.textContent = L === 'zh' ? 'EN' : '中'; b.setAttribute('aria-label', L === 'zh' ? 'Switch to English' : '切换到中文'); }
+    var as = d.querySelectorAll('a[href]:not([target])');
+    for (var i = 0; i < as.length; i++) {
+      var a = as[i], o = a.getAttribute('data-href') || a.getAttribute('href');
+      if (/^(https?:|#|mailto:)/.test(o)) continue;
+      a.setAttribute('data-href', o);
+      var p = o.split('#');
+      a.setAttribute('href', p[0] + (p[0].indexOf('?') < 0 ? '?' : '&') + 'lang=' + L + (p[1] ? '#' + p[1] : ''));
+    }
+    for (var j = 0; j < fns.length; j++) fns[j](L);
+  }
+  window.AVO = {
+    lang: function () { return L; },
+    t: function (o) { return o == null || typeof o !== 'object' ? o : o[L]; },
+    on: function (fn) { fns.push(fn); },
+    set: function (n) { L = n; try { localStorage.setItem('avo-lang', L); } catch (e) {} apply(); }
+  };
+  head();
+  d.addEventListener('DOMContentLoaded', apply);
+  d.addEventListener('click', function (e) {
+    if (e.target.closest && e.target.closest('#langbtn')) AVO.set(L === 'zh' ? 'en' : 'zh');
+  });
+})();
+</script>
 <style>
   body { background: radial-gradient(120% 100% at 50% 18%, #1a1b22 0%, #0b0c10 58%, #050608 100%); }
   .piece {
     position: fixed; z-index: 16; left: 50%; top: 62px; transform: translateX(-50%);
     text-align: center; pointer-events: none; max-width: 90vw;
   }
-  .piece span { font-size: 10.5px; letter-spacing: .32em; text-transform: uppercase; color: rgba(255, 214, 140, .7); }
+  .piece > span { font-size: 10.5px; letter-spacing: .32em; text-transform: uppercase; color: rgba(255, 214, 140, .7); }
   .piece b { display: block; margin-top: 6px; font-size: 19px; font-weight: 500; letter-spacing: .06em; }
   .piece i { display: block; margin-top: 5px; font-size: 11px; font-style: normal; color: rgba(242,245,248,.45); }
   .gate {
@@ -41,45 +78,46 @@
 </style>
 </head>
 <body>
+<button type="button" class="lang-toggle" id="langbtn" aria-label="Switch to English">EN</button>
 
 <div class="topbar">
-  <a href="../../index.html">← 对照总览</a>
-  <div class="ttl">勃兰登堡键盘<span>OPUS 临摹</span></div>
+  <a href="../../index.html">← <span data-zh>对照总览</span><span data-en>Overview</span></a>
+  <div class="ttl"><span data-zh>勃兰登堡键盘</span><span data-en>Brandenburg Piano</span><em class="tag"><span data-zh>OPUS 临摹</span><span data-en>OPUS COPY</span></em></div>
   <div class="spacer"></div>
-  <a href="https://x.com/DeryaTR_/status/2096090915790069857" target="_blank" rel="noopener">原作 @DeryaTR_ ↗</a>
+  <a href="https://x.com/DeryaTR_/status/2096090915790069857" target="_blank" rel="noopener"><span data-zh>原作</span><span data-en>Original by</span> @DeryaTR_ ↗</a>
 </div>
 
 <div class="piece">
   <span>G major · after BWV 1048</span>
-  <b>勃兰登堡式的 G 大调织体</b>
-  <i>照第三号协奏曲第一乐章的写法生成：连绵的十六分音符压在行走低音上（非原谱转录）</i>
+  <b><span data-zh>勃兰登堡式的 G 大调织体</span><span data-en>A Brandenburg-Style Texture in G Major</span></b>
+  <i><span data-zh>照第三号协奏曲第一乐章的写法生成：连绵的十六分音符压在行走低音上（非原谱转录）</span><span data-en>Written in the manner of Concerto No. 3, first movement: running sixteenth notes over a walking bass (not a transcription of the score)</span></i>
 </div>
 
 <div class="nowplaying">
   <h2>Now Playing</h2>
   <div class="chord" id="chord">—</div>
-  <div class="bar" id="barno">第 0 小节 · 0 音</div>
+  <div class="bar" id="barno"><span data-zh>第 0 小节 · 0 音</span><span data-en>Bar 0 · 0 notes</span></div>
 </div>
 
 <div class="panel">
-  <h2>演奏</h2>
-  <label>速度 <b id="bpmv">108</b> BPM</label>
+  <h2><span data-zh>演奏</span><span data-en>Playback</span></h2>
+  <label><span data-zh>速度</span><span data-en>Tempo</span> <b id="bpmv">108</b> BPM</label>
   <input type="range" id="bpm" min="52" max="184" step="1" value="108">
-  <label>音色明亮度 <b id="brightv">0.60</b></label>
+  <label><span data-zh>音色明亮度</span><span data-en>Tone brightness</span> <b id="brightv">0.60</b></label>
   <input type="range" id="bright" min="0" max="1" step="0.01" value="0.6">
   <div class="btnrow">
-    <button class="btn on" id="play">暂停</button>
-    <button class="btn" id="sustain">延音</button>
+    <button class="btn on" id="play"><span data-zh>暂停</span><span data-en>Pause</span></button>
+    <button class="btn" id="sustain"><span data-zh>延音</span><span data-en>Sustain</span></button>
   </div>
 </div>
 
-<div class="hint" id="hint">点琴键可以自己弹 · 键盘 A S D F G H J K 也行</div>
+<div class="hint" id="hint"><span data-zh>点琴键可以自己弹 · 键盘 A S D F G H J K 也行</span><span data-en>Click the keys to play along · or use A S D F G H J K</span></div>
 
 <div class="gate" id="gate">
   <div class="inner">
     <div class="play">▶</div>
-    <p>点击开始演奏</p>
-    <small>浏览器要求先有一次点击，才允许发声</small>
+    <p><span data-zh>点击开始演奏</span><span data-en>Click to start playing</span></p>
+    <small><span data-zh>浏览器要求先有一次点击，才允许发声</span><span data-en>Browsers only allow sound after you click once</span></small>
   </div>
 </div>
 
@@ -353,7 +391,7 @@
   document.getElementById('play').onclick = function () {
     playing = !playing;
     this.classList.toggle('on', playing);
-    this.textContent = playing ? '暂停' : '继续';
+    this.innerHTML = playing ? '<span data-zh>暂停</span><span data-en>Pause</span>' : '<span data-zh>继续</span><span data-en>Resume</span>';
     if (playing && actx) nextTime = Math.max(nextTime, actx.currentTime + 0.1);
   };
   document.getElementById('sustain').onclick = function () {
@@ -452,7 +490,7 @@
     stageLight.intensity = 1.2 + Math.sin(t * 1.3) * 0.12;
 
     chordEl.textContent = currentChord.name;
-    barEl.textContent = '第 ' + (bar + 1) + ' 小节 · ' + noteCount + ' 音';
+    barEl.textContent = AVO.lang() === 'en' ? 'Bar ' + (bar + 1) + ' · ' + noteCount + ' notes' : '第 ' + (bar + 1) + ' 小节 · ' + noteCount + ' 音';
     if (t > 10) hintEl.style.opacity = 0;
 
     renderer.render(scene, camera);
