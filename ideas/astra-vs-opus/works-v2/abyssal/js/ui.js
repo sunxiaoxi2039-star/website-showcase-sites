@@ -306,7 +306,7 @@ export class UI {
     const wa = pages.water;
     wa.append(this.slider(L('水体清澈度', 'Clarity'), 0.4, 2, 0.05, () => E.water.clarity, (v) => { E.water.clarity = v; }));
     wa.append(this.slider(L('洋流强度', 'Current'), 0, 3, 0.05, () => E.water.current, (v) => { E.water.current = v; }));
-    wa.append(this.slider(L('生物发光', 'Bioluminescence'), 0, 3, 0.05, () => E.water.glow, (v) => { E.water.glow = v; }));
+    wa.append(this.slider(L('生物发光', 'Glow'), 0, 3, 0.05, () => E.water.glow, (v) => { E.water.glow = v; }));
     wa.append(this.slider(L('深层上升流', 'Upwelling'), 0, 3, 0.05, () => E.water.upwelling, (v) => { E.water.upwelling = v; }));
     const lampRow = el('div', 'row', `<label>${L('潜水灯', 'Dive light')}</label>`);
     const seg = el('div', 'seg');

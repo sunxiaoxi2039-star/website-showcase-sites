@@ -21,6 +21,9 @@ const $ = (id) => document.getElementById(id);
 // 载入
 // ---------------------------------------------------------------------------
 const ldBar = $('ldBar'), ldMsg = $('ldMsg');
+let ldPair = null;
+const setLd = (zh, en) => { ldPair = [zh, en]; ldMsg.textContent = T(zh, en); };
+onLang(() => { if (ldPair) ldMsg.textContent = T(ldPair[0], ldPair[1]); });
 const progress = {};
 function setProg(k, v) { progress[k] = v; const vals = Object.values(progress); ldBar.style.width = (vals.reduce((a, b) => a + b, 0) / 8 * 100).toFixed(1) + '%'; }
 async function fetchBuf(url, key) {
@@ -978,6 +981,7 @@ const SHORT = { bukhansan: '北汉山', namsan: 'N 首尔塔', yeouido: '63 大�
 function addLabel(el, pos, opt) { $('labels').appendChild(el); const lb = { el, pos, pri: 100, ...opt, vis: null }; labels.push(lb); if (lb.text) lb.text(lb); }
 const lmShort = (L) => (isEn() ? LANDMARK_EN[L.id].short : SHORT[L.id] || L.zh.replace(/（.*）/, ''));
 const lmName = (L) => (isEn() ? LANDMARK_EN[L.id].name : L.zh);
+const lmListName = (L) => (isEn() ? LANDMARK_EN[L.id].short : L.zh);
 const districtName = (ko) => (isEn() ? DISTRICT_EN[ko] : DISTRICT_ZH[ko]) || ko;
 function relabel() { for (const lb of labels) if (lb.text) lb.text(lb); }
 function buildLabels() {
@@ -1223,7 +1227,7 @@ function bindUI() {
   const list = $('placeList');
   LANDMARKS.forEach((L, i) => {
     const li = document.createElement('li');
-    li.innerHTML = `<button><span class="n">${String(i + 1).padStart(2, '0')}</span><span class="nm">${lmName(L)}</span><span class="ct">${T(L.cat, CAT_EN[L.cat] || L.cat)}</span></button>`;
+    li.innerHTML = `<button><span class="n">${String(i + 1).padStart(2, '0')}</span><span class="nm">${lmListName(L)}</span><span class="ct">${T(L.cat, CAT_EN[L.cat] || L.cat)}</span></button>`;
     li.firstChild.addEventListener('click', () => { stopTour(); focusLandmark(i); });
     list.appendChild(li);
   });
@@ -1427,7 +1431,7 @@ function frame(now) {
 async function main() {
   const gl = renderer.getContext();
   if (!gl) throw new Error(T('WebGL 不可用', 'WebGL is not available'));
-  ldMsg.textContent = T('载入地形、建筑与道路数据…', 'Loading terrain, building and road data…');
+  setLd('载入地形、建筑与道路数据…', 'Loading terrain, building and road data…');
   const [metaBuf, terrBuf, bldBuf, treeBuf, ground, night, water, mask] = await Promise.all([
     fetchBuf('data/meta.json', 'meta'), fetchBuf('data/terrain.bin', 'terr'), fetchBuf('data/buildings.bin', 'bld'), fetchBuf('data/trees.bin', 'tree'),
     loadTex('data/ground.jpg', 'g'), loadTex('data/night.jpg', 'n', false), loadTex('data/water.png', 'w', false), loadTex('data/mask.png', 'm', false),
@@ -1436,14 +1440,14 @@ async function main() {
   initGeo(meta, new Int16Array(terrBuf));
   const aniso = Math.min(8, renderer.capabilities.getMaxAnisotropy());
   ground.anisotropy = aniso; night.anisotropy = aniso;
-  ldMsg.textContent = T('搭建地形与汉江…', 'Shaping the terrain and the Han River…');
+  setLd('搭建地形与汉江…', 'Shaping the terrain and the Han River…');
   await tick();
   buildTerrain({ ground, night, water, mask });
   buildPlinth();
-  ldMsg.textContent = T('摆放 ' + (meta.buildings).toLocaleString('zh-CN') + ' 栋建筑…', 'Placing ' + (meta.buildings).toLocaleString('en-US') + ' buildings…');
+  setLd('摆放 ' + (meta.buildings).toLocaleString('zh-CN') + ' 栋建筑…', 'Placing ' + (meta.buildings).toLocaleString('en-US') + ' buildings…');
   await tick();
   const { n, tall } = buildBuildings(bldBuf);
-  ldMsg.textContent = T('种树、架桥、放出车流…', 'Planting trees, raising bridges, releasing traffic…');
+  setLd('种树、架桥、放出车流…', 'Planting trees, raising bridges, releasing traffic…');
   await tick();
   buildTrees(treeBuf);
   const paths = buildRoads();
@@ -1460,7 +1464,7 @@ async function main() {
   buildMinimap(wimg);
   bindUI();
   applyLayers();
-  const stats = () => { $('stats').innerHTML = T(`25 区 · ${n.toLocaleString('zh-CN')} 栋建筑 · ${(meta.trees / 10000).toFixed(0)} 万棵树<br>${meta.roads.length.toLocaleString('zh-CN')} 段主干道 · 22 处地标 · 真实地形`, `25 districts · ${n.toLocaleString('en-US')} buildings · ${(meta.trees / 1000).toFixed(0)}k trees<br>${meta.roads.length.toLocaleString('en-US')} arterial road segments · 22 landmarks · real terrain`); };
+  const stats = () => { $('stats').innerHTML = T(`25 区 · ${n.toLocaleString('zh-CN')} 栋建筑 · ${(meta.trees / 10000).toFixed(0)} 万棵树<br>${meta.roads.length.toLocaleString('zh-CN')} 段主干道 · 22 处地标 · 真实地形`, `${n.toLocaleString('en-US')} buildings · ${(meta.trees / 1000).toFixed(0)}k trees<br>25 districts · ${meta.roads.length.toLocaleString('en-US')} main roads<br>22 landmarks · real terrain`); };
   stats();
   // 切换语言：只改文字（标签、列表、卡片、时钟、状态），不动场景与相机
   onLang(() => {
@@ -1468,7 +1472,7 @@ async function main() {
     relabel();
     document.querySelectorAll('#placeList li').forEach((li, i) => {
       const L = LANDMARKS[i];
-      li.querySelector('.nm').textContent = lmName(L);
+      li.querySelector('.nm').textContent = lmListName(L);
       li.querySelector('.ct').textContent = T(L.cat, CAT_EN[L.cat] || L.cat);
     });
     if (S.focus != null && !$('card').hidden) showCard(S.focus);
@@ -1497,4 +1501,4 @@ async function main() {
   window.__atlas = { viewFor, showCard, sun, hemi, scene, bloom, S, camera, controls, applyCam, groundY, updateTime, focusLandmark, startTour, LANDMARKS, renderer, U };
 }
 const tick = () => new Promise((r) => setTimeout(r, 0));
-main().catch((e) => { console.error(e); ldMsg.textContent = T('载入失败：', 'Failed to load: ') + e.message; });
+main().catch((e) => { console.error(e); setLd('载入失败：' + e.message, 'Failed to load: ' + e.message); });
