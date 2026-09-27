@@ -1,0 +1,39 @@
+# The One-Shot Generation Prompt
+
+Using Three.js (ES modules + import map, referenced from a local `vendor/`, no build, no CDN), build a single-page site: **an interactive V8 engine you can explore hands-on**. All UI text in Chinese, a dark engineering style, usable on desktop and on a 390 px phone with no horizontal overflow.
+
+## 1. Physics and kinematics (write these first as a pure-function module, `physics.js`; every display is driven by it)
+- Engine specs: 90° V8, 94 mm bore, 92 mm stroke, 150 mm connecting rods, 11:1 compression ratio, DOHC with 4 valves per cylinder.
+- Cross-plane crankshaft, firing order 1-8-4-3-6-5-7-2 (odd cylinders on one bank, even on the other; each crankpin drives one cylinder from each bank). **Don't hand-write each cylinder's phase**: given the firing order (one firing every 90°) and bank angles of ±45°, solve for the crankpin angles (you should get four pins 90° apart, with both cylinders on a pin agreeing). The crank turns clockwise viewed from the front.
+- Define a single cylinder's cycle angle ψ = θ − that cylinder's firing phase, with 0° = compression TDC: 0–180 power, 180–360 exhaust, 360–540 intake, 540–720 compression.
+- Piston displacement uses the exact slider-crank formula; each connecting rod follows the crankpin at one end and the wrist pin at the other.
+- Valve timing: IVO 12° BTDC, IVC 48° ABDC, EVO 52° BBDC, EVC 10° ATDC (22° overlap), with smooth polynomial lift profiles, 11.8 mm intake and 11.2 mm exhaust lift; the intake cam supports a VVT phase offset (−20° to +40°).
+- Cylinder pressure: a single-zone thermodynamic model (polytropic compression/expansion) + Wiebe heat release (ignition delay and burn duration varying with load/rpm), integrated from IVC to EVO, followed by exponentially decaying blowdown, exhaust against back-pressure, and intake manifold pressure set by the throttle. Output p, V, burned fraction, heat-release rate and temperature at 0.5° resolution, plus peak pressure and its location, IMEP, torque, power and a knock index. Target magnitude: at WOT, 3000 rpm and 26° advance, a peak of about 65–70 bar at about 14° ATDC.
+
+## 2. The 3D model (all procedural geometry; no external models)
+- Block: each bank is a "cross-section with bores and bolt holes" extruded along the cylinder axis; the crankcase is the front profile (a U-shape + a V-shaped valley web) extruded along the crank axis; main-bearing bulkheads and an oil pan; every shell must be a closed solid.
+- Crankshaft: counterweighted crank webs (extruded 2D profiles), crankpins, main journals, a front sprocket and harmonic balancer pulley, a rear flywheel and ring gear.
+- Connecting rods (I-beam + bolts), pistons (lathed, with ring grooves + three piston rings + a wrist pin).
+- Cylinder heads, cam covers and 4 camshafts: **cam profiles generated in polar coordinates from the lift curve (1° of cam = 2° of crank)**, each lobe installed at its cylinder's phase; bucket tappets, valve springs (blue for intake, orange for exhaust, compressing with lift) and valves.
+- Timing chains (two, with instanced links moving along a "tangent path around the convex hull of several circles," 2:1), spark plugs and coil-on-plug units, an intake plenum + 8 runners + a throttle body with a rotating butterfly, 4-into-1 exhaust manifolds on both sides, and a front water pump/alternator/serpentine belt.
+- In-cylinder gas volumes: height follows the piston; blue on intake → purple on compression → a flame front spreading from the spark plug → orange-red on power → brown on exhaust; a spark flash at ignition; the matching exhaust pipe briefly glows when the exhaust valve opens.
+- Airflow particles: flowing along "plenum → runner → intake valve → cylinder" and "cylinder → exhaust valve → manifold → collector," with speed proportional to valve lift and piston speed, slowing down in sync with slow motion.
+
+## 3. View modes
+- Exterior: the complete engine.
+- Section (default): each bank's shell is clipped by a plane through the cylinder axes to remove the valley-side half, the top half of the crankcase is removed, and the cut faces are shaded with red hatching (the back-face shading trick); the heads are replaced by a combustion-chamber plate + cam-bearing skeleton, and the intake manifold shows as a faint ghost material.
+- X-ray: shells in a translucent material with Fresnel rim glow, internal parts solid.
+- Schematic: a scanning plane sweeps across and "wipes" the solids into a blueprint line drawing (fill + Fresnel outline + crease lines, with hidden parts removed), while the camera dolly-zooms into a near-orthographic front view, the background turns into a blueprint grid, and SVG annotations are overlaid: the 90° bank-angle arc and centre lines, bore Ø94, stroke 92, leader lines to the camshaft and crankshaft centres, and a title block. Pistons and gas keep moving in the line drawing; the transition can be reversed back to 3D.
+- Camera presets: overview / front / top / side, with damped OrbitControls.
+
+## 4. Interaction and panels
+- Left side: a brand block; four stroke buttons (intake/compression/power/exhaust — clicking one smoothly turns the crank forward until the focused cylinder reaches that stroke, then pauses); a card explaining the current stroke (the principle in Chinese + intake/exhaust valve opening, piston direction, live cylinder pressure); focused-cylinder selection (left bank 2468 / right bank 1357, keys 1–8); view mode; part tags (crankshaft, connecting rods, pistons, camshafts, valvetrain, timing chains, spark plugs/coils, block, heads, front accessories, intake manifold, exhaust manifolds) — selecting one makes that part pulse while the rest are ghosted, and shows an explanation card in Chinese; hovering in 3D shows the part name and clicking selects it (picking must ignore the clipped-away portions).
+- Right side: rpm/torque/power/IMEP readouts; a "working cycle" chart (p–θ in linear/log with valve lift overlaid, stroke colour bands, a spark line, peak annotation and a cursor; switchable to a log p–V loop labelled with indicated work); a valve-timing circle (TDC at the top, clockwise, intake on the inner ring and exhaust on the outer, the overlap sector, the spark mark, and a crank pointer rotating with ψ); a firing-order bar (the cylinder on its power stroke lights up) + an 8-cylinder × 720° phase chart (click a row to change the focused cylinder); sliders for rpm, throttle, spark advance and VVT, recomputed live, with an explanation — "spark too early / too late / about right + MBT for the current operating point" (MBT found by sweeping advance for maximum IMEP) — and a knock warning.
+- Bottom drivetrain bar: play/pause (space), ±5° steps (arrow keys), a draggable scale based on the focused cylinder's ψ with stroke colour bands, crank-angle / cylinder-angle readouts, slow-motion levels (1/400 up to real time), and a sound toggle.
+- Sound: WebAudio synthesizes one exhaust pulse at each cylinder's exhaust-valve opening, with the odd bank panned right and the even bank left; in slow motion they are separate pulses, in real time they merge into a V8 rumble.
+- In 3D, each cylinder has a number label above it coloured by its current stroke, flashing on ignition; large text at the top centre shows the focused cylinder's current stroke.
+
+## 5. Visuals
+- A deep graphite background + a fading grid floor + contact shadows + a vignette; RoomEnvironment reflections + a warm key light + a cool rim light; UnrealBloom applied only to combustion and sparks (threshold raised so metal highlights don't bloom), ACES tone mapping.
+- Fixed stroke colours: intake #3fa9ff, compression #9a86ff, power #ff6a2b, exhaust #dba445, consistent across every chart and the 3D view.
+- Panels are translucent frosted-glass cards, with numbers in a monospace font. On desktop, offset the visual centre of the 3D view to sit between the two side panels; at ≤980 px, move the panels below the 3D view in a vertical stack.
