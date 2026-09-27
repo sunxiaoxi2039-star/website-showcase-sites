@@ -132,10 +132,11 @@ function compile(gl, type, src) {
 }
 
 /**
- * 启动开场着色器。返回 { setScroll(s), setVisible(bool) }；失败时返回 null（页面显示 CSS 退路）。
- * reduced=true 时只画一帧静态画面，不跑动画、不跟滚动。
+ * 启动开场着色器。返回 { setScroll(s), setVisible(bool), setReduced(bool) }；失败时返回 null（页面显示 CSS 退路）。
+ * reduced=true 时只画一帧静态画面，不跑动画、不跟滚动；系统设置中途切换时由 setReduced 即时生效。
  */
-export function initHero(canvas, { reduced = false } = {}) {
+export function initHero(canvas, { reduced: reducedInit = false } = {}) {
+  let reduced = !!reducedInit;
   let gl = null;
   try {
     gl = canvas.getContext('webgl', { antialias: false, alpha: false, premultipliedAlpha: false, preserveDrawingBuffer: false, powerPreference: 'low-power' });
@@ -224,15 +225,27 @@ export function initHero(canvas, { reduced = false } = {}) {
     if (reduced) { draw(performance.now()); return; }
     if (!state.raf && state.visible) state.raf = requestAnimationFrame(loop);
   }
+  function setReduced(v) {
+    v = !!v;
+    if (v === reduced) return;
+    reduced = v;
+    if (reduced) {
+      if (state.raf) { cancelAnimationFrame(state.raf); state.raf = 0; }
+      state.scroll = 0.25; state.intro = 1; state.swirl = 0; state.swirlTarget = 0;
+    } else {
+      state.t0 = performance.now() - 2600; // 开场绽开已看过（或被跳过），直接从完成态接着动
+    }
+    kick();
+  }
 
   resize();
   kick();
   let rt = 0;
   window.addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(() => { resize(); kick(); }, 120); });
 
-  if (!reduced) {
+  {
     canvas.parentElement.addEventListener('pointermove', (e) => {
-      if (e.pointerType !== 'mouse') return;
+      if (reduced || e.pointerType !== 'mouse') return;
       const r = canvas.getBoundingClientRect();
       const push = smooth(0.3, 1.0, state.scroll);
       const z = state.zoom * (1 - 0.3 * push);
@@ -248,5 +261,6 @@ export function initHero(canvas, { reduced = false } = {}) {
   return {
     setScroll(s) { if (reduced) return; state.scroll = s; },
     setVisible(v) { state.visible = v; if (v) kick(); },
+    setReduced,
   };
 }

@@ -1,0 +1,812 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Verdant — A Sea of Green</title>
+<meta name="description" content="A procedural rice field moving with the wind. Nothing to do. Just follow the breeze.">
+<style>
+:root{
+  --ink:#f4f1e6; --ink-dim:rgba(244,241,230,.74); --panel:rgba(17,37,24,.56); --line:rgba(236,240,220,.15);
+  --accent:#e8e3c6; --accent-ink:#1c3221;
+  --serif:"Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua","Hoefler Text",Georgia,"Times New Roman",serif;
+  --sans:ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:#aab7b6;overflow:hidden;color:var(--ink);font-family:var(--sans);-webkit-font-smoothing:antialiased}
+canvas#c{position:fixed;inset:0;width:100%;height:100%;display:block;opacity:0;transition:opacity .9s ease;touch-action:none}
+canvas#c.ready{opacity:1}
+#hud{position:fixed;inset:0;display:flex;flex-direction:column;justify-content:space-between;
+  padding:clamp(16px,2.8vw,36px);padding-bottom:max(clamp(16px,2.8vw,36px),env(safe-area-inset-bottom));pointer-events:none}
+.brand{display:flex;align-items:center;gap:10px;font-family:var(--serif);letter-spacing:.44em;font-size:13px;font-weight:600;color:var(--ink);text-shadow:0 1px 14px rgba(20,30,20,.28)}
+.brand svg{width:17px;height:17px;flex:0 0 auto;filter:drop-shadow(0 1px 6px rgba(20,30,20,.3))}
+.bottom{display:flex;align-items:flex-end;justify-content:space-between;gap:28px}
+.title{min-width:0;position:relative}
+.title::before{content:"";position:absolute;left:-60px;right:-80px;top:-50px;bottom:-40px;z-index:-1;pointer-events:none;background:radial-gradient(ellipse at 35% 60%,rgba(10,24,12,.46),rgba(10,24,12,.2) 48%,rgba(10,24,12,0) 72%)}
+.title h1{font-family:var(--serif);font-weight:400;font-size:clamp(42px,6.3vw,92px);line-height:.94;margin:0 0 .26em;letter-spacing:-.012em;text-shadow:0 2px 34px rgba(12,28,14,.38)}
+.title p{margin:0;font-family:var(--serif);font-style:italic;font-size:clamp(15px,1.35vw,19px);color:rgba(244,241,230,.9);text-shadow:0 1px 2px rgba(8,20,10,.55),0 0 18px rgba(8,20,10,.55)}
+.panel{pointer-events:auto;width:320px;flex:0 0 auto;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 14px 12px;
+  backdrop-filter:blur(14px) saturate(1.1);-webkit-backdrop-filter:blur(14px) saturate(1.1);box-shadow:0 12px 40px rgba(6,18,10,.22)}
+.group{margin-bottom:12px}
+.label{display:flex;justify-content:space-between;align-items:baseline;font-size:10.5px;letter-spacing:.17em;text-transform:uppercase;color:var(--ink-dim);margin:0 2px 7px}
+.label span{letter-spacing:.02em;text-transform:none;font-family:var(--serif);font-style:italic;font-size:13.5px;color:var(--ink)}
+.seg{display:flex;gap:3px;background:rgba(0,0,0,.2);border-radius:9px;padding:3px}
+.seg button,.row button{flex:1;appearance:none;border:0;background:transparent;color:var(--ink);font:500 12.5px/1 var(--sans);padding:9px 6px;border-radius:7px;cursor:pointer;transition:background .25s,color .25s;white-space:nowrap}
+.seg button:hover{background:rgba(255,255,255,.08)}
+.seg button.on{background:var(--accent);color:var(--accent-ink)}
+.row{display:flex;gap:8px;margin-top:2px}
+.row button{border:1px solid var(--line);background:rgba(255,255,255,.05)}
+.row button:hover{background:rgba(255,255,255,.11)}
+.row button[aria-pressed="true"]{background:rgba(232,227,198,.2);border-color:rgba(232,227,198,.4)}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:22px;background:transparent;margin:0;cursor:pointer;--p:45%}
+input[type=range]::-webkit-slider-runnable-track{height:3px;border-radius:3px;background:linear-gradient(to right,var(--accent) var(--p),rgba(255,255,255,.22) var(--p))}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:var(--accent);margin-top:-6.5px;box-shadow:0 0 0 5px rgba(232,227,198,.16)}
+input[type=range]::-moz-range-track{height:3px;border-radius:3px;background:rgba(255,255,255,.22)}
+input[type=range]::-moz-range-progress{height:3px;border-radius:3px;background:var(--accent)}
+input[type=range]::-moz-range-thumb{width:16px;height:16px;border:0;border-radius:50%;background:var(--accent)}
+button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.nogl{position:fixed;inset:0;display:none;place-items:center;font-family:var(--serif);font-size:18px;color:#1c3221;text-align:center;padding:24px}
+@media (max-width:720px){
+  .bottom{flex-direction:column;align-items:stretch;gap:14px}
+  .title h1{font-size:40px}
+  .title p{font-size:15px}
+  .panel{width:100%;padding:12px 12px 10px}
+  .group{margin-bottom:10px}
+  .seg button,.row button{font-size:12px;padding:9px 4px}
+}
+@media (max-height:560px) and (min-width:721px){ .title h1{font-size:46px} .group{margin-bottom:8px} }
+@media (prefers-reduced-motion:reduce){ canvas#c{transition:none} }
+</style>
+</head>
+<body>
+<canvas id="c" aria-label="A procedural rice field moving in the wind"></canvas>
+<div class="nogl">This scene needs WebGL. Try a recent desktop or mobile browser.</div>
+<div id="hud">
+  <header class="brand">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22C12 14 13.5 8 20 3c-1 7-3.6 11.6-8 13.4M12 22c0-5-1.3-8.6-6.5-11.5.4 4.6 2.6 7.6 6.5 9" fill="none" stroke="#f4f1e6" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <span>VERDANT</span>
+  </header>
+  <div class="bottom">
+    <div class="title">
+      <h1>A sea of green</h1>
+      <p>Nothing to do. Just follow the breeze.</p>
+    </div>
+    <aside class="panel" aria-label="Scene controls">
+      <div class="group">
+        <div class="label">Light</div>
+        <div class="seg" data-group="light" role="group" aria-label="Light">
+          <button type="button" data-v="morning" aria-pressed="false">Morning</button>
+          <button type="button" data-v="afternoon" class="on" aria-pressed="true">Afternoon</button>
+          <button type="button" data-v="golden" aria-pressed="false">Golden Hour</button>
+        </div>
+      </div>
+      <div class="group">
+        <div class="label">View</div>
+        <div class="seg" data-group="view" role="group" aria-label="View">
+          <button type="button" data-v="open" class="on" aria-pressed="true">Open Field</button>
+          <button type="button" data-v="among" aria-pressed="false">Among the Rice</button>
+        </div>
+      </div>
+      <div class="group">
+        <label class="label" for="wind">Wind <span id="windVal">Breeze</span></label>
+        <input id="wind" type="range" min="0" max="100" value="45" aria-label="Wind strength">
+      </div>
+      <div class="row">
+        <button type="button" id="pause" aria-pressed="false">Pause</button>
+        <button type="button" id="sound" aria-pressed="false">Sound off</button>
+      </div>
+    </aside>
+  </div>
+</div>
+<script type="importmap">
+{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js" } }
+</script>
+<script type="module">
+import * as THREE from 'three';
+
+/* ---------- renderer & basics ---------- */
+const canvas = document.getElementById('c');
+let renderer;
+try {
+  renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
+} catch (err) {
+  document.querySelector('.nogl').style.display = 'grid';
+  throw err;
+}
+renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+renderer.setSize(innerWidth, innerHeight, false);
+renderer.outputColorSpace = THREE.LinearSRGBColorSpace; // every shader does its own tone map + gamma
+renderer.toneMapping = THREE.NoToneMapping;
+renderer.setClearColor(0xaab7b6, 1);
+
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(50, innerWidth / innerHeight, 0.05, 3000);
+const ASPECT0 = innerWidth / innerHeight;
+const NARROW = Math.min(innerWidth, innerHeight) < 720 && innerWidth < 900;
+const DEG = Math.PI / 180, TAU = Math.PI * 2;
+
+function rng(seed) {
+  let a = seed >>> 0;
+  return function () {
+    a = (a + 0x6D2B79F5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+const R = rng(20260926);
+const rand = (a, b) => a + (b - a) * R();
+const clamp = (x, a, b) => Math.min(b, Math.max(a, x));
+const lerp = (a, b, t) => a + (b - a) * t;
+const ease = t => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
+const WIND_DIR = new THREE.Vector2(0.42, -1).normalize();
+
+/* ---------- shared uniforms (one object, referenced by every material) ---------- */
+const U = {
+  uPhase: { value: 0 }, uTime: { value: 0 }, uStrength: { value: 0.6 },
+  uWindDir: { value: WIND_DIR.clone() }, uCloudShift: { value: new THREE.Vector2() },
+  uSunDir: { value: new THREE.Vector3(0.5, 0.6, -0.3).normalize() },
+  uSunColor: { value: new THREE.Color() }, uSkyAmb: { value: new THREE.Color() }, uGroundAmb: { value: new THREE.Color() },
+  uZenith: { value: new THREE.Color() }, uHorizon: { value: new THREE.Color() },
+  uFogColor: { value: new THREE.Color() }, uFogDensity: { value: 0.0035 }, uExposure: { value: 0.92 },
+};
+
+const GLSL_COMMON = /* glsl */`
+uniform float uPhase, uTime, uStrength, uFogDensity, uExposure;
+uniform vec2 uWindDir, uCloudShift;
+uniform vec3 uSunDir, uSunColor, uSkyAmb, uGroundAmb, uZenith, uHorizon, uFogColor;
+float hash12(vec2 p){ vec3 p3 = fract(vec3(p.xyx) * .1031); p3 += dot(p3, p3.yzx + 33.33); return fract((p3.x + p3.y) * p3.z); }
+float hash13(vec3 p3){ p3 = fract(p3 * .1031); p3 += dot(p3, p3.zyx + 31.32); return fract((p3.x + p3.y) * p3.z); }
+float vnoise(vec2 p){ vec2 i = floor(p), f = fract(p); vec2 u = f * f * (3. - 2. * f);
+  return mix(mix(hash12(i), hash12(i + vec2(1., 0.)), u.x), mix(hash12(i + vec2(0., 1.)), hash12(i + vec2(1., 1.)), u.x), u.y); }
+float vnoise3(vec3 p){ vec3 i = floor(p), f = fract(p); vec3 u = f * f * (3. - 2. * f);
+  float a = hash13(i), b = hash13(i + vec3(1.,0.,0.)), c = hash13(i + vec3(0.,1.,0.)), d = hash13(i + vec3(1.,1.,0.));
+  float e = hash13(i + vec3(0.,0.,1.)), f1 = hash13(i + vec3(1.,0.,1.)), g = hash13(i + vec3(0.,1.,1.)), h = hash13(i + vec3(1.,1.,1.));
+  return mix(mix(mix(a, b, u.x), mix(c, d, u.x), u.y), mix(mix(e, f1, u.x), mix(g, h, u.x), u.y), u.z); }
+float fbm(vec2 p){ float s = 0., a = .5; for (int i = 0; i < 5; i++){ s += a * vnoise(p); p = mat2(1.6, 1.2, -1.2, 1.6) * p + vec2(3.1, 7.7); a *= .5; } return s; }
+// Large travelling gust field: long waves rolling downwind, broken up by drifting noise patches.
+float gustField(vec2 p){
+  vec2 w = uWindDir; vec2 q = vec2(-w.y, w.x);
+  float s = dot(p, w), c = dot(p, q);
+  float w1 = sin(s * .15 - uPhase + sin(c * .043 + 1.3) * 2.1 + c * .018);
+  float w2 = sin(s * .34 - uPhase * 1.63 + c * .1 + sin(s * .047) * 1.4 + 2.);
+  float n = vnoise(vec2(s * .07 - uPhase * .45, c * .075));
+  float g = .5 + .32 * w1 + .15 * w2;
+  g *= .45 + 1.05 * n;
+  return clamp(g, 0., 1.25);
+}
+vec3 applyFog(vec3 col, float d){ float f = 1. - exp(-pow(d * uFogDensity, 1.65)); return mix(col, uFogColor, f); }
+vec3 finish(vec3 c){ c *= uExposure; c = (c * (2.51 * c + .03)) / (c * (2.43 * c + .59) + .14); return pow(clamp(c, 0., 1.), vec3(1. / 2.2)); }
+`;
+const withU = extra => Object.assign({}, U, extra || {});
+
+/* ---------- sky dome ---------- */
+const skyMat = new THREE.ShaderMaterial({
+  uniforms: withU(), depthWrite: false, depthTest: false, side: THREE.BackSide,
+  vertexShader: /* glsl */`
+    varying vec3 vDir;
+    void main(){ vDir = position; vec4 p = projectionMatrix * modelViewMatrix * vec4(position, 1.); gl_Position = p.xyww; }`,
+  fragmentShader: GLSL_COMMON + /* glsl */`
+    varying vec3 vDir;
+    void main(){
+      vec3 d = normalize(vDir);
+      float h = d.y;
+      vec3 col = mix(uHorizon, uZenith, pow(smoothstep(-.03, .75, h), .62));
+      vec3 sd3 = normalize(uSunDir);
+      float sd = max(dot(d, sd3), 0.);
+      float lowSun = 1. - smoothstep(.05, .6, sd3.y);
+      col += uSunColor * (pow(sd, 6.) * (.05 + .16 * lowSun) + pow(sd, 48.) * .12 + smoothstep(.9993, .9998, sd) * .9);
+      col += uSunColor * .07 * lowSun * (1. - smoothstep(0., .22, h)) * pow(sd * .5 + .5, 3.);
+      if (h > 0.){
+        vec2 cp = d.xz / (h + .12) * 1.4 + uCloudShift;
+        float c1 = fbm(cp * .55);
+        float c2 = fbm(cp * 1.7 + 4.);
+        float cov = smoothstep(.5, .86, c1 * .78 + c2 * .32) * smoothstep(.02, .24, h) * .7;
+        vec3 lit = mix(uHorizon * 1.04, uSunColor * .32 + uHorizon * .75, .3 + .45 * pow(sd, 2.));
+        vec3 shade = mix(uZenith, uHorizon, .55) * .93;
+        col = mix(col, mix(shade, lit, smoothstep(.3, .9, c2)), cov);
+      }
+      col = mix(col, uFogColor, (1. - smoothstep(-.02, .1, h)) * .85);
+      gl_FragColor = vec4(finish(col), 1.);
+    }`,
+});
+const sky = new THREE.Mesh(new THREE.SphereGeometry(1400, 48, 24), skyMat);
+sky.renderOrder = -10; sky.frustumCulled = false;
+scene.add(sky);
+
+/* ---------- layered hills (arcs around the viewer, hazier with distance) ---------- */
+function hillStrip(radius, baseY, amp, seed, tint, haze) {
+  const r = rng(seed);
+  const ph = [r() * 50, r() * 50, r() * 50, r() * 50];
+  const cols = 260, span = 170 * DEG;
+  const pos = [], top = [], idx = [];
+  for (let i = 0; i <= cols; i++) {
+    const u = i / cols, a = -span / 2 + span * u;
+    const n = 0.5 * Math.sin(u * 7.3 + ph[0]) + 0.27 * Math.sin(u * 17.9 + ph[1]) + 0.15 * Math.sin(u * 41.3 + ph[2]) + 0.08 * Math.sin(u * 97.1 + ph[3]);
+    const y = baseY + amp * (0.58 + 0.42 * n);
+    const x = Math.sin(a) * radius, z = -Math.cos(a) * radius + 9;
+    pos.push(x, -40, z, x, y, z);
+    top.push(0, 1);
+  }
+  for (let i = 0; i < cols; i++) { const a = i * 2; idx.push(a, a + 2, a + 1, a + 1, a + 2, a + 3); }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  g.setAttribute('aTop', new THREE.Float32BufferAttribute(top, 1));
+  g.setIndex(idx);
+  const m = new THREE.ShaderMaterial({
+    uniforms: withU({ uHaze: { value: haze }, uTint: { value: new THREE.Color(tint) } }),
+    side: THREE.DoubleSide,
+    vertexShader: /* glsl */`
+      attribute float aTop; varying vec3 vW; varying float vTop;
+      void main(){ vec4 w = modelMatrix * vec4(position, 1.); vW = w.xyz; vTop = aTop; gl_Position = projectionMatrix * viewMatrix * w; }`,
+    fragmentShader: GLSL_COMMON + /* glsl */`
+      uniform float uHaze; uniform vec3 uTint; varying vec3 vW; varying float vTop;
+      void main(){
+        float n = fbm(vW.xz * .018 + vec2(vW.y * .03, 0.));
+        float n2 = vnoise(vW.xy * .08);
+        vec3 base = uTint * (.72 + .5 * n) * (.9 + .2 * n2);
+        float up = clamp(vTop, 0., 1.);
+        vec3 lit = base * (uSkyAmb * .9 + uSunColor * max(uSunDir.y, .1) * .5 * (.6 + .4 * up));
+        float mist = 1. - smoothstep(.0, .6, up);
+        float fT = 1. - exp(-pow(225. * uFogDensity, 1.65)); // fog at the back of the tree line
+        float hz = clamp(max(uHaze, fT + (uHaze - .42) * .85 + .03) + mist * .22, 0., .97); // hills never read nearer than the trees
+        gl_FragColor = vec4(finish(mix(lit, mix(uFogColor, uHorizon, .45), hz)), 1.);
+      }`,
+  });
+  const mesh = new THREE.Mesh(g, m);
+  mesh.frustumCulled = false;
+  scene.add(mesh);
+}
+hillStrip(900, 2, 62, 11, '#5a7466', 0.74);
+hillStrip(640, 0, 36, 23, '#48664e', 0.58);
+hillStrip(430, -2, 20, 37, '#3a5838', 0.42);
+
+/* ---------- tree line: clustered, noise-displaced canopy blobs ---------- */
+(function buildTrees() {
+  const base = new THREE.IcosahedronGeometry(1, 3);
+  const g = new THREE.InstancedBufferGeometry();
+  g.setAttribute('position', base.getAttribute('position'));
+  g.setAttribute('normal', base.getAttribute('normal'));
+  const P = [], V = [];
+  let x = -380;
+  while (x < 380) {
+    x += rand(4, 34);
+    const width = rand(10, 60), zc = rand(-232, -178);
+    const rows = 1 + (R() < 0.6 ? 1 : 0);
+    for (let row = 0; row < rows; row++) {
+      const n = Math.max(2, Math.round(width / rand(3.2, 5)));
+      for (let i = 0; i < n; i++) {
+        const tall = R() < 0.13;
+        const r = tall ? rand(2.6, 3.8) : rand(3.2, 7.2);
+        const sx = tall ? rand(0.55, 0.72) : rand(0.9, 1.3);
+        const sy = tall ? rand(1.7, 2.4) : rand(0.72, 1.05);
+        const zz = zc + row * rand(6, 12) + rand(-5, 5);
+        P.push(x + rand(0, width), r * sy * 0.84 + (tall ? 1.2 : 0), zz, r);
+        V.push(sx, sy, R() * 97, rand(-1, 1));
+      }
+    }
+    x += width;
+  }
+  g.setAttribute('tPos', new THREE.InstancedBufferAttribute(new Float32Array(P), 4));
+  g.setAttribute('tVar', new THREE.InstancedBufferAttribute(new Float32Array(V), 4));
+  g.instanceCount = P.length / 4;
+  const m = new THREE.ShaderMaterial({
+    uniforms: withU(),
+    vertexShader: GLSL_COMMON + /* glsl */`
+      attribute vec4 tPos; attribute vec4 tVar;
+      varying vec3 vW; varying vec3 vN; varying float vTint; varying float vH;
+      void main(){
+        vec3 p = position;
+        float n = vnoise3(p * 2.1 + tVar.z) * .62 + vnoise3(p * 4.6 + tVar.z * 1.7) * .38;
+        vec3 q = p * (.8 + n * .44);
+        if (q.y < -.25) q.y = -.25 + (q.y + .25) * .35;
+        vec3 sc = vec3(tVar.x, tVar.y, tVar.x) * tPos.w;
+        vec3 w = tPos.xyz + q * sc;
+        w.y = mix(w.y, -.4, smoothstep(-.3, -.85, p.y)); // understory skirt: canopy meets the ground
+        float sway = uStrength * .2 * max(p.y, 0.) * (sin(uTime * .8 + tVar.z * 3.1) * .6 + .4 * sin(uPhase * 1.1 + tPos.x * .05));
+        w.xz += uWindDir * sway;
+        vW = w; vTint = tVar.w; vH = p.y * .5 + .5;
+        vN = normalize(normal / vec3(tVar.x, tVar.y, tVar.x) + (n - .5) * .9 * normal);
+        gl_Position = projectionMatrix * viewMatrix * vec4(w, 1.);
+      }`,
+    fragmentShader: GLSL_COMMON + /* glsl */`
+      varying vec3 vW; varying vec3 vN; varying float vTint; varying float vH;
+      void main(){
+        vec3 N = normalize(vN);
+        float leaf = vnoise3(vW * .9) * .6 + vnoise3(vW * 2.4) * .4;
+        vec3 base = mix(vec3(.028, .058, .026), vec3(.07, .105, .04), clamp(vTint * .5 + .5, 0., 1.));
+        base *= .6 + .75 * leaf;
+        float ndl = dot(N, uSunDir);
+        vec3 amb = mix(uGroundAmb, uSkyAmb, N.y * .5 + .5);
+        float ao = mix(.45, 1., vH) * (.6 + .4 * leaf);
+        vec3 col = base * (amb * ao * .9 + uSunColor * (max(ndl, 0.) * .85 + (ndl * .5 + .5) * .15) * ao);
+        col = applyFog(col, length(vW - cameraPosition));
+        gl_FragColor = vec4(finish(col), 1.);
+      }`,
+  });
+  const mesh = new THREE.Mesh(g, m);
+  mesh.frustumCulled = false;
+  scene.add(mesh);
+})();
+
+/* ---------- ground: wet paddy soil near, wind-rippled canopy tone far ---------- */
+const groundMat = new THREE.ShaderMaterial({
+  uniforms: withU({ uCanopyA: { value: new THREE.Color('#2e4d1c') }, uCanopyB: { value: new THREE.Color('#8d9b45') } }),
+  vertexShader: /* glsl */`
+    varying vec3 vW;
+    void main(){ vec4 w = modelMatrix * vec4(position, 1.); vW = w.xyz; gl_Position = projectionMatrix * viewMatrix * w; }`,
+  fragmentShader: GLSL_COMMON + /* glsl */`
+    uniform vec3 uCanopyA, uCanopyB; varying vec3 vW;
+    void main(){
+      vec2 p = vW.xz;
+      float d = length(vW - cameraPosition);
+      float dField = length(p - vec2(0., 9.6));
+      float g = gustField(p);
+      float n1 = fbm(p * .035), n2 = vnoise(p * .5), n3 = vnoise(p * 2.7);
+      vec3 canopy = mix(uCanopyA, uCanopyB, clamp(.33 + (g - .5) * .6 * min(uStrength, 1.3) + (n1 - .5) * .55 + (n3 - .5) * .08, 0., 1.));
+      canopy = mix(canopy, uCanopyB * .92, smoothstep(30., 150., d) * .42);
+      vec3 soil = mix(vec3(.016, .018, .009), vec3(.036, .034, .016), n2);
+      float t = smoothstep(9., 46., dField);
+      vec3 base = mix(soil, canopy, t);
+      float field = smoothstep(-174., -166., p.y);
+      vec3 verge = mix(vec3(.04, .06, .022), vec3(.075, .085, .032), n2);
+      base = mix(verge, base, field);
+      vec3 lit = base * (uSkyAmb * .8 + uSunColor * (.18 + .5 * max(uSunDir.y, 0.)));
+      lit = mix(lit * .5, lit, t);
+      vec3 V = normalize(cameraPosition - vW);
+      lit += uHorizon * pow(1. - clamp(V.y, 0., 1.), 5.) * .06 * (1. - t);
+      gl_FragColor = vec4(finish(applyFog(lit, d)), 1.);
+    }`,
+});
+const ground = new THREE.Mesh(new THREE.PlaneGeometry(3200, 3200, 1, 1).rotateX(-Math.PI / 2), groundMat);
+ground.frustumCulled = false;
+scene.add(ground);
+
+/* ---------- rice plant geometry (curved, tapered ribbons) ---------- */
+function ribbonBuilder() {
+  const P = [], N = [], UV = [], K = [], I = [];
+  const t = new THREE.Vector3(), nn = new THREE.Vector3();
+  return {
+    add(pts, widths, sides, kind) {
+      const n = pts.length, start = P.length / 3;
+      for (let i = 0; i < n; i++) {
+        const p = pts[i], s = sides[i], w = widths[i] * 0.5;
+        t.subVectors(pts[Math.min(i + 1, n - 1)], pts[Math.max(i - 1, 0)]).normalize();
+        nn.crossVectors(s, t).normalize();
+        P.push(p.x - s.x * w, p.y - s.y * w, p.z - s.z * w, p.x + s.x * w, p.y + s.y * w, p.z + s.z * w);
+        N.push(nn.x, nn.y, nn.z, nn.x, nn.y, nn.z);
+        const v = i / (n - 1);
+        UV.push(0, v, 1, v);
+        K.push(kind, kind);
+      }
+      for (let i = 0; i < n - 1; i++) { const a = start + i * 2; I.push(a, a + 2, a + 1, a + 1, a + 2, a + 3); }
+    },
+    build() {
+      const g = new THREE.BufferGeometry();
+      g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3));
+      g.setAttribute('normal', new THREE.Float32BufferAttribute(N, 3));
+      g.setAttribute('uv', new THREE.Float32BufferAttribute(UV, 2));
+      g.setAttribute('aKind', new THREE.Float32BufferAttribute(K, 1));
+      g.setIndex(I);
+      return g;
+    },
+  };
+}
+// integrate a curve whose elevation angle eases from e0 to e1 (arching / drooping)
+function arc(base, az, len, e0, e1, segs, pw) {
+  const pts = [base.clone()], p = base.clone(), st = len / segs;
+  for (let i = 1; i <= segs; i++) {
+    const e = e0 + (e1 - e0) * Math.pow(i / segs, pw);
+    p.x += Math.cos(e) * Math.cos(az) * st; p.y += Math.sin(e) * st; p.z += Math.cos(e) * Math.sin(az) * st;
+    pts.push(p.clone());
+  }
+  return pts;
+}
+function sidesFor(pts, az, twist) {
+  return pts.map((_, i) => {
+    const tw = (twist || 0) * i / (pts.length - 1), a = az + Math.PI / 2;
+    return new THREE.Vector3(Math.cos(a) * Math.cos(tw), Math.sin(tw), Math.sin(a) * Math.cos(tw)).normalize();
+  });
+}
+function pointAlong(pts, f) {
+  const x = f * (pts.length - 1), i = Math.min(Math.floor(x), pts.length - 2);
+  return pts[i].clone().lerp(pts[i + 1], x - i);
+}
+const leafW = (wMax, n) => Array.from({ length: n + 1 }, (_, i) => { const t = i / n; return wMax * Math.min(1, 0.6 + t * 1.5) * Math.pow(1 - t, 0.55); });
+
+function buildHill(seed, tillers) {
+  const r = rng(seed), rb = ribbonBuilder();
+  for (let k = 0; k < tillers; k++) {
+    const az = (k / tillers) * TAU + r() * 0.9;
+    const lean = 0.05 + r() * 0.2, H = 0.8 + r() * 0.18;
+    const root = new THREE.Vector3(Math.cos(az) * 0.025 * r(), 0, Math.sin(az) * 0.025 * r());
+    const stem = arc(root, az, H, Math.PI / 2 - lean * 0.4, Math.PI / 2 - lean * 1.7, 5, 1.4);
+    rb.add(stem, stem.map((_, i) => 0.011 - i * 0.0009), sidesFor(stem, az + 0.4), 0);
+    for (let j = 0; j < 2; j++) {
+      const lb = pointAlong(stem, 0.06 + j * 0.24 + r() * 0.1);
+      const laz = az + (r() - 0.5) * 2.4, len = 0.42 + r() * 0.24;
+      const pts = arc(lb, laz, len, (66 + r() * 16) * DEG, (-12 - r() * 42) * DEG, 6, 1.8);
+      rb.add(pts, leafW(0.012 + r() * 0.006, 6), sidesFor(pts, laz, (r() - 0.5) * 1.3), 0);
+    }
+    { // flag leaf, more upright
+      const lb = pointAlong(stem, 0.6 + r() * 0.12), laz = az + (r() - 0.5) * 1.3;
+      const pts = arc(lb, laz, 0.26 + r() * 0.13, 82 * DEG, (38 + r() * 26) * DEG, 5, 1.5);
+      rb.add(pts, leafW(0.015, 5), sidesFor(pts, laz, 0.5), 0);
+    }
+    { // panicle: rises, arches over and hangs (two crossed ribbons)
+      const top = stem[stem.length - 1], paz = az + (r() - 0.5) * 0.7;
+      const pts = arc(top, paz, 0.2 + r() * 0.09, 80 * DEG, (-48 - r() * 28) * DEG, 6, 1.2);
+      const ws = pts.map((_, i) => 0.028 * Math.sin(Math.PI * Math.min(1, 0.12 + (i / 6) * 0.95)) + 0.004);
+      const s1 = sidesFor(pts, paz), tt = new THREE.Vector3();
+      const s2 = pts.map((_, i) => { tt.subVectors(pts[Math.min(i + 1, 6)], pts[Math.max(i - 1, 0)]).normalize(); return new THREE.Vector3().crossVectors(tt, s1[i]).normalize(); });
+      rb.add(pts, ws, s1, 1);
+      rb.add(pts, ws.map(w => w * 0.8), s2, 1);
+    }
+  }
+  return rb.build();
+}
+function buildClump(seed) { // coarser clump for the middle distance
+  const r = rng(seed), rb = ribbonBuilder(), O = new THREE.Vector3();
+  for (let k = 0; k < 4; k++) {
+    const az = (k / 4) * TAU + r() * 0.8;
+    const pts = arc(O, az, 0.86 + r() * 0.2, (84 - r() * 8) * DEG, (32 + r() * 26) * DEG, 4, 1.6);
+    rb.add(pts, pts.map((_, i) => 0.046 * Math.pow(1 - i / 4, 0.6) + 0.004), sidesFor(pts, az, 0.3), 0);
+  }
+  for (let k = 0; k < 2; k++) {
+    const az = r() * TAU, b = new THREE.Vector3(Math.cos(az) * 0.05, 0.8 + r() * 0.08, Math.sin(az) * 0.05);
+    const pts = arc(b, az, 0.2, 62 * DEG, -45 * DEG, 3, 1.2);
+    rb.add(pts, [0.02, 0.045, 0.04, 0.01], sidesFor(pts, az), 1);
+  }
+  return rb.build();
+}
+
+/* ---------- rice material: GPU wind (roots fixed, bend grows with height) ---------- */
+const riceMat = new THREE.ShaderMaterial({
+  uniforms: withU({
+    uLeafA: { value: new THREE.Color('#1d3815') }, uLeafB: { value: new THREE.Color('#4d7a29') },
+    uLeafC: { value: new THREE.Color('#98a547') }, uPanA: { value: new THREE.Color('#7d8d3e') }, uPanB: { value: new THREE.Color('#ada95f') },
+  }),
+  side: THREE.DoubleSide,
+  vertexShader: GLSL_COMMON + /* glsl */`
+    attribute float aKind; attribute vec4 iPos; attribute vec4 iVar;
+    varying vec3 vW; varying vec3 vN; varying vec2 vUv; varying float vKind; varying float vH; varying float vCol; varying float vG; varying float vLod;
+    void main(){
+      float cr = cos(iPos.z), sr = sin(iPos.z);
+      vec3 p = position;
+      vec3 lp = vec3(cr * p.x - sr * p.z, p.y, sr * p.x + cr * p.z);
+      vec3 ln = vec3(cr * normal.x - sr * normal.z, normal.y, sr * normal.x + cr * normal.z);
+      float s = iPos.w;
+      lp.xz *= s * iVar.w; lp.y *= s;
+      vec2 root = iPos.xy;
+      float g = gustField(root);
+      float hh = max(lp.y, 0.);
+      float prof = pow(hh / 1.05, 1.75);
+      vec2 w = uWindDir, q = vec2(-w.y, w.x);
+      float ph = iVar.x * 6.2831;
+      float fl = sin(uTime * 2.1 + ph + root.x * .35) * .6 + sin(uTime * 3.3 + ph * 1.7 + root.y * .4) * .4;
+      float amp = uStrength * (.14 + .86 * g) / iVar.y;
+      float along = amp * .62 + fl * .05 * uStrength * (.4 + g);
+      float side = fl * .07 * uStrength + (vnoise(root * .6 + uTime * .35) - .5) * .1 * uStrength;
+      float head = aKind * smoothstep(.6, 1., hh / 1.05);
+      along += head * (amp * .18 + sin(uTime * 2.6 + ph) * .04 * uStrength);
+      side += head * sin(uTime * 1.9 + ph * 2.3) * .05 * uStrength;
+      vec2 off = (w * along + q * side) * prof;
+      vec2 toC = root - cameraPosition.xz; float dC = length(toC); // stalks lean out of the lens: a small clearing where you stand
+      off += toC / max(dC, 1e-3) * (1. - smoothstep(.35, 1.4, dC)) * .6 * prof;
+      float d2 = dot(off, off);
+      lp.y = sqrt(max(hh * hh - d2, hh * hh * .2)) + min(lp.y, 0.);
+      lp.xz += off;
+      ln.xz += off * .8;
+      vec3 wp = vec3(root.x, 0., root.y) + lp;
+      vW = wp; vN = normalize(ln); vUv = uv; vKind = aKind; vH = clamp(hh / 1.05, 0., 1.2); vLod = step(2., iVar.z); vCol = iVar.z - 4. * vLod; vG = g;
+      gl_Position = projectionMatrix * viewMatrix * vec4(wp, 1.);
+    }`,
+  fragmentShader: GLSL_COMMON + /* glsl */`
+    uniform vec3 uLeafA, uLeafB, uLeafC, uPanA, uPanB;
+    varying vec3 vW; varying vec3 vN; varying vec2 vUv; varying float vKind; varying float vH; varying float vCol; varying float vG; varying float vLod;
+    void main(){
+      vec3 N = normalize(vN); if (!gl_FrontFacing) N = -N;
+      N = normalize(mix(N, vec3(0., 1., 0.), .25));
+      vec3 V = normalize(cameraPosition - vW);
+      float h = vH;
+      vec3 base;
+      if (vKind > .5){
+        float grain = .74 + .26 * smoothstep(.15, .85, abs(sin(vUv.y * 46. + vUv.x * 3.)));
+        base = mix(uPanA, uPanB, clamp(smoothstep(.1, .9, vUv.y) * .65 + vCol * .15 + .15, 0., 1.)) * grain;
+      } else {
+        base = mix(uLeafA, uLeafB, smoothstep(0., .95, h));
+        base = mix(base, uLeafC, clamp(.22 * vCol + .22 * smoothstep(.55, 1., h), 0., 1.));
+        float mid = 1. - abs(vUv.x - .5) * 2.;
+        base *= .9 + .16 * smoothstep(.7, 1., mid);
+      }
+      // LOD tone match: the coarse far clumps carry few panicles, so on their own they read darker than the
+      // near rows and a hard band appears where the two plant types meet. Pull them to the near field's
+      // average leaf/panicle tone and open up their occlusion (from afar you mostly see the canopy top).
+      float dCam = length(vW - cameraPosition);
+      vec3 avgTone = mix(uLeafB, mix(uPanA, uPanB, .35), .62) * (.9 + .2 * vCol);
+      base = mix(base, avgTone, vLod * .72);
+      float ndl = dot(N, uSunDir);
+      float diff = max(ndl, 0.) * .75 + (ndl * .5 + .5) * .25;
+      vec3 amb = mix(uGroundAmb, uSkyAmb, N.y * .5 + .5);
+      float ao = mix(.16, 1., smoothstep(0., .9, h));
+      ao = mix(ao, 1., vLod * .45);
+      float back = pow(max(dot(-V, uSunDir), 0.), 4.) * (.3 + .7 * h);
+      vec3 Hv = normalize(uSunDir + V);
+      float spec = pow(max(dot(N, Hv), 0.), 28.) * .05;
+      vec3 col = base * amb * ao
+               + base * uSunColor * diff * ao * mix(.5, 1., h)
+               + base * vec3(.95, 1.12, .7) * uSunColor * back * ao * mix(.6, .3, vKind)
+               + uSunColor * spec * ao;
+      col *= 1. + (vG - .5) * .18 * min(uStrength, 1.2);
+      col = mix(vec3(dot(col, vec3(.2126, .7152, .0722))), col, .84);
+      col = applyFog(col, dCam);
+      gl_FragColor = vec4(finish(col), 1.);
+    }`,
+});
+
+function instancedRice(geo, rows) {
+  const ig = new THREE.InstancedBufferGeometry();
+  ig.setIndex(geo.index);
+  for (const k of ['position', 'normal', 'uv', 'aKind']) ig.setAttribute(k, geo.getAttribute(k));
+  const n = rows.length / 8, a = new Float32Array(n * 4), b = new Float32Array(n * 4);
+  for (let i = 0; i < n; i++) for (let j = 0; j < 4; j++) { a[i * 4 + j] = rows[i * 8 + j]; b[i * 4 + j] = rows[i * 8 + 4 + j]; }
+  ig.setAttribute('iPos', new THREE.InstancedBufferAttribute(a, 4));
+  ig.setAttribute('iVar', new THREE.InstancedBufferAttribute(b, 4));
+  ig.instanceCount = n;
+  const m = new THREE.Mesh(ig, riceMat);
+  m.frustumCulled = false;
+  scene.add(m);
+  return m;
+}
+
+/* ---------- views (needed here so the near field can leave room for the low camera) ---------- */
+const VIEWS = {
+  open: { pos: new THREE.Vector3(0, 2.15, 9.6), pitch: -9.2, yaw: 0 },
+  among: { pos: new THREE.Vector3(0.66, 0.98, -3.2), pitch: -1.2, yaw: 5 },
+};
+
+/* ---------- plant placement: rows up close, clumps further out, canopy tone beyond ---------- */
+let riceCount = 0;
+(function plantField() {
+  const k = clamp(0.47 * Math.max(ASPECT0, 0.6) * 1.1, 0.36, 1.1);
+  const ROW = 0.44, PL = 0.36, NEAR_END = -14;
+  const hw = z => 1.2 + k * (10 - z);
+  const buckets = [[], [], []];
+  const am = VIEWS.among.pos;
+  for (let z = 9.8; z > NEAR_END; z -= PL) {
+    const h = hw(z);
+    for (let x = -Math.floor(h / ROW) * ROW; x <= h; x += ROW) {
+      const jx = x + (R() - 0.5) * 0.08, jz = z + (R() - 0.5) * 0.1;
+      if (Math.hypot(jx - am.x, jz - am.z) < 0.42) continue;
+      const edge = Math.abs(jx) - (h - 1.6);
+      if (edge > 0 && R() < edge / 1.6) continue;
+      buckets[(R() * 3) | 0].push(jx, jz, R() * TAU, rand(0.93, 1.13), R(), rand(0.78, 1.3), rand(-1, 1), rand(0.9, 1.15));
+    }
+  }
+  const variants = [buildHill(101, 5), buildHill(202, 4), buildHill(303, 5)];
+  buckets.forEach((rows, i) => { if (rows.length) { instancedRice(variants[i], rows); riceCount += rows.length / 8; } });
+
+  const far = [], target = NARROW ? 9000 : 16000;
+  let guard = 0;
+  while (far.length / 8 < target && guard++ < target * 30) {
+    const z = rand(-120, 9.5), x = rand(-140, 140);
+    if (Math.abs(x) > 4 + 1.05 * (10 - z)) continue;
+    if (z > NEAR_END + 0.7 && Math.abs(x) < hw(z) - 0.9) continue;
+    const d = Math.hypot(x, z - 9.6);
+    const p = d < 22 ? 1 : Math.pow(22 / d, 1.3);
+    if (R() > p) continue;
+    const sc = 1 + Math.max(0, d - 20) / 45;
+    far.push(x, z, R() * TAU, rand(0.9, 1.1), R(), rand(0.8, 1.25), 4 + rand(-1, 1), sc * rand(0.9, 1.2)); // +4 flags a clump for the shader
+  }
+  const clumps = [buildClump(404), buildClump(505)];
+  const half = Math.floor(far.length / 16) * 8;
+  instancedRice(clumps[0], far.slice(0, half));
+  instancedRice(clumps[1], far.slice(half));
+  riceCount += far.length / 8;
+})();
+
+/* ---------- light presets ---------- */
+const PRESETS = {
+  morning:   { az: -74, el: 12, sun: '#ffd6b0', sunI: 2.3, zen: '#89a2b8', hor: '#dadbd2', fog: '#c5cec9', fogD: 0.0047, sky: '#8fa3b5', skyI: 0.95, gnd: '#3b4731', gndI: 0.8, exp: 0.95 },
+  afternoon: { az: 64, el: 44, sun: '#fff2e0', sunI: 2.8, zen: '#7894b0', hor: '#cbd4d6', fog: '#bac6c7', fogD: 0.0033, sky: '#9db0c1', skyI: 0.9, gnd: '#465334', gndI: 0.8, exp: 0.9 },
+  golden:    { az: 18, el: 5, sun: '#ffb676', sunI: 2.35, zen: '#76849c', hor: '#ecc195', fog: '#d2b691', fogD: 0.0041, sky: '#8691a4', skyI: 0.8, gnd: '#5a4a2e', gndI: 0.8, exp: 1.0 },
+};
+const toState = p => ({
+  az: p.az, el: p.el, fogD: p.fogD, exp: p.exp,
+  sun: new THREE.Color(p.sun).multiplyScalar(p.sunI), zen: new THREE.Color(p.zen), hor: new THREE.Color(p.hor),
+  fog: new THREE.Color(p.fog), sky: new THREE.Color(p.sky).multiplyScalar(p.skyI), gnd: new THREE.Color(p.gnd).multiplyScalar(p.gndI),
+});
+const cur = toState(PRESETS.afternoon);
+let lightFrom = toState(PRESETS.afternoon), lightTo = toState(PRESETS.afternoon), lightT = 1;
+function applyLight(t) {
+  const e = ease(t), a = lightFrom, b = lightTo;
+  cur.az = lerp(a.az, b.az, e); cur.el = lerp(a.el, b.el, e);
+  cur.fogD = lerp(a.fogD, b.fogD, e); cur.exp = lerp(a.exp, b.exp, e);
+  for (const k of ['sun', 'zen', 'hor', 'fog', 'sky', 'gnd']) cur[k].lerpColors(a[k], b[k], e);
+  const az = cur.az * DEG, el = cur.el * DEG;
+  U.uSunDir.value.set(Math.sin(az) * Math.cos(el), Math.sin(el), -Math.cos(az) * Math.cos(el));
+  U.uSunColor.value.copy(cur.sun); U.uZenith.value.copy(cur.zen); U.uHorizon.value.copy(cur.hor);
+  U.uFogColor.value.copy(cur.fog); U.uSkyAmb.value.copy(cur.sky); U.uGroundAmb.value.copy(cur.gnd);
+  U.uFogDensity.value = cur.fogD; U.uExposure.value = cur.exp;
+}
+function setLight(name) {
+  if (!PRESETS[name]) return;
+  lightFrom = { az: cur.az, el: cur.el, fogD: cur.fogD, exp: cur.exp };
+  for (const k of ['sun', 'zen', 'hor', 'fog', 'sky', 'gnd']) lightFrom[k] = cur[k].clone();
+  lightTo = toState(PRESETS[name]); lightT = 0;
+}
+applyLight(1);
+
+/* ---------- camera views ---------- */
+let viewName = 'open';
+let viewFrom = { pos: VIEWS.open.pos.clone(), pitch: VIEWS.open.pitch, yaw: 0 }, viewT = 1;
+function setView(name) {
+  if (!VIEWS[name] || name === viewName) return;
+  viewFrom = { pos: camState.pos.clone(), pitch: camState.pitch, yaw: camState.yaw };
+  viewName = name; viewT = 0;
+}
+const camState = { pos: VIEWS.open.pos.clone(), pitch: VIEWS.open.pitch, yaw: 0 };
+const par = { x: 0, y: 0, tx: 0, ty: 0 };
+addEventListener('pointermove', e => {
+  if (e.pointerType === 'touch') return;
+  par.tx = (e.clientX / innerWidth) * 2 - 1; par.ty = (e.clientY / innerHeight) * 2 - 1;
+});
+document.addEventListener('pointerleave', () => { par.tx = 0; par.ty = 0; });
+
+function resize() {
+  const w = innerWidth, h = innerHeight;
+  renderer.setSize(w, h, false);
+  camera.aspect = w / h;
+  camera.fov = camera.aspect < 0.9 ? 64 : 50;
+  camera.updateProjectionMatrix();
+  // keep the horizon about a third of the way down the frame
+  VIEWS.open.pitch = -Math.atan(Math.tan(camera.fov * DEG / 2) / 3) / DEG;
+}
+addEventListener('resize', resize);
+resize();
+camState.pitch = viewFrom.pitch = VIEWS.open.pitch;
+
+/* ---------- wind audio (procedural, starts only on click) ---------- */
+const audio = {
+  ctx: null, on: false,
+  init() {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return false;
+    const ctx = (this.ctx = new AC());
+    const len = (ctx.sampleRate * 6) | 0, buf = ctx.createBuffer(2, len, ctx.sampleRate);
+    for (let ch = 0; ch < 2; ch++) {
+      const d = buf.getChannelData(ch);
+      let b0 = 0, b1 = 0, b2 = 0, b3 = 0, b4 = 0, b5 = 0, b6 = 0;
+      for (let i = 0; i < len; i++) {
+        const w = Math.random() * 2 - 1;
+        b0 = 0.99886 * b0 + w * 0.0555179; b1 = 0.99332 * b1 + w * 0.0750759; b2 = 0.969 * b2 + w * 0.153852;
+        b3 = 0.8665 * b3 + w * 0.3104856; b4 = 0.55 * b4 + w * 0.5329522; b5 = -0.7616 * b5 - w * 0.016898;
+        d[i] = (b0 + b1 + b2 + b3 + b4 + b5 + b6 + w * 0.5362) * 0.11; b6 = w * 0.115926;
+      }
+      const f = (ctx.sampleRate * 0.3) | 0; // soften the loop seam
+      for (let i = 0; i < f; i++) { const t = i / f; d[i] = d[i] * t + d[len - f + i] * (1 - t); }
+    }
+    const src = ctx.createBufferSource(); src.buffer = buf; src.loop = true; src.loopEnd = len / ctx.sampleRate - 0.3;
+    const low = ctx.createBiquadFilter(); low.type = 'lowpass'; low.frequency.value = 500; low.Q.value = 0.4;
+    const band = ctx.createBiquadFilter(); band.type = 'bandpass'; band.frequency.value = 3000; band.Q.value = 0.6;
+    const bodyG = ctx.createGain(), rustG = ctx.createGain(), master = ctx.createGain();
+    bodyG.gain.value = 0; rustG.gain.value = 0; master.gain.value = 0;
+    src.connect(low).connect(bodyG).connect(master);
+    src.connect(band).connect(rustG).connect(master);
+    master.connect(ctx.destination);
+    src.start();
+    Object.assign(this, { low, band, bodyG, rustG, master });
+    return true;
+  },
+  toggle() {
+    if (!this.ctx && !this.init()) return false;
+    this.on = !this.on;
+    const t = this.ctx.currentTime;
+    if (this.on) this.ctx.resume();
+    this.master.gain.cancelScheduledValues(t);
+    this.master.gain.setTargetAtTime(this.on ? 0.85 : 0, t, this.on ? 0.7 : 0.25);
+    if (!this.on) setTimeout(() => { if (!this.on && this.ctx) this.ctx.suspend(); }, 1600);
+    return this.on;
+  },
+  update(g, w, fl) {
+    if (!this.on) return;
+    const t = this.ctx.currentTime;
+    this.bodyG.gain.setTargetAtTime((0.15 + 0.85 * g) * (0.22 + w * 0.9) * 0.9, t, 0.25);
+    this.low.frequency.setTargetAtTime(260 + 700 * g * (0.4 + w), t, 0.3);
+    this.rustG.gain.setTargetAtTime((0.05 + 0.6 * g * g) * (0.12 + w) * (0.8 + 0.2 * Math.sin(fl * 7)) * 0.22, t, 0.12);
+    this.band.frequency.setTargetAtTime(2300 + 1800 * g, t, 0.3);
+  },
+};
+// CPU twin of the shader gust field (close enough to drive the sound)
+function gustJS(x, z, phase) {
+  const w = WIND_DIR, s = x * w.x + z * w.y, c = -x * w.y + z * w.x;
+  const w1 = Math.sin(s * 0.15 - phase + Math.sin(c * 0.043 + 1.3) * 2.1 + c * 0.018);
+  const w2 = Math.sin(s * 0.34 - phase * 1.63 + c * 0.1 + Math.sin(s * 0.047) * 1.4 + 2);
+  const n = 0.5 + 0.5 * Math.sin(s * 0.16 - phase * 1.03 + 1.1) * Math.cos(c * 0.13 + 0.3);
+  return clamp((0.5 + 0.32 * w1 + 0.15 * w2) * (0.45 + 1.05 * n), 0, 1.25);
+}
+
+/* ---------- UI ---------- */
+let windTarget = 0.45, windS = 0.45, paused = false;
+const windEl = document.getElementById('wind'), windVal = document.getElementById('windVal');
+function syncWindUI() {
+  const v = +windEl.value;
+  windEl.style.setProperty('--p', v + '%');
+  windVal.textContent = v < 6 ? 'Still' : v < 28 ? 'Calm' : v < 58 ? 'Breeze' : v < 82 ? 'Gusty' : 'Strong';
+}
+windEl.addEventListener('input', () => { windTarget = windEl.value / 100; syncWindUI(); });
+syncWindUI();
+document.querySelectorAll('.seg').forEach(seg => seg.addEventListener('click', e => {
+  const b = e.target.closest('button');
+  if (!b) return;
+  seg.querySelectorAll('button').forEach(x => { x.classList.toggle('on', x === b); x.setAttribute('aria-pressed', String(x === b)); });
+  if (seg.dataset.group === 'light') setLight(b.dataset.v); else setView(b.dataset.v);
+}));
+const pauseBtn = document.getElementById('pause');
+function togglePause() {
+  paused = !paused;
+  pauseBtn.textContent = paused ? 'Resume' : 'Pause';
+  pauseBtn.setAttribute('aria-pressed', String(paused));
+}
+pauseBtn.addEventListener('click', togglePause);
+addEventListener('keydown', e => {
+  if (e.code === 'Space' && !(e.target instanceof HTMLButtonElement) && !(e.target instanceof HTMLInputElement)) { e.preventDefault(); togglePause(); }
+});
+const soundBtn = document.getElementById('sound');
+soundBtn.addEventListener('click', () => {
+  const on = audio.toggle();
+  soundBtn.textContent = on ? 'Sound on' : 'Sound off';
+  soundBtn.setAttribute('aria-pressed', String(on));
+});
+
+/* ---------- loop ---------- */
+let last = performance.now(), phase = 0, flutter = 0, clouds = 0, ready = false;
+const tmpDir = new THREE.Vector3(), tmpPos = new THREE.Vector3();
+function frame(now) {
+  const dt = Math.min((now - last) / 1000, 0.05); last = now;
+  windS += (windTarget - windS) * (1 - Math.exp(-dt * 1.6));
+  if (!paused) {
+    phase += dt * (0.3 + windS * 1.15);
+    flutter += dt * (0.55 + windS * 1.1);
+    clouds += dt * (0.004 + windS * 0.012);
+  }
+  U.uPhase.value = phase; U.uTime.value = flutter; U.uStrength.value = 0.1 + windS * 1.25;
+  U.uCloudShift.value.set(-WIND_DIR.x * clouds, -WIND_DIR.y * clouds);
+
+  if (lightT < 1) { lightT = Math.min(1, lightT + dt / 2.4); applyLight(lightT); }
+
+  const to = VIEWS[viewName];
+  if (viewT < 1) viewT = Math.min(1, viewT + dt / 2.8);
+  const e = ease(viewT);
+  camState.pos.lerpVectors(viewFrom.pos, to.pos, e);
+  camState.pos.y += Math.sin(Math.PI * e) * 0.35 * (viewT < 1 ? 1 : 0);
+  camState.pitch = lerp(viewFrom.pitch, to.pitch, e);
+  camState.yaw = lerp(viewFrom.yaw, to.yaw, e);
+
+  const kp = 1 - Math.exp(-dt * 2.2);
+  par.x += (par.tx - par.x) * kp; par.y += (par.ty - par.y) * kp;
+  const pScale = viewName === 'among' ? 0.5 : 1;
+  const yaw = (camState.yaw + par.x * 1.1) * DEG, pitch = (camState.pitch - par.y * 0.55) * DEG;
+  tmpPos.copy(camState.pos);
+  tmpPos.x += par.x * 0.16 * pScale; tmpPos.y -= par.y * 0.05 * pScale;
+  camera.position.copy(tmpPos);
+  tmpDir.set(Math.sin(yaw) * Math.cos(pitch), Math.sin(pitch), -Math.cos(yaw) * Math.cos(pitch));
+  camera.lookAt(tmpPos.x + tmpDir.x, tmpPos.y + tmpDir.y, tmpPos.z + tmpDir.z);
+  sky.position.copy(camera.position);
+
+  renderer.render(scene, camera);
+  if (!ready) { ready = true; canvas.classList.add('ready'); }
+
+  if (audio.on) {
+    const cx = camera.position.x, cz = camera.position.z;
+    const g = (gustJS(cx, cz - 3, phase) + gustJS(cx, cz - 8, phase) + gustJS(cx + 4, cz - 14, phase)) / 3;
+    audio.update(paused ? 0.25 : g, windS, flutter);
+  }
+}
+renderer.setAnimationLoop(frame);
+
+// small hook for automated checks; the scene never needs it
+window.__verdant = { setLight, setView, togglePause, get riceCount() { return riceCount; } };
+</script>
+</body>
+</html>
