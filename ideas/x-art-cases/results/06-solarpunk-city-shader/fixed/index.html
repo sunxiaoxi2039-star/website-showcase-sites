@@ -1,0 +1,846 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="description" content="单个 fragment shader 绘制的无尽太阳朋克城市：绿植塔楼、道路与风力机，微风持续吹过。">
+<title>无尽太阳朋克城</title>
+<style>
+  :root{
+    --ink:#1c2a21;
+    --ink-soft:rgba(28,42,33,.72);
+    --glass:rgba(252,251,244,.66);
+    --line:rgba(28,52,36,.16);
+    --accent:#3f7a4a;
+    color-scheme: light;
+  }
+  html,body{margin:0;height:100%;overflow:hidden;background:#cfe0d6;}
+  canvas{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none;image-rendering:auto;}
+  .ui{position:fixed;inset:0;pointer-events:none;font:14px/1.45 -apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Noto Sans SC","Microsoft YaHei",system-ui,sans-serif;color:var(--ink);}
+  .card{position:absolute;left:16px;top:16px;max-width:min(380px,calc(100% - 32px));box-sizing:border-box;padding:10px 14px 11px;border-radius:14px;background:var(--glass);border:1px solid var(--line);backdrop-filter:blur(10px) saturate(1.2);-webkit-backdrop-filter:blur(10px) saturate(1.2);pointer-events:auto;}
+  .card h1{margin:0;font-size:16px;font-weight:650;letter-spacing:.02em}
+  .card h1 span{display:inline-block;margin-left:6px;font-size:12px;font-weight:450;color:var(--ink-soft);letter-spacing:0}
+  .card p{margin:3px 0 0;font-size:12.5px;color:var(--ink-soft)}
+  .bar{position:absolute;right:16px;bottom:16px;display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;max-width:calc(100% - 32px);pointer-events:auto}
+  .bar button{font:inherit;font-size:13px;color:var(--ink);background:var(--glass);border:1px solid var(--line);border-radius:999px;padding:8px 14px;cursor:pointer;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);transition:background .2s,color .2s}
+  .bar button:hover{background:rgba(255,255,250,.86)}
+  .bar button[aria-pressed="true"]{background:var(--accent);color:#fff;border-color:transparent}
+  .bar button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  #err{position:fixed;left:16px;right:16px;top:50%;transform:translateY(-50%);margin:auto;max-width:520px;padding:14px 16px;border-radius:12px;background:rgba(255,250,245,.94);color:#5a1d12;font:13px/1.5 ui-monospace,Menlo,monospace;white-space:pre-wrap;box-shadow:0 8px 30px rgba(0,0,0,.15)}
+  @media (max-width:520px){
+    .card{padding:9px 12px}
+    .card h1{font-size:15px}
+    .card h1 span{display:block;margin:1px 0 0}
+    .bar{left:16px;right:16px;justify-content:stretch}
+    .bar button{flex:1 1 0;padding:9px 10px}
+  }
+</style>
+</head>
+<body>
+<canvas id="c" aria-label="实时渲染的无尽太阳朋克城市"></canvas>
+<div class="ui">
+  <div class="card">
+    <h1>无尽太阳朋克城<span>Infinite Solarpunk City</span></h1>
+    <p>一个 fragment shader：道路与绿塔无限延伸，风一直在吹。移动鼠标或拖动画面可以环顾。</p>
+  </div>
+  <div class="bar">
+    <button id="snd" type="button" aria-pressed="false">开启风声</button>
+    <button id="cp" type="button">复制 twigl 代码</button>
+  </div>
+</div>
+<div id="err" hidden></div>
+
+<script id="fs" type="x-shader/x-fragment">
+precision highp float;
+uniform vec2 resolution;
+uniform vec2 mouse;
+uniform float time;
+
+// ------------------------------------------------------------------
+//  Infinite Solarpunk City  —  one fragment shader
+//  twigl.app classic mode compatible (resolution / mouse / time)
+//  raymarched SDF city: endless roads, planted towers, street trees,
+//  wind turbines, solar leaves; a breeze that never stops.
+// ------------------------------------------------------------------
+#define CS 12.0
+#define HC 6.0
+#define MARGIN 0.8
+#define FH 1.5
+#define FAR 190.0
+#define PI 3.14159265
+
+const vec2 WIND  = vec2(0.707107, -0.707107);
+const vec2 WPERP = vec2(0.707107, 0.707107);
+const vec3 SUN   = vec3(0.8521, 0.5013, -0.1504);
+const vec3 SOLN  = vec3(0.4041, 0.9119, -0.0713);
+
+float h21(vec2 p){
+  vec3 p3 = fract(vec3(p.xyx)*0.1031);
+  p3 += dot(p3, p3.yzx + 33.33);
+  return fract((p3.x + p3.y)*p3.z);
+}
+vec3 h33(vec3 p3){
+  p3 = fract(p3*vec3(0.1031, 0.1030, 0.0973));
+  p3 += dot(p3, p3.yxz + 33.33);
+  return fract((p3.xxy + p3.yxx)*p3.zyx);
+}
+float vnoise(vec2 p){
+  vec2 i = floor(p);
+  vec2 f = fract(p);
+  f = f*f*(3.0 - 2.0*f);
+  return mix(mix(h21(i), h21(i + vec2(1.0, 0.0)), f.x),
+             mix(h21(i + vec2(0.0, 1.0)), h21(i + vec2(1.0, 1.0)), f.x), f.y);
+}
+float fbm(vec2 p){
+  float s = 0.0, a = 0.5;
+  for (int i = 0; i < 5; i++){ s += a*vnoise(p); p = mat2(1.6, 1.2, -1.2, 1.6)*p + 3.1; a *= 0.5; }
+  return s;
+}
+// gust fronts travelling downwind across the whole city
+float gust(vec2 xz){
+  float a = dot(xz, WIND), b = dot(xz, WPERP);
+  return 0.5 + 0.5*sin(a*0.21 - time*1.5 + 2.0*sin(b*0.09 + time*0.2));
+}
+vec2 opU(vec2 a, vec2 b){ return a.x < b.x ? a : b; }
+
+// rounded cylinder standing on y=0
+float rcyl(vec3 q, float r, float h){
+  vec2 w = vec2(length(q.xz) - r + 0.45, q.y - h + 0.45);
+  return min(max(w.x, w.y), 0.0) + length(max(w, 0.0)) - 0.45;
+}
+
+// swaying tree: x = trunk, y = canopy
+vec2 treeD(vec3 q, float th, float cr, vec2 wp){
+  float s = h21(wp*1.37 + 0.5);
+  float g = gust(wp);
+  vec2 off = WIND*(0.07 + 0.2*g)*(0.8 + 0.2*sin(time*2.6 + s*6.28)) + WPERP*(0.04*sin(time*3.3 + s*9.0));
+  float k = clamp(q.y/(th + cr), 0.0, 1.0);
+  vec2 tq = q.xz - off*k*k;
+  float trunk = max(length(tq) - (0.04 + 0.035*th)*(1.0 - 0.4*k), q.y - th - cr*0.4);
+  vec3 cq = q - vec3(off.x, th + cr*0.55, off.y);
+  float r = cr*(0.85 + 0.3*s);
+  float cd = (length(cq*vec3(1.0, 1.25, 1.0)) - r)/1.25;
+  cd += 0.06*sin(cq.x*5.0 + s*20.0)*sin(cq.y*5.5 + time*4.0)*sin(cq.z*5.0 + time*1.7)*(0.6 + g);
+  return vec2(trunk, cd*0.75);
+}
+
+// rooftop wind turbine, rotor faces into the wind
+vec2 turbine(vec3 m, float spin){
+  float mast = max(length(m.xz) - 0.1 + 0.02*clamp(m.y/3.6, 0.0, 1.0), abs(m.y - 1.8) - 1.8);
+  vec3 hq = m - vec3(0.0, 3.6, 0.0);
+  float w = dot(hq.xz, WIND);
+  vec2 uv = vec2(dot(hq.xz, WPERP), hq.y);
+  float nac = length(vec3(uv, (w + 0.15)*0.45)) - 0.17;
+  float d = min(mast, nac);
+  float bound = length(hq) - 2.05;
+  if (bound < 0.2){
+    float sec = 2.0*PI/3.0;
+    float an = atan(uv.y, uv.x) + spin;
+    an = mod(an + sec*0.5, sec) - sec*0.5;
+    vec2 bp = length(uv)*vec2(cos(an), sin(an));
+    float bl = clamp(bp.x, 0.1, 1.9);
+    float bw = 0.14 - 0.09*(bl - 0.1)/1.8;
+    vec3 e = vec3(bp.x - bl, max(abs(bp.y + 0.03*sin(bl*2.0)) - bw, 0.0), max(abs(w + 0.42) - 0.015, 0.0));
+    float blade = length(e) - 0.015;
+    float hub = length(vec3(uv, w + 0.42)) - 0.13;
+    d = min(d, min(blade, hub));
+  } else {
+    d = min(d, bound);
+  }
+  return vec2(d, 6.0);
+}
+
+// rooftop "solar leaf": a tilted photovoltaic petal on a stalk
+vec2 solarLeaf(vec3 m){
+  float stalk = max(length(m.xz) - 0.08, abs(m.y - 0.95) - 0.95);
+  vec3 dq = m - vec3(0.0, 1.9, 0.0);
+  float hn = dot(dq, SOLN);
+  vec3 ip = dq - SOLN*hn;
+  float disk = length(vec2(max(length(ip) - 1.5, 0.0), hn)) - 0.035;
+  return opU(vec2(stalk, 6.0), vec2(disk, 7.0));
+}
+
+// materials: 1 ground, 2 facade, 3 balcony slab, 4 foliage, 5 trunk, 6 white metal, 7 solar glass
+vec2 map(vec3 p){
+  vec2 id = floor(p.xz/CS);
+  vec2 cc = (id + 0.5)*CS;
+  vec3 q = vec3(p.x - cc.x, p.y, p.z - cc.y);
+  vec2 res = vec2(p.y, 1.0);
+  float ha = h21(id);
+  float hb = h21(id + 17.31);
+  float hc = h21(id + 41.73);
+  float hd = h21(id + 73.11);
+
+  // street trees along every verge
+  if (q.y < 3.3){
+    float sp = 7.4/3.0;
+    vec2 tA = vec2(sign(q.x)*3.7, (clamp(floor(q.z/sp), -2.0, 1.0) + 0.5)*sp);
+    vec2 tB = vec2((clamp(floor(q.x/sp), -1.0, 0.0) + 0.5)*sp, sign(q.z)*3.7);
+    vec2 d1 = treeD(q - vec3(tA.x, 0.0, tA.y), 1.25, 0.72, cc + tA);
+    vec2 d2 = treeD(q - vec3(tB.x, 0.0, tB.y), 1.25, 0.72, cc + tB);
+    res = opU(res, vec2(min(d1.x, d2.x), 5.0));
+    res = opU(res, vec2(min(d1.y, d2.y), 4.0));
+  } else {
+    res = opU(res, vec2(q.y - 3.0, 4.0));
+  }
+
+  if (ha > 0.1){
+    // ---------------- tower ----------------
+    float H = 9.0 + 30.0*hb*hb;
+    float R = 1.7 + 0.6*hc;
+    float H1 = hd > 0.5 ? H*(0.42 + 0.3*fract(hd*7.31)) : H;
+    float ph = ha*40.0;
+    vec2 toff = (vec2(h21(id + 3.3), h21(id + 8.8)) - 0.5)*0.5;
+    vec3 tq = q; tq.xz -= toff;
+    float rad = length(tq.xz);
+    float yc = clamp(tq.y, 0.0, H);
+    float prof = 1.0 - 0.18*yc/H + 0.07*sin(yc*0.33 + ph);
+    float body = rcyl(tq, R*prof, H1);
+    if (H1 < H) body = min(body, rcyl(tq, 0.68*R*prof, H));
+    res = opU(res, vec2(body, 2.0));
+
+    float Rmax = R*1.07 + 0.75;
+    if (rad < Rmax + 0.6 && tq.y < H + 0.3){
+      float gP = gust(p.xz);
+      float kmax = floor((H - 1.2)/FH);
+      float ang = atan(tq.z, tq.x);
+      // balcony slab + planter hedge
+      float k = clamp(floor(tq.y/FH + 0.5), 2.0, kmax);
+      float ky = k*FH;
+      float rr = (ky < H1 ? R : 0.68*R)*(1.0 - 0.18*ky/H + 0.07*sin(ky*0.33 + ph)) + 0.5;
+      float ys = tq.y - ky;
+      vec2 sw = vec2(rad - rr + 0.03, abs(ys) - 0.07);
+      float slab = min(max(sw.x, sw.y), 0.0) + length(max(sw, 0.0)) - 0.03;
+      float bump = 0.05*sin(ang*18.0 + ph + 3.0*sin(k*1.7)) + 0.025*(0.5 + gP)*sin(ang*31.0 + time*5.0);
+      float hedge = (length(vec2(rad - rr + 0.22, ys - 0.2)) - 0.19 - bump)*0.6;
+      res = opU(res, vec2(slab, 3.0));
+      res = opU(res, vec2(hedge, 4.0));
+      // vines hanging from the slab above, swinging downwind
+      float kv = clamp(floor(tq.y/FH) + 1.0, 2.0, kmax);
+      float kvy = kv*FH;
+      float rv = (kvy < H1 ? R : 0.68*R)*(1.0 - 0.18*kvy/H + 0.07*sin(kvy*0.33 + ph)) + 0.5;
+      float ysv = tq.y - kvy;
+      float sec = 2.0*PI/16.0;
+      float ai = floor(ang/sec + 0.5);
+      float la = ang - ai*sec;
+      float vine = max(max(rad*sin(0.5*sec - abs(la)), 0.0), abs(rad - rv + 0.2) - 0.35) + 0.08;
+      float vh = h21(vec2(ai + 19.0*kv, 3.0) + id*7.0);
+      if (vh > 0.42){
+        float L = 0.45 + 0.95*(vh - 0.42)/0.58;
+        vec2 dr = vec2(cos(ai*sec), sin(ai*sec));
+        float wr = dot(WIND, dr);
+        float wt = dot(WIND, vec2(-dr.y, dr.x));
+        float yy = clamp(-ysv, 0.0, L);
+        float f = yy/L;
+        float sw2 = (0.05 + 0.14*gP)*f*f + 0.03*f*sin(time*3.2 + ai*1.7 + kv);
+        vec2 vp = rad*vec2(cos(la), sin(la));
+        vec2 vc = vec2(rv - 0.2 + wr*sw2, wt*sw2);
+        float own = (length(vec3(vp.x - vc.x, ysv + yy, vp.y - vc.y)) - 0.085*(1.0 - 0.45*f) + 0.015*sin(ysv*24.0 + ai))*0.75;
+        vine = min(vine, own);
+      }
+      res = opU(res, vec2(vine, 4.0));
+    } else {
+      res = opU(res, vec2(max(rad - Rmax, tq.y - H - 0.1), 4.0));
+    }
+
+    // roof: garden parapet + turbine / solar leaf / roof trees
+    float topR = (H1 < H ? 0.68*R : R)*(0.82 + 0.07*sin(H*0.33 + ph));
+    if (tq.y > H - 1.3 && rad < 3.2){
+      vec3 m = tq - vec3(0.0, H, 0.0);
+      float rk = h21(id + 55.5);
+      if (topR > 1.25){
+        float par = (length(vec2(rad - topR + 0.6, m.y - 0.1)) - 0.2 - 0.04*sin(atan(m.z, m.x)*14.0 + ph))*0.8;
+        res = opU(res, vec2(par, 4.0));
+      }
+      if (rk < 0.45){
+        res = opU(res, turbine(m, time*(1.8 + 1.4*rk) + ph));
+      } else if (rk < 0.75){
+        res = opU(res, solarLeaf(m));
+        vec2 t1 = treeD(m - vec3(0.5, 0.0, -0.45), 0.45, 0.5, cc + toff + vec2(0.5, -0.45));
+        res = opU(res, vec2(t1.x, 5.0));
+        res = opU(res, vec2(t1.y, 4.0));
+      } else {
+        vec2 t1 = treeD(m - vec3(0.45, 0.0, 0.3), 0.7, 0.75, cc + toff + vec2(0.45, 0.3));
+        vec2 t2 = treeD(m - vec3(-0.5, 0.0, -0.4), 0.5, 0.6, cc + toff + vec2(-0.5, -0.4));
+        res = opU(res, vec2(min(t1.x, t2.x), 5.0));
+        res = opU(res, vec2(min(t1.y, t2.y), 4.0));
+      }
+    } else {
+      res = opU(res, vec2(max(rad - 2.7, H - 1.0 - tq.y), 4.0));
+    }
+  } else {
+    // ---------------- pocket park: two big trees ----------------
+    vec2 b1 = treeD(q - vec3(0.3, 0.0, 0.2), 2.6, 2.1, cc + vec2(0.3, 0.2));
+    vec2 b2 = treeD(q - vec3(-1.2, 0.0, -1.1), 1.6, 1.3, cc + vec2(-1.2, -1.1));
+    res = opU(res, vec2(min(b1.x, b2.x), 5.0));
+    res = opU(res, vec2(min(b1.y, b2.y), 4.0));
+  }
+  return res;
+}
+
+// safe step: objects never come closer than MARGIN to their cell walls
+float cellBound(vec3 p, vec3 rd){
+  vec2 lq = mod(p.xz, CS) - HC;
+  vec2 bd2 = HC - abs(lq);
+  vec2 ex = (HC - lq*sign(rd.xz))/(abs(rd.xz) + 1e-4);
+  return max(min(ex.x, ex.y) + 0.02, min(bd2.x, bd2.y) + MARGIN);
+}
+
+vec3 calcNormal(vec3 p, float t){
+  float e = clamp(0.0005*t, 0.001, 0.03);
+  vec3 n = vec3(0.0);
+  for (int i = 0; i < 4; i++){
+    vec3 s = i == 0 ? vec3(1.0, -1.0, -1.0) : (i == 1 ? vec3(-1.0, -1.0, 1.0) : (i == 2 ? vec3(-1.0, 1.0, -1.0) : vec3(1.0)));
+    n += s*map(p + s*e).x;
+  }
+  return normalize(n);
+}
+
+float shadow(vec3 ro, vec3 rd){
+  float res = 1.0, t = 0.03;
+  for (int i = 0; i < 32; i++){
+    vec3 p = ro + rd*t;
+    if (p.y > 48.0) break;
+    float h = map(p).x;
+    res = min(res, 8.0*h/t);
+    t += clamp(min(h, cellBound(p, rd)), 0.04, 2.0);
+    if (res < 0.01 || t > 50.0) break;
+  }
+  return clamp(res, 0.0, 1.0);
+}
+
+float calcAO(vec3 p, vec3 n){
+  float o = 0.0, s = 1.0;
+  for (int i = 1; i <= 4; i++){
+    float h = 0.08 + 0.16*float(i);
+    o += (h - map(p + n*h).x)*s;
+    s *= 0.75;
+  }
+  return clamp(1.0 - 1.1*o, 0.0, 1.0);
+}
+
+vec3 skyBase(vec3 rd){
+  float y = clamp(rd.y, 0.0, 1.0);
+  vec3 col = mix(vec3(0.86, 0.88, 0.84), vec3(0.26, 0.50, 0.86), pow(y, 0.45));
+  float sd = clamp(dot(rd, SUN), 0.0, 1.0);
+  col += vec3(1.0, 0.70, 0.38)*(0.22*pow(sd, 5.0) + 0.5*pow(sd, 40.0));
+  return col;
+}
+
+vec3 skyFull(vec3 ro, vec3 rd){
+  vec3 col = skyBase(rd);
+  float sd = clamp(dot(rd, SUN), 0.0, 1.0);
+  if (rd.y > 0.0){
+    vec2 uv = rd.xz/(rd.y + 0.1) + ro.xz*0.002 + WIND*time*0.05;
+    float c = fbm(uv*0.6);
+    float cs = fbm(uv*0.6 + SUN.xz*0.15);
+    float cov = smoothstep(0.5, 0.78, c)*smoothstep(0.02, 0.22, rd.y);
+    vec3 cl = mix(vec3(1.06, 1.02, 0.96), vec3(0.68, 0.74, 0.84), clamp((cs - c)*2.5 + 0.35, 0.0, 1.0));
+    cl += vec3(1.0, 0.7, 0.4)*pow(sd, 8.0)*0.5;
+    col = mix(col, cl, cov*0.9);
+  }
+  col += vec3(1.4, 1.15, 0.85)*smoothstep(0.9989, 0.9995, sd)*3.0;
+  return col;
+}
+
+vec3 envCol(vec3 r){
+  vec3 s = skyBase(r);
+  return r.y > 0.0 ? s : mix(vec3(0.16, 0.22, 0.14), s, 0.35);
+}
+
+// grass with wind sheen running across it, plus wild flowers
+vec3 grassCol(vec2 xz, float g){
+  float a = dot(xz, WIND), b = dot(xz, WPERP);
+  float sheen = vnoise(vec2(a*1.5 - time*4.5, b*6.0));
+  float base = vnoise(xz*1.1);
+  vec3 col = mix(vec3(0.10, 0.28, 0.06), vec3(0.36, 0.55, 0.14), clamp(0.2 + 0.5*base + 0.45*sheen*g, 0.0, 1.0));
+  col = mix(col, vec3(0.62, 0.70, 0.36), smoothstep(0.55, 0.95, sheen)*g*0.5);
+  vec2 fc = floor(xz*3.0);
+  vec3 fh = h33(vec3(fc, 5.0));
+  if (fh.z > 0.8){
+    vec2 fo = fract(xz*3.0) - 0.5 - (fh.xy - 0.5)*0.5 - WIND*(0.08*g*sin(time*3.0 + fh.x*6.28));
+    vec3 fcol = fh.x < 0.3 ? vec3(1.0, 0.45, 0.65) : (fh.x < 0.55 ? vec3(1.0, 0.82, 0.22) : (fh.x < 0.8 ? vec3(0.98, 0.97, 0.95) : vec3(0.68, 0.5, 1.0)));
+    col = mix(col, fcol, 1.0 - smoothstep(0.07, 0.12, length(fo)));
+  }
+  return col;
+}
+
+vec3 shade(vec3 p, vec3 n, vec3 rd, float t, float mat){
+  vec2 id = floor(p.xz/CS);
+  vec2 cc = (id + 0.5)*CS;
+  vec3 q = vec3(p.x - cc.x, p.y, p.z - cc.y);
+  float ha = h21(id);
+  float g = gust(p.xz);
+  vec3 alb = vec3(0.6);
+  float spec = 0.04, gloss = 16.0, refl = 0.0, trans = 0.0;
+
+  if (mat < 1.5){
+    // ---- ground: roads, bike lanes, verges, plazas ----
+    vec2 cp = p.xz - CS*floor(p.xz/CS + 0.5);
+    vec2 db = abs(cp);
+    float dr = min(db.x, db.y);
+    if (dr < 1.8){
+      float gr = 0.6*vnoise(p.xz*4.0) + 0.4*vnoise(p.xz*0.5);
+      alb = vec3(0.17, 0.175, 0.18)*(0.8 + 0.4*gr);
+      float mk = 0.0;
+      if (db.x < 1.8 && db.y > 1.8){
+        mk = max(mk, step(fract(p.z/3.0), 0.5)*(1.0 - smoothstep(0.05, 0.08, db.x)));
+        alb = mix(alb, vec3(0.20, 0.46, 0.30), smoothstep(1.2, 1.24, db.x)*0.8);
+        mk = max(mk, 1.0 - smoothstep(0.03, 0.06, abs(db.x - 1.17)));
+        mk = max(mk, step(1.95, db.y)*step(db.y, 2.75)*step(fract(p.x*1.6), 0.5)*step(db.x, 1.15));
+      } else if (db.y < 1.8 && db.x > 1.8){
+        mk = max(mk, step(fract(p.x/3.0), 0.5)*(1.0 - smoothstep(0.05, 0.08, db.y)));
+        alb = mix(alb, vec3(0.20, 0.46, 0.30), smoothstep(1.2, 1.24, db.y)*0.8);
+        mk = max(mk, 1.0 - smoothstep(0.03, 0.06, abs(db.y - 1.17)));
+        mk = max(mk, step(1.95, db.x)*step(db.x, 2.75)*step(fract(p.z*1.6), 0.5)*step(db.y, 1.15));
+      } else {
+        mk = 1.0 - smoothstep(0.04, 0.08, abs(length(cp) - 1.0));
+      }
+      alb = mix(alb, vec3(0.92, 0.90, 0.84), mk*0.85);
+      spec = 0.15; gloss = 24.0;
+    } else if (dr < 1.95){
+      alb = vec3(0.72, 0.70, 0.66);
+    } else if (dr < 3.0 || ha <= 0.1){
+      alb = grassCol(p.xz, g);
+    } else {
+      vec2 tp = p.xz*1.25;
+      vec2 tf = abs(fract(tp) - 0.5);
+      float tj = smoothstep(0.44, 0.48, max(tf.x, tf.y));
+      alb = vec3(0.80, 0.75, 0.66)*(0.88 + 0.16*h21(floor(tp)));
+      alb = mix(alb, vec3(0.30, 0.42, 0.18), tj*0.8);
+    }
+  } else if (mat < 2.5){
+    // ---- facade: glass bands, pale walls, living-wall patches ----
+    float hc = h21(id + 41.73);
+    float R = 1.7 + 0.6*hc;
+    vec3 tq = q; tq.xz -= (vec2(h21(id + 3.3), h21(id + 8.8)) - 0.5)*0.5;
+    float ang = atan(tq.z, tq.x);
+    float N = floor(R*9.0);
+    float mf = abs(fract(ang/(2.0*PI)*N) - 0.5);
+    float yf = mod(tq.y, FH);
+    float pal = h21(id + 29.1);
+    alb = pal < 0.3 ? vec3(0.93, 0.90, 0.83) : (pal < 0.55 ? vec3(0.91, 0.76, 0.62) : (pal < 0.8 ? vec3(0.80, 0.89, 0.81) : vec3(0.96, 0.95, 0.91)));
+    float glass = step(0.32, yf)*step(yf, FH - 0.14)*step(mf, 0.38)*step(1.0, tq.y)*step(abs(n.y), 0.6);
+    float wx = n.x*n.x/(n.x*n.x + n.z*n.z + 1e-4);
+    float lw = mix(vnoise(tq.xy*vec2(1.1, 0.55) + id*5.0), vnoise(tq.zy*vec2(1.1, 0.55) + id*9.0), wx);
+    float green = smoothstep(0.6, 0.68, lw + 0.1*sin(tq.y*0.45 + ha*9.0));
+    alb = mix(alb, vec3(0.05, 0.10, 0.11), glass);
+    refl = glass*0.9; spec = mix(0.12, 1.0, glass); gloss = mix(20.0, 90.0, glass);
+    vec3 leaf = mix(vec3(0.10, 0.30, 0.07), vec3(0.30, 0.52, 0.12), vnoise(tq.xy*6.0 + tq.zy*4.0));
+    alb = mix(alb, leaf, green);
+    refl *= 1.0 - green; spec = mix(spec, 0.05, green); trans = green*0.6;
+  } else if (mat < 3.5){
+    alb = n.y < -0.5 ? vec3(0.64, 0.46, 0.30) : vec3(0.93, 0.91, 0.86);
+    spec = 0.1;
+  } else if (mat < 4.5){
+    // ---- foliage: hedges, vines, trees; blossoms; leaves flip in gusts ----
+    float ln = vnoise(p.xz*3.0 + p.y*2.3);
+    float ln2 = vnoise(p.xz*9.0 - p.y*7.0 + 11.0);
+    alb = mix(vec3(0.07, 0.24, 0.05), vec3(0.30, 0.52, 0.10), ln)*(0.75 + 0.5*ln2);
+    float bl = h21(id + 12.3);
+    bool street = ha <= 0.1 || (p.y < 3.2 && max(abs(q.x), abs(q.z)) > 2.9);
+    if (street && bl < 0.5){
+      vec3 bc = bl < 0.22 ? vec3(1.0, 0.62, 0.76) : (bl < 0.36 ? vec3(0.62, 0.48, 0.95) : vec3(1.0, 0.80, 0.25));
+      alb = mix(alb, bc*(0.8 + 0.3*ln2), 0.8*smoothstep(0.25, 0.65, ln2 + 0.25*ln));
+    }
+    vec3 fb = h33(floor(p*7.0));
+    if (fb.x > 0.94 && t < 35.0) alb = fb.y < 0.5 ? vec3(1.0, 0.55, 0.72) : vec3(1.0, 0.9, 0.4);
+    alb = mix(alb, vec3(0.62, 0.72, 0.45), 0.35*g*smoothstep(0.45, 0.9, ln2));
+    trans = 1.0; spec = 0.06; gloss = 10.0;
+  } else if (mat < 5.5){
+    alb = vec3(0.30, 0.23, 0.17);
+  } else if (mat < 6.5){
+    alb = vec3(0.93, 0.94, 0.95); spec = 0.5; gloss = 48.0;
+  } else {
+    vec2 sg = abs(fract(p.xz*3.5) - 0.5);
+    float gln = smoothstep(0.43, 0.47, max(sg.x, sg.y));
+    alb = mix(vec3(0.03, 0.06, 0.17), vec3(0.6, 0.65, 0.72), gln*0.7);
+    refl = 0.9 - 0.6*gln; spec = 1.0; gloss = 110.0;
+    if (dot(n, SOLN) < 0.0){ alb = vec3(0.85, 0.85, 0.82); refl = 0.0; spec = 0.2; }
+  }
+
+  // ---- lighting ----
+  float occ = calcAO(p, n);
+  float sh = shadow(p + n*0.03, SUN);
+  float dif = clamp(dot(n, SUN), 0.0, 1.0);
+  float skd = 0.5 + 0.5*n.y;
+  float bou = clamp(dot(n, vec3(-SUN.x, 0.0, -SUN.z)/length(SUN.xz)), 0.0, 1.0)*clamp(1.0 - p.y/35.0, 0.25, 1.0);
+  vec3 lin = vec3(1.40, 1.18, 0.92)*2.2*dif*sh;
+  lin += vec3(0.40, 0.56, 0.82)*0.9*skd*occ;
+  lin += vec3(0.42, 0.36, 0.26)*0.35*bou*occ;
+  float back = pow(clamp(dot(rd, SUN), 0.0, 1.0), 3.0);
+  lin += trans*vec3(0.38, 0.55, 0.10)*(0.15 + 1.4*back*(0.35 + 0.65*sh))*occ;
+  vec3 col = alb*lin;
+  vec3 hv = normalize(SUN - rd);
+  col += vec3(1.3, 1.1, 0.85)*spec*pow(clamp(dot(n, hv), 0.0, 1.0), gloss)*dif*sh*1.5;
+  if (refl > 0.0){
+    vec3 r = reflect(rd, n);
+    float fr = pow(1.0 - clamp(dot(-rd, n), 0.0, 1.0), 5.0);
+    col = mix(col, envCol(r)*(0.55 + 0.45*occ), refl*(0.3 + 0.65*fr));
+  }
+  return col;
+}
+
+// ribbons of wind drawn on invisible sheets above and below the camera
+vec3 windLines(vec3 ro, vec3 rd, float tmax, vec3 col, float pix){
+  for (int k = 0; k < 3; k++){
+    float fk = float(k);
+    float hk = k == 0 ? -2.3 : (k == 1 ? 3.4 : 9.0);
+    if (abs(rd.y) < 1e-3) continue;
+    float t = hk/rd.y;
+    if (t > 0.5 && t < min(tmax, 75.0)){
+      vec3 P = ro + rd*t;
+      float a = dot(P.xz, WIND), b = dot(P.xz, WPERP);
+      float bw = b + 1.4*sin(a*0.12 + time*0.7 + fk*2.1) + 0.5*sin(a*0.29 - time*1.1 + fk);
+      float spc = 4.5 + fk*1.5;
+      float n = floor(bw/spc);
+      float f = abs(fract(bw/spc) - 0.5)*spc;
+      float hn = h21(vec2(n, fk*7.13));
+      float wdt = 0.035 + t*pix*1.5/max(abs(rd.y), 0.08);
+      float line = 1.0 - smoothstep(wdt*0.3, wdt, f);
+      float s = sin(a*0.17 - time*(1.6 + 1.2*hn) + hn*40.0);
+      float seg = smoothstep(0.6, 0.95, s);
+      float fade = smoothstep(0.5, 5.0, t)*exp(-t*0.035)*clamp(0.07/wdt, 0.2, 1.0);
+      col += vec3(1.0, 0.98, 0.92)*line*seg*fade*(0.18 + 0.5*gust(P.xz))*step(0.35, hn);
+    }
+  }
+  return col;
+}
+
+// drifting leaves, petals and seeds carried by the breeze (3D grid walk)
+vec3 petals(vec3 ro, vec3 rd, float tmax, vec3 col, float pix){
+  float S = 1.7;
+  vec3 drift = vec3(WIND.x, 0.0, WIND.y)*time*2.6 + vec3(0.0, -time*0.28, 0.0);
+  vec3 o = (ro - drift)/S;
+  vec3 cell = floor(o);
+  vec3 sg = sign(rd);
+  vec3 ird = 1.0/(abs(rd) + 1e-5);
+  vec3 tm = (cell + max(sg, 0.0) - o)*sg*ird;
+  for (int i = 0; i < 20; i++){
+    vec3 hh = h33(cell);
+    if (hh.x > 0.5){
+      vec3 hp = h33(cell + 17.7);
+      vec3 pc = cell + 0.25 + 0.5*hp + 0.12*vec3(sin(time*1.9 + hh.y*6.28), sin(time*2.7 + hh.z*6.28), cos(time*2.2 + hp.x*6.28));
+      vec3 v = pc - o;
+      float tt = dot(v, rd);
+      float tw = tt*S;
+      if (tw > 0.25 && tw < tmax){
+        float dist = length(v - rd*tt)*S;
+        float size = 0.03 + 0.035*hh.y;
+        float flick = 0.35 + 0.65*abs(sin(time*(3.0 + 4.0*hh.z) + hp.y*20.0));
+        float sz = size*flick;
+        float pw = pix*tw;
+        float w = max(sz, pw);
+        float a = (1.0 - smoothstep(w*0.4, w + pw, dist))*(sz*sz)/(w*w);
+        a *= smoothstep(0.6, 2.2, tw)*exp(-tw*0.05);
+        vec3 pcl = hp.z < 0.45 ? vec3(0.45, 0.72, 0.18) : (hp.z < 0.8 ? vec3(1.0, 0.72, 0.82) : vec3(1.0, 0.96, 0.85));
+        pcl *= 0.8 + 0.6*pow(clamp(dot(rd, SUN), 0.0, 1.0), 4.0) + 0.3*flick;
+        col = mix(col, pcl, clamp(a, 0.0, 1.0));
+      }
+    }
+    vec3 mk = step(tm.xyz, tm.yzx)*step(tm.xyz, tm.zxy);
+    cell += mk*sg;
+    tm += mk*ird;
+    if (min(tm.x, min(tm.y, tm.z))*S > tmax) break;
+  }
+  return col;
+}
+
+void main(){
+  vec2 m = mouse;
+  if (m.x == 0.0 && m.y == 0.0) m = vec2(0.5);
+  vec2 uv = (gl_FragCoord.xy*2.0 - resolution)/resolution.y;
+  float T = time;
+
+  // camera glides down an endless avenue, rising over the treetops and dipping back
+  vec3 ro = vec3(0.7*sin(T*0.11), 6.5 + 3.3*sin(T*0.05), T*3.4);
+  float yaw = 0.12*sin(T*0.083) + (m.x - 0.5)*1.6;
+  float pitch = 0.08 - 0.025*(ro.y - 6.5) + 0.03*sin(T*0.061) + (m.y - 0.5)*0.9;
+  vec3 fw = vec3(sin(yaw)*cos(pitch), sin(pitch), cos(yaw)*cos(pitch));
+  vec3 rt = normalize(cross(vec3(0.0, 1.0, 0.0), fw));
+  vec3 up = cross(fw, rt);
+  float fl = resolution.x < resolution.y ? 1.2 : 1.55;
+  vec3 rd = normalize(uv.x*rt + uv.y*up + fl*fw);
+  float pix = 2.0/(resolution.y*fl);
+
+  float t = 0.05;
+  vec2 h = vec2(1.0, 0.0);
+  bool sky = false;
+  for (int i = 0; i < 160; i++){
+    vec3 p = ro + rd*t;
+    h = map(p);
+    if (h.x < 0.0006*t + 0.0004) break;
+    if (t > FAR || (p.y > 50.0 && rd.y > 0.0)){ sky = true; break; }
+    t += min(h.x, cellBound(p, rd));
+  }
+  if (t > FAR) sky = true;
+
+  vec3 col;
+  if (!sky){
+    vec3 p = ro + rd*t;
+    vec3 n = calcNormal(p, t);
+    col = shade(p, n, rd, t, h.y);
+    vec3 fogC = skyBase(normalize(vec3(rd.x, 0.04, rd.z)));
+    float fa = 1.0 - exp(-t*0.0065 - max(t - 70.0, 0.0)*0.012);
+    col = mix(col, fogC, fa);
+  } else {
+    col = skyFull(ro, rd);
+    t = FAR;
+  }
+
+  col = windLines(ro, rd, t, col, pix);
+  col = petals(ro, rd, t, col, pix);
+
+  col += vec3(1.0, 0.75, 0.45)*0.10*pow(clamp(dot(rd, SUN), 0.0, 1.0), 10.0);
+  col *= 0.95;
+  col = (col*(2.51*col + 0.03))/(col*(2.43*col + 0.59) + 0.14);
+  col = pow(clamp(col, 0.0, 1.0), vec3(0.4545));
+  vec2 sp = gl_FragCoord.xy/resolution;
+  col *= 0.6 + 0.4*pow(16.0*sp.x*sp.y*(1.0 - sp.x)*(1.0 - sp.y), 0.12);
+  gl_FragColor = vec4(col, 1.0);
+}
+</script>
+
+<script>
+(function () {
+  'use strict';
+  var canvas = document.getElementById('c');
+  var errBox = document.getElementById('err');
+  var sndBtn = document.getElementById('snd');
+  var cpBtn = document.getElementById('cp');
+  var FS = document.getElementById('fs').textContent.replace(/^\s+/, '');
+
+  function fail(msg) {
+    errBox.hidden = false;
+    errBox.textContent = msg;
+    console.error(msg);
+  }
+
+  var gl = canvas.getContext('webgl', {
+    antialias: false, alpha: false, depth: false, stencil: false,
+    premultipliedAlpha: false, preserveDrawingBuffer: false, powerPreference: 'high-performance'
+  }) || canvas.getContext('experimental-webgl');
+  if (!gl) { fail('无法创建 WebGL 上下文：这个作品需要支持 WebGL 的浏览器。'); return; }
+
+  var VS = 'attribute vec2 a;void main(){gl_Position=vec4(a,0.0,1.0);}';
+  var prog, uRes, uMouse, uTime;
+
+  function compile(type, src) {
+    var s = gl.createShader(type);
+    gl.shaderSource(s, src);
+    gl.compileShader(s);
+    if (!gl.getShaderParameter(s, gl.COMPILE_STATUS) && !gl.isContextLost()) {
+      throw new Error(gl.getShaderInfoLog(s) || 'shader compile failed');
+    }
+    return s;
+  }
+  function setup() {
+    prog = gl.createProgram();
+    gl.attachShader(prog, compile(gl.VERTEX_SHADER, VS));
+    gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, FS));
+    gl.bindAttribLocation(prog, 0, 'a');
+    gl.linkProgram(prog);
+    if (!gl.getProgramParameter(prog, gl.LINK_STATUS) && !gl.isContextLost()) {
+      throw new Error(gl.getProgramInfoLog(prog) || 'program link failed');
+    }
+    gl.useProgram(prog);
+    var buf = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+    gl.enableVertexAttribArray(0);
+    gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+    uRes = gl.getUniformLocation(prog, 'resolution');
+    uMouse = gl.getUniformLocation(prog, 'mouse');
+    uTime = gl.getUniformLocation(prog, 'time');
+  }
+  try { setup(); } catch (e) { fail('着色器编译失败：\n' + e.message); return; }
+
+  // ---------- adaptive resolution (devicePixelRatio capped at 2) ----------
+  var reduceMotion = !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
+  function dprNow() { return Math.min(window.devicePixelRatio || 1, 2); }
+  function budget(px) {
+    var d = dprNow();
+    var full = Math.max(1, innerWidth * innerHeight * d * d);
+    return Math.min(1, Math.sqrt(px / full));
+  }
+  var minS, maxS;
+  function limits() { minS = budget(80000); maxS = budget(2400000); }
+  limits();
+  var scale = budget(120000);          // cheap first paint, then climb to what the GPU can hold
+  var needResize = true;
+  function applySize() {
+    var d = dprNow();
+    var w = Math.max(1, Math.round(innerWidth * d * scale));
+    var h = Math.max(1, Math.round(innerHeight * d * scale));
+    if (w !== canvas.width || h !== canvas.height) { canvas.width = w; canvas.height = h; }
+  }
+  addEventListener('resize', function () {
+    limits();
+    scale = Math.min(maxS, Math.max(minS, scale));
+    needResize = true;
+  });
+
+  // ---------- pointer look ----------
+  var mouse = { x: 0.5, y: 0.5, tx: 0.5, ty: 0.5 };
+  function setPointer(e) {
+    mouse.tx = Math.min(1, Math.max(0, e.clientX / innerWidth));
+    mouse.ty = Math.min(1, Math.max(0, 1 - e.clientY / innerHeight));
+  }
+  addEventListener('pointermove', function (e) {
+    if (e.pointerType === 'mouse' || e.buttons) setPointer(e);
+  }, { passive: true });
+  canvas.addEventListener('pointerdown', setPointer, { passive: true });
+  addEventListener('pointerup', function (e) {
+    if (e.pointerType !== 'mouse') { mouse.tx = 0.5; mouse.ty = 0.5; }
+  });
+  addEventListener('pointercancel', function () { mouse.tx = 0.5; mouse.ty = 0.5; });
+  document.addEventListener('mouseout', function (e) {
+    if (!e.relatedTarget) { mouse.tx = 0.5; mouse.ty = 0.5; }
+  });
+
+  // ---------- wind sound (only after a click) ----------
+  var A = null;
+  function gustAt(t) {           // same gust field as the shader, sampled at the camera
+    var x = 0.7 * Math.sin(t * 0.11), z = t * 3.4;
+    var a = x * 0.707107 - z * 0.707107, b = x * 0.707107 + z * 0.707107;
+    return 0.5 + 0.5 * Math.sin(a * 0.21 - t * 1.5 + 2.0 * Math.sin(b * 0.09 + t * 0.2));
+  }
+  function makeNoise(ctx) {
+    var len = Math.floor(ctx.sampleRate * 3), buf = ctx.createBuffer(2, len, ctx.sampleRate);
+    for (var ch = 0; ch < 2; ch++) {
+      var d = buf.getChannelData(ch), b0 = 0, b1 = 0, b2 = 0, b3 = 0, b4 = 0, b5 = 0, b6 = 0;
+      for (var i = 0; i < len; i++) {
+        var w = Math.random() * 2 - 1;
+        b0 = 0.99886 * b0 + w * 0.0555179; b1 = 0.99332 * b1 + w * 0.0750759;
+        b2 = 0.96900 * b2 + w * 0.1538520; b3 = 0.86650 * b3 + w * 0.3104856;
+        b4 = 0.55000 * b4 + w * 0.5329522; b5 = -0.7616 * b5 - w * 0.0168980;
+        d[i] = (b0 + b1 + b2 + b3 + b4 + b5 + b6 + w * 0.5362) * 0.11;
+        b6 = w * 0.115926;
+      }
+    }
+    return buf;
+  }
+  function buildAudio() {
+    var AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return null;
+    var ctx = new AC();
+    var buf = makeNoise(ctx);
+    var master = ctx.createGain(); master.gain.value = 0; master.connect(ctx.destination);
+    var s1 = ctx.createBufferSource(); s1.buffer = buf; s1.loop = true; s1.playbackRate.value = 0.93;
+    var bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 380; bp.Q.value = 0.8;
+    var lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 1400;
+    var gW = ctx.createGain(); gW.gain.value = 0.5;
+    s1.connect(bp); bp.connect(lp); lp.connect(gW); gW.connect(master);
+    var s2 = ctx.createBufferSource(); s2.buffer = buf; s2.loop = true; s2.playbackRate.value = 1.07;
+    var hp = ctx.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 2600;
+    var gL = ctx.createGain(); gL.gain.value = 0.05;
+    var pan = ctx.createStereoPanner ? ctx.createStereoPanner() : null;
+    s2.connect(hp); hp.connect(gL);
+    if (pan) { gL.connect(pan); pan.connect(master); } else { gL.connect(master); }
+    s1.start(0); s2.start(0, 1.3);
+    return { ctx: ctx, master: master, bp: bp, gW: gW, gL: gL, pan: pan, on: false, last: 0 };
+  }
+  function setSound(on) {
+    if (!A) { A = buildAudio(); if (!A) { sndBtn.textContent = '此浏览器不支持音频'; return; } }
+    var now = A.ctx.currentTime;
+    A.master.gain.cancelScheduledValues(now);
+    if (on) {
+      if (A.ctx.state !== 'running') A.ctx.resume();
+      A.master.gain.setTargetAtTime(0.55, now, 0.6);
+    } else {
+      A.master.gain.setTargetAtTime(0.0, now, 0.25);
+    }
+    A.on = on;
+    sndBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
+    sndBtn.textContent = on ? '关闭风声' : '开启风声';
+  }
+  sndBtn.addEventListener('click', function () { setSound(!(A && A.on)); });
+  function audioTick(t, nowMs) {
+    if (!A || !A.on || nowMs - A.last < 90) return;
+    A.last = nowMs;
+    var g = gustAt(t), now = A.ctx.currentTime;
+    A.gW.gain.setTargetAtTime(0.25 + 0.85 * g, now, 0.25);
+    A.bp.frequency.setTargetAtTime(260 + 520 * g, now, 0.3);
+    A.gL.gain.setTargetAtTime(0.02 + 0.10 * g * g, now, 0.2);
+    if (A.pan) A.pan.pan.setTargetAtTime(0.35 * Math.sin(t * 0.13), now, 0.5);
+  }
+  document.addEventListener('visibilitychange', function () {
+    if (!A) return;
+    if (document.hidden) A.ctx.suspend();
+    else if (A.on) A.ctx.resume();
+  });
+
+  // ---------- copy the shader for twigl.app ----------
+  cpBtn.addEventListener('click', function () {
+    function done(ok) {
+      cpBtn.textContent = ok ? '已复制，贴进 twigl（classic 模式）' : '复制失败，请查看页面源码';
+      setTimeout(function () { cpBtn.textContent = '复制 twigl 代码'; }, 2600);
+    }
+    function legacy() {
+      var ok = false;
+      try {
+        var ta = document.createElement('textarea');
+        ta.value = FS; ta.setAttribute('readonly', ''); ta.style.position = 'fixed'; ta.style.opacity = '0';
+        document.body.appendChild(ta); ta.select();
+        ok = document.execCommand('copy');
+        ta.remove();
+      } catch (e) { ok = false; }
+      done(ok);
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(FS).then(function () { done(true); }, legacy);
+    } else legacy();
+  });
+
+  // ---------- render loop ----------
+  var running = true, last = performance.now(), acc = 0, cnt = 0, frames = 0;
+  var simT = 6.0, speed = reduceMotion ? 0.5 : 1.0;
+  var stats = { scale: scale, width: 0, height: 0, frames: 0, fps: 0 };
+  window.__solarpunk = stats;
+
+  function frame(now) {
+    if (!running) return;
+    var dt = now - last; last = now;
+    frames++;
+    if (frames > 2) {
+      if (dt > 350) {
+        scale = Math.max(minS, scale * 0.7); needResize = true; acc = 0; cnt = 0;
+      } else {
+        acc += dt; cnt++;
+        if (cnt >= 8) {
+          var avg = acc / cnt; acc = 0; cnt = 0;
+          stats.fps = Math.round(1000 / avg);
+          if (avg > 40 && scale > minS) { scale = Math.max(minS, scale * 0.82); needResize = true; }
+          else if (avg < 24 && scale < maxS) { scale = Math.min(maxS, scale * 1.18); needResize = true; }
+        }
+      }
+    }
+    simT += Math.min(Math.max(dt, 0), 250) / 1000 * speed;
+    var k = 1 - Math.exp(-Math.max(dt, 0) / 260);
+    mouse.x += (mouse.tx - mouse.x) * k;
+    mouse.y += (mouse.ty - mouse.y) * k;
+
+    if (needResize) { applySize(); needResize = false; }
+    gl.viewport(0, 0, canvas.width, canvas.height);
+    gl.uniform2f(uRes, canvas.width, canvas.height);
+    gl.uniform2f(uMouse, mouse.x, mouse.y);
+    gl.uniform1f(uTime, simT);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+
+    stats.scale = scale; stats.width = canvas.width; stats.height = canvas.height; stats.frames = frames; stats.time = simT;
+    audioTick(simT, now);
+    requestAnimationFrame(frame);
+  }
+
+  canvas.addEventListener('webglcontextlost', function (e) { e.preventDefault(); running = false; }, false);
+  canvas.addEventListener('webglcontextrestored', function () {
+    try { setup(); } catch (e) { fail('WebGL 恢复失败：' + e.message); return; }
+    running = true; needResize = true; last = performance.now();
+    requestAnimationFrame(frame);
+  }, false);
+
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

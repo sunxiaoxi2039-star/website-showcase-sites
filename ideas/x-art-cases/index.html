@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>X 艺术案例十则</title>
+<meta name="description" content="十条在 X 上流传的艺术提示词，原样交给 Claude Opus 5.5 写成可运行的作品；每件附原帖提示词、一次成型版与精修版对照。全部只写代码，零额外花费。">
+<meta name="theme-color" content="#efebe3">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23efebe3'/%3E%3Ccircle cx='16' cy='16' r='11' fill='none' stroke='%231b1a17' stroke-width='2'/%3E%3Ccircle cx='16' cy='16' r='6' fill='%23b8321f'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<!-- 字体不阻塞首屏：国内网络连不上 Google Fonts 时退回系统宋体 -->
+<link rel="stylesheet" media="print" onload="this.media='all'" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Noto+Serif+SC:wght@400;600;900&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="site/style.css">
+<script type="module" src="site/app.js"></script>
+</head>
+<body>
+<a class="skip" href="#works">跳到展品</a>
+
+<header class="bar" id="bar">
+  <div class="bar-progress" aria-hidden="true"><i id="barProgress"></i></div>
+  <a class="bar-brand" href="#top">X 艺术案例十则</a>
+  <p class="bar-room" id="barRoom" aria-live="polite"></p>
+  <nav class="bar-nav" aria-label="页面导航">
+    <a href="#catalogue">目录</a>
+    <a href="#coda">结语</a>
+  </nav>
+</header>
+
+<main id="top">
+  <!-- 开场：手写 GLSL 墨流（suminagashi），滚动推进墨滴绽开与梳纹 -->
+  <section class="hero" id="hero" aria-labelledby="heroTitle">
+    <div class="hero-stage">
+      <canvas class="hero-canvas" id="heroCanvas" aria-hidden="true"></canvas>
+      <div class="hero-fallback" aria-hidden="true"></div>
+      <div class="hero-text" id="heroText">
+        <p class="hero-kicker"><span>生成艺术 · 特展</span><span>N°&thinsp;10</span></p>
+        <h1 class="hero-title" id="heroTitle">
+          <span class="ht-x">X</span><span class="ht-cn">艺术案例<em>十则</em></span>
+        </h1>
+        <p class="hero-sub">十条在 X 上流传的艺术提示词，原样交给 <b>Claude Opus 5.5</b>，<br class="br-wide">一条一条写成可以运行的作品。</p>
+        <p class="hero-hint" aria-hidden="true"><span class="hint-line"></span>向下滚动，墨会散开</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 前言 -->
+  <section class="preface" id="preface" aria-labelledby="prefaceTitle">
+    <div class="wrap preface-grid">
+      <header class="sec-head">
+        <p class="sec-no">壹</p>
+        <h2 class="sec-title" id="prefaceTitle">展览前言</h2>
+      </header>
+      <div class="preface-body">
+        <p class="lede">这里挂的<span data-stat="count-cn">十</span>件作品，出发点都是别人在 X 上公开的一段提示词。我们不改写、不加料，把原文交给 Claude Opus 5.5 执行，先留下一次成型的样子；跑不通的地方再修，最后精修成品。<span data-pending hidden>其余<span data-stat="pending-cn"></span>件还在生成，做完陆续上墙。</span></p>
+        <p>每个展间都能切换版本对照：一次成型、修正版（若有）、精修版。海报先挂在墙上，点一下才会开启现场；全站同一时刻只开一个现场，离开视野就自动熄灯，省电也省心。</p>
+        <p class="preface-note">原帖提示词只作对照引用，版权归原作者；作品代码由 Claude Opus 5.5 写成。</p>
+      </div>
+      <dl class="stats" id="stats" aria-label="展览数据">
+        <div><dt>展品</dt><dd data-stat="count">—</dd></div>
+        <div><dt>一次成型</dt><dd data-stat="clean">—</dd></div>
+        <div><dt>一次成型总用时</dt><dd data-stat="minutes">—</dd></div>
+        <div><dt>额外花费</dt><dd data-stat="cost">¥0</dd></div>
+      </dl>
+    </div>
+  </section>
+
+  <!-- 展品目录 -->
+  <section class="catalogue" id="catalogue" aria-labelledby="catalogueTitle">
+    <div class="wrap">
+      <header class="sec-head">
+        <p class="sec-no">贰</p>
+        <h2 class="sec-title" id="catalogueTitle">展品目录</h2>
+      </header>
+      <ol class="cat-list" id="catList"></ol>
+    </div>
+    <img class="cat-peek" id="catPeek" alt="" aria-hidden="true">
+  </section>
+
+  <!-- 展间：由 site/app.js 按 cases.json 生成 -->
+  <div class="works" id="works" aria-label="展间">
+    <p class="works-loading" id="worksStatus">展品布置中……</p>
+  </div>
+
+  <!-- 结语 -->
+  <section class="coda" id="coda" aria-labelledby="codaTitle">
+    <div class="wrap coda-grid">
+      <header class="sec-head">
+        <p class="sec-no">叁</p>
+        <h2 class="sec-title" id="codaTitle">结语</h2>
+      </header>
+      <div class="coda-body">
+        <p class="coda-big"><span data-stat="count-cn">十</span>件作品，<span class="nw">额外花费 <b class="zero">¥0</b></span></p>
+        <p class="coda-text">全部只靠写代码完成：没有调用任何付费的图像、视频或 3D 生成接口，没有一张生成图，也没有买额度。画面里的每一道光、每一片瓷砖、每一圈墨纹，都是 Claude Opus 5.5 用着色器、Canvas 和原生 JavaScript 一行一行写出来的。</p>
+        <a class="coda-link" href="https://sunxiaoxi2039-star.github.io/website-showcase-sites/ideas/tripo-3d-showcase/">
+          <span class="cl-kicker">回到主展</span>
+          <span class="cl-title">原文 → 成品：七条 Tripo 提示词的 Opus 5.5 复刻</span>
+          <span class="cl-arrow" aria-hidden="true">→</span>
+        </a>
+      </div>
+      <div class="seal" aria-label="印章：只写代码"><span>只</span><span>写</span><span>代</span><span>码</span></div>
+    </div>
+  </section>
+</main>
+
+<footer class="foot">
+  <div class="wrap foot-row">
+    <p>X 艺术案例十则 · 执行模型 Claude Opus 5.5</p>
+    <p>原帖提示词仅作对照引用，版权归原作者</p>
+  </div>
+</footer>
+</body>
+</html>

@@ -1,0 +1,985 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>SINGULARITY</title>
+<meta name="description" content="A full-length EDM / dubstep track synthesized live in WebAudio, bending light around a real-time 3D black hole.">
+<style>
+:root{--fg:#f4ede3;--dim:rgba(244,237,227,.58);--faint:rgba(244,237,227,.16);--hot:#ffb070;--bg:#000}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:var(--bg);color:var(--fg);overflow:hidden;font-family:"Helvetica Neue",Helvetica,Arial,system-ui,sans-serif;-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent}
+#gl{position:fixed;inset:0;width:100vw;height:100vh;display:block;touch-action:none;cursor:grab}
+#gl.drag{cursor:grabbing}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+.hud{position:fixed;inset:0;pointer-events:none;opacity:0;transition:opacity 1.4s ease}
+.hud.on{opacity:1}
+.hud.on.off{opacity:0}
+.brand{position:absolute;left:max(16px,env(safe-area-inset-left));top:max(16px,env(safe-area-inset-top))}
+.wm{font-size:12px;letter-spacing:.46em;font-weight:500}
+.meta{margin-top:7px;font-size:10px;letter-spacing:.22em;color:var(--dim);text-transform:uppercase}
+.dbg{position:absolute;right:16px;top:16px;font-size:10px;color:var(--dim);font-variant-numeric:tabular-nums;letter-spacing:.1em}
+.bottom{position:absolute;left:max(16px,env(safe-area-inset-left));right:max(16px,env(safe-area-inset-right));bottom:max(16px,env(safe-area-inset-bottom))}
+.sec{font-size:clamp(11px,1.25vw,14px);letter-spacing:.4em;font-weight:300;margin-bottom:10px;transition:opacity .6s,letter-spacing 1.2s;text-shadow:0 0 18px rgba(255,160,90,.55)}
+.sec.swap{opacity:0;letter-spacing:.7em}
+.pbar{position:relative;height:20px;cursor:pointer;pointer-events:auto}
+.pbar .track{position:absolute;left:0;right:0;top:9px;height:1px;background:var(--faint)}
+.pbar .tick{position:absolute;top:6px;width:1px;height:7px;background:rgba(244,237,227,.32)}
+.pbar .fill{position:absolute;left:0;top:8.5px;height:2px;width:0;background:linear-gradient(90deg,rgba(255,150,80,.2),var(--hot) 70%,#fff);box-shadow:0 0 10px rgba(255,170,100,.8)}
+.row{display:flex;align-items:center;gap:14px;margin-top:6px;font-size:10px;letter-spacing:.18em;color:var(--dim)}
+.row .sp{flex:1}
+.btn{pointer-events:auto;padding:6px 0;letter-spacing:.22em;font-size:10px;color:var(--dim);transition:color .2s}
+.btn:hover,.btn:focus-visible{color:var(--fg);outline:none}
+.icon{width:30px;height:30px;display:grid;place-items:center;border:1px solid var(--faint);border-radius:50%;padding:0}
+.icon svg{width:10px;height:10px;fill:currentColor}
+.time{font-variant-numeric:tabular-nums}
+.gate{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;padding:24px 16px;background:radial-gradient(ellipse at 50% 50%,rgba(0,0,0,.05) 0%,rgba(0,0,0,.45) 50%,rgba(0,0,0,.85) 100%);transition:opacity 1.6s ease,visibility 1.6s}
+.gate.gone{opacity:0;visibility:hidden;pointer-events:none}
+.kicker{font-size:10px;letter-spacing:.42em;color:var(--dim)}
+.title{margin:18px 0 16px;font-weight:200;font-size:clamp(30px,8.4vw,120px);letter-spacing:.28em;margin-right:-.28em;line-height:1;background:linear-gradient(180deg,#fff 0%,#ffe1bf 50%,#ff9a55 100%);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 26px rgba(255,140,70,.4))}
+.sub{max-width:540px;margin:0 auto;font-size:14px;line-height:1.65;color:var(--dim);font-weight:300}
+.go{margin-top:34px;padding:16px 30px;border:1px solid rgba(255,200,150,.55);border-radius:999px;letter-spacing:.32em;font-size:11px;color:#fff;background:rgba(255,140,60,.08);box-shadow:0 0 30px rgba(255,140,60,.2),inset 0 0 20px rgba(255,140,60,.08);transition:background .3s,box-shadow .3s}
+.go:hover,.go:focus-visible{background:rgba(255,140,60,.2);box-shadow:0 0 54px rgba(255,140,60,.4);outline:none}
+.go:disabled{opacity:.5;cursor:wait}
+.hint{margin:26px auto 0;font-size:10px;letter-spacing:.14em;color:rgba(244,237,227,.42);line-height:1.9;max-width:560px}
+.err{position:fixed;left:16px;right:16px;bottom:16px;font-size:12px;color:#ffb3a0;text-align:center;display:none;letter-spacing:.05em}
+@media (max-width:600px){.sub{font-size:13px}.meta{display:none}.hint{font-size:9px}.go{padding:15px 22px;letter-spacing:.24em}}
+</style>
+<script type="importmap">
+{"imports":{
+  "three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+}}
+</script>
+</head>
+<body>
+<canvas id="gl" aria-label="3D black hole visualizer"></canvas>
+
+<div id="hud" class="hud">
+  <div class="brand"><div class="wm">SINGULARITY</div><div class="meta">procedural transmission · 140 bpm · f minor</div></div>
+  <div class="dbg" id="dbg"></div>
+  <div class="bottom">
+    <div class="sec" id="sec">I — APPROACH</div>
+    <div class="pbar" id="pbar" title="Seek"><div class="track"></div><div class="fill" id="fill"></div></div>
+    <div class="row">
+      <button class="btn icon" id="pp" aria-label="Pause"><svg viewBox="0 0 10 10" id="ppIcon"><rect x="1" y="0" width="3" height="10"/><rect x="6" y="0" width="3" height="10"/></svg></button>
+      <span class="time" id="time">0:00 / 0:00</span>
+      <span class="sp"></span>
+      <button class="btn" id="fs">FULLSCREEN</button>
+      <button class="btn" id="hide">HIDE UI</button>
+    </div>
+  </div>
+</div>
+
+<div id="gate" class="gate">
+  <div>
+    <div class="kicker">A PROCEDURAL AUDIOVISUAL TRANSMISSION</div>
+    <h1 class="title">SINGULARITY</h1>
+    <p class="sub">A full-length EDM / dubstep track, synthesized note by note inside your browser, bending light around a black hole in real time. No samples. No images. Only math.</p>
+    <button id="go" class="go">ENTER THE EVENT HORIZON</button>
+    <div class="hint">Sound starts only when you press the button · headphones recommended<br>drag to orbit · scroll or pinch to zoom · space pauses · H hides the interface</div>
+  </div>
+</div>
+<div id="err" class="err"></div>
+
+<script>
+  // Fallback notice if the pinned three.js module cannot be fetched.
+  setTimeout(function(){ if(!window.__sgBoot){ var e=document.getElementById('err'); e.textContent='Could not load three.js from cdn.jsdelivr.net — check your connection and reload.'; e.style.display='block'; } }, 9000);
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+window.__sgBoot = true;
+
+const $ = id => document.getElementById(id);
+const IS_MOBILE = matchMedia('(pointer:coarse)').matches || Math.min(innerWidth, innerHeight) < 600;
+const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const DEBUG = /[?&]debug/.test(location.search);
+
+/* =====================================================================
+   THE SONG — "SINGULARITY"  ·  140 BPM  ·  F minor  ·  120 bars (~3:26)
+   ===================================================================== */
+const BPM = 140, SPB = 60 / BPM, STEP = SPB / 4, BAR = SPB * 4;
+const BARS = 120, TOTAL_STEPS = BARS * 16, SONG_LEN = BARS * BAR, TAIL_BARS = 2;
+const SECTIONS = [
+  { id: 'intro',  from: 0,   to: 16,  name: 'I — APPROACH' },
+  { id: 'build',  from: 16,  to: 24,  name: 'II — TIDAL FORCES' },
+  { id: 'drop',   from: 24,  to: 40,  name: 'III — EVENT HORIZON' },
+  { id: 'break',  from: 40,  to: 56,  name: 'IV — TIME DILATION' },
+  { id: 'build2', from: 56,  to: 64,  name: 'V — SPAGHETTIFICATION' },
+  { id: 'drop2',  from: 64,  to: 80,  name: 'VI — SINGULARITY' },
+  { id: 'switch', from: 80,  to: 88,  name: 'VII — HAWKING RADIATION' },
+  { id: 'final',  from: 88,  to: 104, name: 'VIII — COLLAPSE' },
+  { id: 'outro',  from: 104, to: 120, name: 'IX — EVAPORATION' },
+];
+SECTIONS.forEach((s, i) => s.i = i);
+const secAt = bar => SECTIONS.find(s => bar < s.to) || SECTIONS[SECTIONS.length - 1];
+const mtof = m => 440 * Math.pow(2, (m - 69) / 12);
+
+// i – VI – III – VII   (Fm – Db – Ab – Eb)
+const CHORDS = [
+  { root: 29, notes: [53, 56, 60, 65] },
+  { root: 25, notes: [49, 53, 56, 61] },
+  { root: 32, notes: [51, 56, 60, 63] },
+  { root: 27, notes: [51, 55, 58, 63] },
+];
+// The hook: 3-3-2 syncopation, [step, midi, lengthInSteps]
+const HOOK = [
+  [[0, 72, 3], [3, 72, 3], [6, 75, 2], [8, 77, 4], [12, 75, 2], [14, 72, 2]],
+  [[0, 73, 3], [3, 72, 3], [6, 68, 2], [8, 72, 6], [14, 68, 2]],
+  [[0, 72, 3], [3, 72, 3], [6, 75, 2], [8, 80, 4], [12, 79, 2], [14, 77, 2]],
+  [[0, 79, 3], [3, 77, 3], [6, 75, 4], [10, 72, 6]],
+];
+const ARP = [0, 1, 2, 3, 5, 3, 2, 1, 0, 2, 1, 3, 6, 3, 2, 1];
+// Wobble phrases: [step, lenSteps, semitone, lfoCyclesPerBeat, shape]
+const WOB = [
+  [[0, 4, 0, 1, 'sine'], [4, 4, 0, 2, 'sine'], [8, 2, 12, 4, 'saw'], [10, 2, 7, 4, 'saw'], [12, 4, 0, 3, 'sine']],
+  [[0, 3, 0, 2, 'saw'], [4, 2, 0, 4, 'saw'], [6, 2, 12, 4, 'sine'], [8, 4, 0, 4, 'sine'], [12, 2, 3, 8, 'saw'], [14, 2, 5, 8, 'saw']],
+  [[0, 6, 0, 1.333, 'sine'], [6, 2, -2, 4, 'saw'], [8, 4, 0, 2, 'rise'], [12, 4, 12, 6, 'sine']],
+  [[0, 2, 0, 4, 'saw'], [2, 2, 0, 4, 'saw'], [4, 4, 7, 2, 'sine'], [8, 1, 0, 8, 'sq'], [9, 1, 0, 8, 'sq'], [10, 2, 12, 6, 'saw'], [12, 4, 0, 1, 'rise']],
+];
+const lfo = (shape, fr) => shape === 'saw' ? Math.pow(1 - fr, 1.6) : shape === 'rise' ? fr : shape === 'sq' ? (fr < 0.5 ? 1 : 0.1) : 0.5 - 0.5 * Math.cos(fr * Math.PI * 2);
+
+/* =====================================================================
+   AUDIO ENGINE — everything synthesized, nothing sampled
+   ===================================================================== */
+let ctx = null, master, duck, analyser, revIn, delayIn, noiseBuf, distCurve, kickCurve, bus = null;
+const visQ = [], wobSegs = [];
+const vis = (t, type, v = 1) => visQ.push({ t, type, v });
+
+function makeCurve(k) { const n = 2048, c = new Float32Array(n); for (let i = 0; i < n; i++) { const x = i / (n - 1) * 2 - 1; c[i] = (1 + k) * x / (1 + k * Math.abs(x)); } return c; }
+function tanhCurve(d) { const n = 2048, c = new Float32Array(n), td = Math.tanh(d); for (let i = 0; i < n; i++) { const x = i / (n - 1) * 2 - 1; c[i] = Math.tanh(x * d) / td; } return c; }
+function makeImpulse(sec, decay) {
+  const sr = ctx.sampleRate, len = Math.floor(sr * sec), buf = ctx.createBuffer(2, len, sr);
+  for (let c = 0; c < 2; c++) {
+    const d = buf.getChannelData(c); let lp = 0;
+    for (let i = 0; i < len; i++) {
+      const k = i / len, n = Math.random() * 2 - 1;
+      lp += (n - lp) * (0.85 - 0.7 * k);                         // darker as it decays
+      d[i] = lp * Math.pow(1 - k, decay) * Math.min(1, i / (sr * 0.012));
+    }
+  }
+  return buf;
+}
+function initAudio() {
+  ctx = new (window.AudioContext || window.webkitAudioContext)({ latencyHint: 'playback' });
+  master = ctx.createGain(); master.gain.value = 0;
+  const comp = ctx.createDynamicsCompressor();
+  comp.threshold.value = -14; comp.knee.value = 10; comp.ratio.value = 4; comp.attack.value = 0.004; comp.release.value = 0.2;
+  const lim = ctx.createWaveShaper(); lim.curve = tanhCurve(1.15);
+  const out = ctx.createGain(); out.gain.value = 0.9;
+  analyser = ctx.createAnalyser(); analyser.fftSize = 2048; analyser.smoothingTimeConstant = 0.55;
+  analyser.minDecibels = -92; analyser.maxDecibels = -16;
+  master.connect(comp); comp.connect(lim); lim.connect(out); out.connect(ctx.destination); out.connect(analyser);
+  duck = ctx.createGain(); duck.connect(master);                  // sidechain-pumped music bus
+  const reverb = ctx.createConvolver(); reverb.buffer = makeImpulse(3.4, 3.0);
+  revIn = ctx.createBiquadFilter(); revIn.type = 'highpass'; revIn.frequency.value = 240;
+  const revOut = ctx.createGain(); revOut.gain.value = 0.85;
+  revIn.connect(reverb); reverb.connect(revOut); revOut.connect(duck);
+  delayIn = ctx.createGain();
+  const dl = ctx.createDelay(2); dl.delayTime.value = STEP * 3;    // dotted eighth
+  const fb = ctx.createGain(); fb.gain.value = 0.38;
+  const dlf = ctx.createBiquadFilter(); dlf.type = 'lowpass'; dlf.frequency.value = 2600;
+  delayIn.connect(dl); dl.connect(dlf); dlf.connect(fb); fb.connect(dl); dlf.connect(duck);
+  noiseBuf = ctx.createBuffer(1, ctx.sampleRate * 2, ctx.sampleRate);
+  const nd = noiseBuf.getChannelData(0); for (let i = 0; i < nd.length; i++) nd[i] = Math.random() * 2 - 1;
+  distCurve = makeCurve(7); kickCurve = makeCurve(1.4);
+  newBus();
+}
+// A fresh set of bus gains per play-session, so seeking can silence already-scheduled notes.
+function newBus() {
+  const old = bus, t = ctx.currentTime;
+  bus = { drum: ctx.createGain(), music: ctx.createGain(), rev: ctx.createGain(), dly: ctx.createGain() };
+  bus.drum.connect(master); bus.music.connect(duck); bus.rev.connect(revIn); bus.dly.connect(delayIn);
+  if (old) for (const k in old) { const g = old[k]; g.gain.setTargetAtTime(0, t, 0.015); setTimeout(() => { try { g.disconnect(); } catch (e) {} }, 500); }
+}
+function osc(type, f, t, end, det = 0) { const o = ctx.createOscillator(); o.type = type; o.frequency.setValueAtTime(f, t); if (det) o.detune.setValueAtTime(det, t); o.start(t); o.stop(end); return o; }
+function gain(v = 1) { const g = ctx.createGain(); g.gain.value = v; return g; }
+function filt(type, f, Q = 0.7, t) { const b = ctx.createBiquadFilter(); b.type = type; b.frequency.value = f; if (t !== undefined) b.frequency.setValueAtTime(f, t); b.Q.value = Q; return b; }
+function noise(t, dur) { const s = ctx.createBufferSource(); s.buffer = noiseBuf; s.loop = true; s.start(t, Math.random() * 1.5); s.stop(t + dur); return s; }
+function sends(node, rev = 0, dly = 0) {
+  if (rev) { const g = gain(rev); node.connect(g); g.connect(bus.rev); }
+  if (dly) { const g = gain(dly); node.connect(g); g.connect(bus.dly); }
+}
+function pump(t, depth, rel = 0.15) { duck.gain.setTargetAtTime(depth, t, 0.004); duck.gain.setTargetAtTime(1, t + 0.045, rel); }
+
+/* ---------- drums ---------- */
+function kick(t, v = 1, hard = true) {
+  const o = osc('sine', 172, t, t + 0.9);
+  o.frequency.exponentialRampToValueAtTime(54, t + 0.07); o.frequency.exponentialRampToValueAtTime(37, t + 0.5);
+  const sh = ctx.createWaveShaper(); sh.curve = kickCurve;
+  const g = gain(0); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(v, t + 0.003); g.gain.setTargetAtTime(0, t + 0.08, hard ? 0.15 : 0.1);
+  o.connect(sh); sh.connect(g); g.connect(bus.drum);
+  const n = noise(t, 0.04), hp = filt('highpass', 3200), ng = gain(0);
+  ng.gain.setValueAtTime(0.3 * v, t); ng.gain.exponentialRampToValueAtTime(0.001, t + 0.022);
+  n.connect(hp); hp.connect(ng); ng.connect(bus.drum);
+  pump(t, hard ? 0.2 : 0.5);
+  vis(t, 'kick', v);
+}
+function snare(t, v = 1, tone = 1, rev = 0.3) {
+  const n = noise(t, 0.6), hp = filt('highpass', 650), bp = filt('bandpass', 2000 * tone, 0.9), g = gain(0);
+  g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.55 * v, t + 0.002); g.gain.setTargetAtTime(0, t + 0.012, 0.085);
+  const bg = gain(0.8);
+  n.connect(hp); hp.connect(g); hp.connect(bp); bp.connect(bg); bg.connect(g); g.connect(bus.drum);
+  const o = osc('triangle', 215 * tone, t, t + 0.3); o.frequency.exponentialRampToValueAtTime(155 * tone, t + 0.08);
+  const og = gain(0); og.gain.setValueAtTime(0.6 * v, t); og.gain.setTargetAtTime(0, t + 0.004, 0.045);
+  o.connect(og); og.connect(bus.drum);
+  sends(g, rev);
+  vis(t, 'snare', v);
+}
+function clap(t, v = 1) {
+  const n = noise(t, 0.45), bp = filt('bandpass', 1350, 1.1), g = gain(0), p = g.gain;
+  p.setValueAtTime(0, t);
+  for (let i = 0; i < 3; i++) { const tt = t + i * 0.011; p.setValueAtTime(0.75 * v, tt); p.setTargetAtTime(0.04, tt + 0.001, 0.004); }
+  p.setValueAtTime(0.6 * v, t + 0.034); p.setTargetAtTime(0, t + 0.035, 0.075);
+  n.connect(bp); bp.connect(g); g.connect(bus.drum); sends(g, 0.35);
+  vis(t, 'snare', v * 0.7);
+}
+function hat(t, v = 0.2, open = false) {
+  const n = noise(t, open ? 0.4 : 0.07), hp = filt('highpass', open ? 7200 : 8800), g = gain(0);
+  g.gain.setValueAtTime(v, t); g.gain.setTargetAtTime(0, t + 0.001, open ? 0.075 : 0.014);
+  const pn = ctx.createStereoPanner(); pn.pan.value = (Math.random() - 0.5) * 0.6;
+  n.connect(hp); hp.connect(g); g.connect(pn); pn.connect(bus.drum);
+  vis(t, 'hat', v);
+}
+function crash(t, v = 0.3) {
+  const n = noise(t, 3.2), hp = filt('highpass', 4800), g = gain(0);
+  g.gain.setValueAtTime(v, t); g.gain.setTargetAtTime(0, t + 0.01, 0.65);
+  n.connect(hp); hp.connect(g); g.connect(bus.drum); sends(g, 0.4);
+}
+function impact(t, v = 1) {
+  const o = osc('sine', 95, t, t + 3.2); o.frequency.exponentialRampToValueAtTime(27, t + 2.4);
+  const g = gain(0); g.gain.setValueAtTime(0.95 * v, t); g.gain.setTargetAtTime(0, t + 0.06, 0.75);
+  o.connect(g); g.connect(bus.drum);
+  const n = noise(t, 2.6), lp = filt('lowpass', 9000, 0.5, t); lp.frequency.exponentialRampToValueAtTime(110, t + 2.2);
+  const ng = gain(0); ng.gain.setValueAtTime(0.5 * v, t); ng.gain.setTargetAtTime(0, t + 0.02, 0.55);
+  n.connect(lp); lp.connect(ng); ng.connect(bus.drum); sends(ng, 0.6);
+  crash(t, 0.3 * v);
+  vis(t, 'impact', v);
+}
+function riser(t, dur, v = 0.2) {
+  const n = noise(t, dur + 0.1), bp = filt('bandpass', 280, 2.4, t); bp.frequency.exponentialRampToValueAtTime(9500, t + dur);
+  const g = gain(0); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(v, t + dur); g.gain.linearRampToValueAtTime(0, t + dur + 0.03);
+  n.connect(bp); bp.connect(g); g.connect(bus.music); sends(g, 0.3);
+  const lp = filt('lowpass', 380, 4, t); lp.frequency.exponentialRampToValueAtTime(6500, t + dur);
+  const og = gain(0); og.gain.setValueAtTime(0.0001, t); og.gain.exponentialRampToValueAtTime(v * 0.32, t + dur); og.gain.linearRampToValueAtTime(0, t + dur + 0.04);
+  for (const d of [0, 16]) { const o = osc('sawtooth', mtof(41), t, t + dur + 0.06, d); o.frequency.exponentialRampToValueAtTime(mtof(41 + 36), t + dur); o.connect(lp); }
+  lp.connect(og); og.connect(bus.music); sends(og, 0.25);
+}
+function dive(t, dur) {
+  const o = osc('sawtooth', mtof(65), t, t + dur + 0.05); o.frequency.exponentialRampToValueAtTime(mtof(29), t + dur);
+  const lp = filt('lowpass', 5000, 3, t); lp.frequency.exponentialRampToValueAtTime(200, t + dur);
+  const g = gain(0); g.gain.setValueAtTime(0.16, t); g.gain.linearRampToValueAtTime(0, t + dur);
+  o.connect(lp); lp.connect(g); g.connect(bus.music); sends(g, 0.4);
+}
+
+/* ---------- tonal ---------- */
+function pad(t, notes, dur, bright = 0.3, v = 0.1) {
+  const lp = filt('lowpass', 280 + bright * 2800, 0.6, t), g = gain(0), end = t + dur + 1.1;
+  g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(v, t + Math.min(0.6, dur * 0.3));
+  g.gain.setValueAtTime(v, t + dur); g.gain.linearRampToValueAtTime(0, t + dur + 0.95);
+  for (const m of notes) for (const d of [-9, 9]) osc('sawtooth', mtof(m), t, end, d).connect(lp);
+  lp.connect(g); g.connect(bus.music); sends(g, 0.55);
+}
+function pluck(t, m, v = 0.15, cut = 3200, rev = 0.25, dly = 0.25, dec = 0.28) {
+  const f = mtof(m), end = t + dec * 5 + 0.1;
+  const lp = filt('lowpass', cut, 2, t); lp.frequency.setTargetAtTime(Math.max(180, cut * 0.12), t + 0.005, dec * 0.45);
+  const g = gain(0); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(v, t + 0.004); g.gain.setTargetAtTime(0, t + 0.01, dec);
+  osc('sawtooth', f, t, end, -6).connect(lp);
+  const m2 = gain(0.5); osc('square', f, t, end, 6).connect(m2); m2.connect(lp);
+  const m3 = gain(0.3); osc('triangle', f * 2, t, end).connect(m3); m3.connect(lp);
+  lp.connect(g); g.connect(bus.music); sends(g, rev, dly);
+}
+const SS_DET = [-17, -8, 0, 8, 17];
+function saw(t, m, dur, v = 0.08, cut = 5200, rev = 0.25, dly = 0.12, sub = true) {
+  const f = mtof(m), end = t + dur + 0.4;
+  const lp = filt('lowpass', cut, 0.9, t), g = gain(0);
+  g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(v, t + 0.008); g.gain.setTargetAtTime(v * 0.75, t + 0.01, 0.12); g.gain.setTargetAtTime(0, t + dur, 0.07);
+  const L = ctx.createStereoPanner(), R = ctx.createStereoPanner(); L.pan.value = -0.65; R.pan.value = 0.65; L.connect(lp); R.connect(lp);
+  SS_DET.forEach((d, i) => osc('sawtooth', f, t, end, d + (Math.random() * 4 - 2)).connect(i === 2 ? lp : (i & 1 ? R : L)));
+  if (sub) { const sg = gain(0.25); osc('square', f / 2, t, end).connect(sg); sg.connect(lp); }
+  lp.connect(g); g.connect(bus.music); sends(g, rev, dly);
+}
+function wob(t, m, dur, rate, shape, v = 0.26, growl = false) {
+  const f = mtof(m), end = t + dur + 0.06;
+  const mix = gain(0.33);
+  osc('sawtooth', f, t, end, -11).connect(mix); osc('sawtooth', f, t, end, 11).connect(mix);
+  const m3 = gain(0.45); osc('square', f * 0.5, t, end).connect(m3); m3.connect(mix);
+  const lp = filt('lowpass', 200, growl ? 13 : 9);                 // no event at t: the LFO curve owns this param
+  const cycles = rate * dur / SPB, N = Math.max(24, Math.ceil(cycles * 40));
+  const c = new Float32Array(N), c2 = growl ? new Float32Array(N) : null;
+  const fmin = 70, fmax = growl ? 4200 : 2600;
+  for (let i = 0; i < N; i++) {
+    const ph = i / (N - 1) * cycles, fr = ph - Math.floor(ph), l = lfo(shape, fr);
+    c[i] = fmin * Math.pow(fmax / fmin, l);
+    if (c2) c2[i] = 320 * Math.pow(5.5, l);
+  }
+  lp.frequency.setValueCurveAtTime(c, t, dur);
+  const ws = ctx.createWaveShaper(); ws.curve = distCurve;
+  const post = filt('lowpass', growl ? 6200 : 4300, 0.5);
+  const g = gain(0); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(v, t + 0.006); g.gain.setValueAtTime(v, t + dur - 0.02); g.gain.linearRampToValueAtTime(0, t + dur);
+  mix.connect(lp); lp.connect(ws); ws.connect(post);
+  let tail = post;
+  if (growl) { const pk = ctx.createBiquadFilter(); pk.type = 'peaking'; pk.Q.value = 5; pk.gain.value = 13; pk.frequency.value = 400; pk.frequency.setValueCurveAtTime(c2, t, dur); post.connect(pk); tail = pk; }
+  tail.connect(g); g.connect(bus.music);
+  const sg = gain(0); sg.gain.setValueAtTime(0, t); sg.gain.linearRampToValueAtTime(0.4, t + 0.008); sg.gain.setValueAtTime(0.4, t + dur - 0.02); sg.gain.linearRampToValueAtTime(0, t + dur);
+  osc('sine', f / 2, t, end).connect(sg); sg.connect(bus.music);
+  wobSegs.push({ t0: t, dur, rate, shape });
+}
+function reese(t, m, dur, v = 0.14, cut = 500) {
+  const f = mtof(m), end = t + dur + 0.3;
+  const lp = filt('lowpass', cut, 1.4, t), g = gain(0);
+  g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(v, t + 0.03); g.gain.setValueAtTime(v, t + dur); g.gain.linearRampToValueAtTime(0, t + dur + 0.2);
+  for (const d of [-14, 14]) osc('sawtooth', f, t, end, d).connect(lp);
+  const sg = gain(0.8); osc('sine', f / 2, t, end).connect(sg); sg.connect(g);
+  lp.connect(g); g.connect(bus.music);
+}
+
+/* =====================================================================
+   ARRANGEMENT — one call per 16th note
+   ===================================================================== */
+function seq(step, t) {
+  const bar = step >> 4, s = step & 15, sec = secAt(bar), lb = bar - sec.from, nb = sec.to - sec.from;
+  const ci = bar & 3, ch = CHORDS[ci], root = ch.root, q = (s & 3) === 0, off = (s & 3) === 2;
+  const hookAt = fn => { for (const h of HOOK[ci]) if (h[0] === s) fn(h[1], h[2] * STEP); };
+  const arpNote = () => { const a = ARP[s]; return ch.notes[a % 4] + 12 + Math.floor(a / 4) * 12; };
+  if (s === 0) vis(t, 'bar', bar);
+
+  switch (sec.id) {
+    case 'intro': {
+      if (s === 0) pad(t, ch.notes, BAR, 0.08 + lb / 16 * 0.45, 0.085);
+      if (lb === 0 && s === 0) { const o = osc('sine', mtof(29), t, t + BAR * 4); const g = gain(0); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.22, t + BAR * 2); g.gain.linearRampToValueAtTime(0, t + BAR * 4); o.connect(g); g.connect(bus.music); }
+      if (lb >= 4) pluck(t, arpNote(), 0.03 + 0.04 * Math.min(1, (lb - 4) / 8), 700 + lb * 170, 0.2, 0.3, 0.18);
+      if (lb >= 8) hookAt(m => pluck(t, m, 0.075, 2400, 0.35, 0.35, 0.35));
+      if (lb >= 8 && off) hat(t, 0.07 + 0.005 * lb);
+      if (lb >= 12 && q) kick(t, 0.75, false);
+      if (lb === 15 && s === 0) riser(t, BAR, 0.12);
+      break;
+    }
+    case 'build': case 'build2': {
+      const big = sec.id === 'build2', p = (lb * 16 + s) / (nb * 16);
+      const gap = lb === nb - 1 && s >= 12;
+      if (s === 0) pad(t, ch.notes, BAR, 0.4 + p * 0.5, 0.075);
+      if (lb === 0 && s === 0) { riser(t, nb * BAR - SPB, big ? 0.26 : 0.2); if (big) crash(t, 0.22); }
+      if (!gap) {
+        hookAt((m, d) => saw(t, m, d * 0.9, 0.045 + 0.04 * p, 380 + p * p * 6800, 0.3, 0.15, false));
+        pluck(t, arpNote(), 0.035, 1400 + p * 3200, 0.2, 0.25, 0.15);
+        if (lb < nb - 2 && q) kick(t, 0.85, false);
+        const div = big ? (lb < 2 ? 8 : lb < 4 ? 4 : lb < 6 ? 2 : 1) : (lb < 4 ? 8 : lb < 6 ? 4 : lb < 7 ? 2 : 1);
+        if ((s + (div === 8 ? 4 : 0)) % div === 0) snare(t, 0.3 + 0.6 * p, 1 + p * 0.6, 0.25);
+        if (div === 1 && lb === nb - 1) snare(t + STEP / 2, 0.3 + 0.6 * p, 1 + p * 0.65, 0.2);
+        if (lb >= 2) hat(t, 0.04 + 0.1 * p);
+      }
+      if (lb === nb - 1 && s === 12) { vis(t, 'gap', 1); if (big) dive(t, SPB); }
+      break;
+    }
+    case 'drop': case 'drop2': case 'final': {
+      const hard = sec.id !== 'drop', fin = sec.id === 'final', fill = (lb & 3) === 3;
+      if (lb === 0 && s === 0) impact(t, 1);
+      if (s === 0 && lb > 0 && lb % 8 === 0) crash(t, 0.24);
+      const kicks = (bar & 1) ? [0, 7, 10] : [0, 10];
+      if (kicks.includes(s)) kick(t, s === 0 ? 1 : 0.85, true);
+      if (s === 8) snare(t, 1, 1, 0.35);
+      if (fill && s >= 13) snare(t, 0.45 + 0.15 * (s - 13), 1.15, 0.2);
+      if (fill && s === 15 && hard) snare(t + STEP / 2, 0.8, 1.25, 0.2);
+      if ((s & 1) === 0) hat(t, s % 4 === 0 ? 0.1 : 0.15); else if (hard) hat(t, 0.045);
+      if (s === 6 || (s === 14 && !fill)) hat(t, 0.13, true);
+      const pi = sec.id === 'drop' ? [0, 1, 0, 2][lb & 3] : sec.id === 'drop2' ? [1, 3, 2, 3][lb & 3] : [0, 3, 1, 2][lb & 3];
+      for (const w of WOB[pi]) if (w[0] === s) wob(t, root + 12 + w[2], w[1] * STEP, w[3], w[4], 0.26, hard && (w[4] === 'saw' || sec.id === 'drop2'));
+      if (sec.id === 'drop' && lb >= 8) hookAt((m, d) => saw(t, m, d * 0.85, 0.034, 4800, 0.3, 0.2, false));
+      if (sec.id === 'drop2' && (lb & 3) === 3) hookAt((m, d) => saw(t, m, d * 0.85, 0.05, 4600, 0.3, 0.2, true));
+      if (fin) { hookAt((m, d) => saw(t, m, d * 0.9, 0.058, 5200, 0.3, 0.2, true)); if (s === 0) pad(t, ch.notes, BAR, 0.6, 0.04); }
+      break;
+    }
+    case 'break': {
+      if (lb === 0 && s === 0) { crash(t, 0.2); const g = gain(0); g.gain.setValueAtTime(0.2, t); g.gain.linearRampToValueAtTime(0, t + BAR * 2); const n = noise(t, BAR * 2), lp = filt('lowpass', 8000, 1, t); lp.frequency.exponentialRampToValueAtTime(150, t + BAR * 2); n.connect(lp); lp.connect(g); g.connect(bus.music); sends(g, 0.5); }
+      if (s === 0) pad(t, ch.notes, BAR, 0.22 + (lb >= 8 ? (lb - 8) / 8 * 0.4 : 0), 0.1);
+      hookAt(m => pluck(t, m, 0.1, 2600, 0.4, 0.35, 0.4));
+      if (lb >= 4) pluck(t, arpNote(), 0.03, 1600, 0.25, 0.3, 0.15);
+      if (lb >= 8) {
+        if (q) kick(t, 0.8, false);
+        if (s === 4 || s === 12) clap(t, 0.55);
+        if (off) hat(t, 0.11, true); else if (s & 1) hat(t, 0.045);
+        if (s === 0) reese(t, root + 12, BAR * 0.98, 0.12, 300 + (lb - 8) * 70);
+      }
+      if (lb === nb - 1 && s >= 8) snare(t, 0.3 + (s - 8) * 0.06, 1.2, 0.2);
+      break;
+    }
+    case 'switch': {
+      const p = (lb * 16 + s) / (nb * 16), gap = lb === nb - 1 && s >= 12;
+      if (lb === 0 && s === 0) impact(t, 0.7);
+      if (!gap) {
+        if (q) kick(t, 1, true);
+        if (s === 4 || s === 12) clap(t, 0.8);
+        if (off) hat(t, 0.15, true); else hat(t, 0.05);
+        if (s === 0) for (const n of ch.notes) saw(t, n + 12, BAR * 0.98, 0.02, 2200 + p * 3200, 0.3, 0, false);
+        if (off) pluck(t, root + 24, 0.16, 900, 0, 0, 0.1);
+        hookAt(m => pluck(t, m + 12, 0.07, 4000, 0.35, 0.35, 0.3));
+        if (lb >= nb - 2 && s % (lb === nb - 1 ? 1 : 2) === 0) snare(t, 0.4 + 0.4 * (lb - (nb - 2)) / 2, 1.2, 0.2);
+      }
+      if (lb === nb - 4 && s === 0) riser(t, 4 * BAR - SPB, 0.2);
+      if (gap && s === 12) vis(t, 'gap', 1);
+      break;
+    }
+    case 'outro': {
+      if (lb === 0 && s === 0) impact(t, 0.9);
+      if (s === 0 && lb < 12) pad(t, ch.notes, BAR, 0.5 - lb / 12 * 0.35, 0.1);
+      if (lb === 12 && s === 0) { pad(t, CHORDS[0].notes.concat([41]), 4 * BAR, 0.2, 0.12); pluck(t, 77, 0.12, 3000, 0.6, 0.5, 1.2); vis(t, 'fade', 1); }
+      if (lb < 8) hookAt(m => pluck(t, m, 0.09 * (1 - lb / 10), 2400, 0.4, 0.4, 0.4));
+      if (lb < 12) pluck(t, arpNote(), 0.035 * (1 - lb / 12), 1200, 0.3, 0.3, 0.15);
+      if (lb < 8 && q) kick(t, 0.9 - lb * 0.08, false);
+      if (lb < 8 && off) hat(t, 0.09);
+      break;
+    }
+  }
+}
+
+/* =====================================================================
+   TRANSPORT — look-ahead scheduler on the audio clock
+   ===================================================================== */
+let started = false, nextStep = 0, nextTime = 0, songStarts = [0], timer = 0;
+function tick() {
+  if (!ctx || ctx.state !== 'running') return;
+  const ahead = document.hidden ? 1.6 : 0.15;
+  while (nextTime < ctx.currentTime + ahead) {
+    if (nextStep >= TOTAL_STEPS + TAIL_BARS * 16) { nextStep = 0; songStarts.push(nextTime); if (songStarts.length > 3) songStarts.shift(); }
+    if (nextStep < TOTAL_STEPS) seq(nextStep, nextTime);
+    nextStep++; nextTime += STEP;
+  }
+}
+function songPos() {
+  if (!ctx) return 0;
+  const now = ctx.currentTime; let s0 = songStarts[0];
+  for (const s of songStarts) if (s <= now) s0 = s;
+  return Math.max(0, now - s0);
+}
+function seek(frac) {
+  if (!started) return;
+  const bar = Math.max(0, Math.min(BARS - 1, Math.floor(frac * BARS)));
+  newBus(); visQ.length = 0; wobSegs.length = 0;
+  const now = ctx.currentTime;
+  duck.gain.cancelScheduledValues(now); duck.gain.setValueAtTime(1, now);
+  nextStep = bar * 16; nextTime = now + 0.06; songStarts = [nextTime - bar * BAR];
+  tick();
+}
+async function startSong() {
+  if (started) return;
+  const go = $('go'); go.disabled = true;
+  try { initAudio(); } catch (e) { showErr('WebAudio is not available in this browser.'); go.disabled = false; return; }
+  try { ctx.resume(); } catch (e) {}
+  const now = ctx.currentTime;
+  master.gain.setValueAtTime(0, now); master.gain.linearRampToValueAtTime(0.9, now + 0.5);
+  nextStep = 0; nextTime = now + 0.12; songStarts = [nextTime];
+  started = true;
+  timer = setInterval(tick, 25); tick();
+  ctx.onstatechange = () => { updatePP(); if (ctx.state === 'running') tick(); };
+  $('gate').classList.add('gone'); $('hud').classList.add('on');
+  updatePP();
+}
+function togglePlay() {
+  if (!started) { startSong(); return; }
+  if (ctx.state === 'running') ctx.suspend(); else ctx.resume();
+}
+function updatePP() {
+  const running = ctx && ctx.state === 'running';
+  $('pp').setAttribute('aria-label', running ? 'Pause' : 'Play');
+  $('ppIcon').innerHTML = running ? '<rect x="1" y="0" width="3" height="10"/><rect x="6" y="0" width="3" height="10"/>' : '<path d="M1 0 L10 5 L1 10 Z"/>';
+}
+function showErr(msg) { const e = $('err'); e.textContent = msg; e.style.display = 'block'; }
+
+/* =====================================================================
+   VISUALS — ray-traced Schwarzschild lensing + GPU particles + bloom
+   ===================================================================== */
+const canvas = $('gl');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: 'high-performance', alpha: false });
+const DPR = Math.min(window.devicePixelRatio || 1, 2);                // hard cap at 2
+let quality = IS_MOBILE ? 0.55 : 0.8;                                  // adaptive render scale (× DPR, never above 2)
+renderer.setPixelRatio(Math.min(2, DPR * quality));
+renderer.setSize(innerWidth, innerHeight);
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.05;
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.setClearColor(0x000000, 1);
+
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(50, innerWidth / innerHeight, 0.1, 500);
+
+const PAL_GLSL = `
+uniform float uPal;
+vec3 palette(float t){
+  vec3 warm = mix(mix(vec3(.50,.06,.015), vec3(1.,.42,.1), smoothstep(0.,.5,t)), vec3(1.,.93,.8), smoothstep(.5,1.,t));
+  vec3 neon = mix(mix(vec3(.30,.02,.42), vec3(.95,.18,.55), smoothstep(0.,.5,t)), vec3(.72,.9,1.), smoothstep(.5,1.,t));
+  return mix(warm, neon, uPal);
+}`;
+
+const STEPS = IS_MOBILE ? 72 : 110;
+const bhMat = new THREE.ShaderMaterial({
+  uniforms: {
+    uTime: { value: 0 }, uBass: { value: 0 }, uHigh: { value: 0 }, uKick: { value: 0 }, uEnergy: { value: 0 },
+    uSpin: { value: 0 }, uPal: { value: 0 }, uDisk: { value: 1 }, uGrav: { value: 1 }, uWob: { value: 0 },
+    uWaveR: { value: 0 }, uWaveA: { value: 0 }, uHoriz: { value: 1 }, uRing: { value: 1 },
+    uCamPos: { value: new THREE.Vector3() }, uCamMat: { value: new THREE.Matrix4() }, uProjInv: { value: new THREE.Matrix4() },
+  },
+  vertexShader: `varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0., 1.); }`,
+  fragmentShader: `
+#define STEPS ${STEPS}
+varying vec2 vUv;
+uniform float uTime, uBass, uHigh, uKick, uEnergy, uSpin, uDisk, uGrav, uWob, uWaveR, uWaveA, uHoriz, uRing;
+uniform vec3 uCamPos; uniform mat4 uCamMat, uProjInv;
+${PAL_GLSL}
+float h31(vec3 p){ p = fract(p*vec3(.1031,.1030,.0973)); p += dot(p, p.yxz + 33.33); return fract((p.x + p.y)*p.z); }
+float h21(vec2 p){ vec3 p3 = fract(vec3(p.xyx)*.1031); p3 += dot(p3, p3.yzx + 33.33); return fract((p3.x + p3.y)*p3.z); }
+float n2(vec2 p){ vec2 i = floor(p), f = fract(p); f = f*f*(3. - 2.*f);
+  return mix(mix(h21(i), h21(i + vec2(1,0)), f.x), mix(h21(i + vec2(0,1)), h21(i + vec2(1,1)), f.x), f.y); }
+float fbm(vec2 p){ float a = .5, s = 0.; for(int i = 0; i < 4; i++){ s += a*n2(p); p = mat2(1.6,1.2,-1.2,1.6)*p; a *= .5; } return s; }
+float n3(vec3 p){ vec3 i = floor(p), f = fract(p); f = f*f*(3. - 2.*f);
+  return mix(mix(mix(h31(i), h31(i + vec3(1,0,0)), f.x), mix(h31(i + vec3(0,1,0)), h31(i + vec3(1,1,0)), f.x), f.y),
+             mix(mix(h31(i + vec3(0,0,1)), h31(i + vec3(1,0,1)), f.x), mix(h31(i + vec3(0,1,1)), h31(i + vec3(1,1,1)), f.x), f.y), f.z); }
+
+vec3 sky(vec3 d){
+  vec3 col = vec3(0.);
+  for(int l = 0; l < 2; l++){
+    float sc = l == 0 ? 70. : 150.;
+    vec3 p = d*sc, id = floor(p), f = fract(p) - .5;
+    float h = h31(id + float(l)*31.7);
+    if(h > .9){
+      vec3 o = vec3(h31(id + 1.7), h31(id + 4.3), h31(id + 8.9)) - .5;
+      float dd = length(f - o*.6), b = (h - .9)*10.;
+      float tw = .65 + .35*sin(uTime*(1.5 + h*5.) + h*60.);
+      vec3 sc2 = mix(vec3(1.,.78,.55), vec3(.65,.8,1.), h31(id + 3.1));
+      col += sc2*(1. - smoothstep(0., .07*(1. + b), dd))*b*b*tw*(1.6 + uHigh*2.5);
+    }
+  }
+  float n = n3(d*2.2 + 1.3), m = n3(d*5.3 + 7.1);
+  vec3 neb = mix(vec3(.10,.03,.14), vec3(.02,.06,.16), m)*n*n*1.5;
+  float band = exp(-pow(dot(d, normalize(vec3(.25,1.,.35)))*3.2, 2.));
+  neb += vec3(.09,.07,.12)*band*(.4 + .8*n3(d*11.));
+  neb = mix(neb, neb.gbr, uPal*.5);
+  return col + neb*(.7 + uEnergy*.9);
+}
+
+vec4 disk(vec3 hp, float rr, vec3 rd){
+  float rin = 2.6, rout = 13.;
+  float x = (rr - rin)/(rout - rin);
+  if(x < 0. || x > 1.) return vec4(0.);
+  // Keplerian shear via two cross-faded flow layers (keeps the noise from over-winding)
+  float om = 5.5*pow(rr, -1.5), T = 3.;
+  float p1 = mod(uSpin, T), p2 = mod(uSpin + T*.5, T), w = 1. - abs(2.*p1/T - 1.);
+  float a1 = -p1*om, a2 = -p2*om;
+  vec2 q = hp.xz*(1. + uWob*.04*sin(rr*3. - uTime*4.));
+  vec2 q1 = mat2(cos(a1), sin(a1), -sin(a1), cos(a1))*q;
+  vec2 q2 = mat2(cos(a2), sin(a2), -sin(a2), cos(a2))*q;
+  float n = mix(fbm(q2*.75 + 11.), fbm(q1*.75 + 3.), w);
+  float rings = .55 + .45*sin(rr*8. + n*7.);
+  float dens = smoothstep(0., .05, x)*(1. - smoothstep(.45, 1., x));
+  dens *= (.2 + 1.5*n*n)*(.55 + .45*rings);
+  float wave = exp(-pow((rr - uWaveR)*1.4, 2.))*uWaveA;
+  float temp = pow(1. - x, 1.8);
+  vec3 vel = normalize(vec3(-hp.z, 0., hp.x));
+  float beta = .5*sqrt(rin/rr), cosT = dot(vel, -rd);
+  float D = sqrt(1. - beta*beta)/(1. - beta*cosT);                 // relativistic Doppler factor
+  float beam = clamp(D*D*D, .2, 5.);
+  vec3 c = palette(clamp(temp*(.55 + .45*D) + wave*.3, 0., 1.))*(1. + 4.*temp)*beam;
+  c *= uDisk*(1. + uBass*1.1 + wave*2.);
+  return vec4(c, clamp(dens*1.5, 0., .96));
+}
+
+void main(){
+  vec2 ndc = vUv*2. - 1.;
+  vec4 vp = uProjInv*vec4(ndc, 1., 1.);
+  vec3 rd = normalize((uCamMat*vec4(normalize(vp.xyz/vp.w), 0.)).xyz);
+  vec3 p = uCamPos, v = rd;
+  vec3 hh = cross(p, v); float h2 = dot(hh, hh);
+  float G = 1.5*uGrav, rH = uHoriz;
+  vec3 col = vec3(0.); float tr = 1., glow = 0.; bool cap = false;
+  for(int i = 0; i < STEPS; i++){
+    float r = length(p);
+    float dt = clamp(.085*r, .03, 1.6);
+    v += -G*h2*p/(r*r*r*r*r)*dt;                                     // photon geodesic (Schwarzschild, r_s = 1)
+    vec3 np = p + v*dt;
+    if(p.y*np.y < 0.){
+      vec3 hp = mix(p, np, p.y/(p.y - np.y));
+      vec4 dc = disk(hp, length(hp.xz), normalize(v));
+      col += tr*dc.rgb*dc.a; tr *= 1. - dc.a;
+    }
+    glow += exp(-abs(r - 1.5*rH)*10.)*dt;
+    p = np;
+    float nr = length(p);
+    if(nr < rH){ cap = true; break; }
+    if(tr < .02) break;
+    if(nr > 40. && dot(p, v) > 0.) break;
+  }
+  if(!cap) col += tr*sky(normalize(v));
+  vec3 rc = mix(vec3(1.,.72,.42), vec3(.75,.85,1.), uPal);
+  col += rc*glow*(.25 + 1.2*uKick + .4*uBass)*uRing;
+  gl_FragColor = vec4(col, 1.);
+}`,
+  depthTest: false, depthWrite: false,
+});
+const quad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), bhMat);
+quad.frustumCulled = false; quad.renderOrder = -10;
+scene.add(quad);
+
+/* ---------- infalling matter + relativistic jets (all animated on the GPU) ---------- */
+const PCOUNT = IS_MOBILE ? 9000 : 24000;
+const pGeo = new THREE.BufferGeometry();
+{
+  const seed = new Float32Array(PCOUNT * 4), type = new Float32Array(PCOUNT);
+  for (let i = 0; i < PCOUNT; i++) { for (let k = 0; k < 4; k++) seed[i * 4 + k] = Math.random(); type[i] = Math.random() < 0.2 ? 1 : 0; }
+  pGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(PCOUNT * 3), 3));
+  pGeo.setAttribute('aSeed', new THREE.BufferAttribute(seed, 4));
+  pGeo.setAttribute('aType', new THREE.BufferAttribute(type, 1));
+  pGeo.boundingSphere = new THREE.Sphere(new THREE.Vector3(), 200);
+}
+const pMat = new THREE.ShaderMaterial({
+  uniforms: { uTime: { value: 0 }, uPhase: { value: 0 }, uFlow: { value: 0 }, uBass: { value: 0 }, uKick: { value: 0 }, uJet: { value: 0 },
+    uPal: bhMat.uniforms.uPal, uPix: { value: 800 }, uSize: { value: 0.075 }, uWob: { value: 0 }, uHoriz: bhMat.uniforms.uHoriz, uCam: { value: new THREE.Vector3() } },
+  vertexShader: `
+attribute vec4 aSeed; attribute float aType;
+uniform float uTime, uPhase, uFlow, uBass, uKick, uJet, uPix, uSize, uWob, uHoriz; uniform vec3 uCam;
+varying vec3 vCol; varying float vA;
+${PAL_GLSL}
+void main(){
+  vec3 pos; float a;
+  if(aType < .5){
+    float life = fract(aSeed.y + uFlow*(.6 + aSeed.w*.8));
+    float r = mix(14. + aSeed.x*10., 2.4, pow(life, .8));
+    float ang = aSeed.z*6.2832 + uPhase*.35 + 9./sqrt(r);
+    r *= 1. + .05*uWob*sin(ang*3. + uTime*3.);
+    float h = (aSeed.w - .5)*(.12 + r*.045)*(1. + uBass*1.8);
+    pos = vec3(cos(ang)*r, h, sin(ang)*r);
+    float t = 1. - smoothstep(2.6, 16., r);
+    a = smoothstep(0., .08, life)*smoothstep(2.4, 3.3, r)*(.5 + .5*uBass + .3*uKick);
+    vCol = palette(t)*(.5 + 1.8*t);
+  } else {
+    float life = fract(aSeed.y + uTime*(.22 + aSeed.x*.35));
+    float side = aSeed.w < .5 ? -1. : 1.;
+    float rad = .12 + life*1.6*aSeed.x;
+    float ang = aSeed.z*6.2832 + life*14. + uTime*2.;
+    pos = vec3(cos(ang)*rad, side*(1.4 + life*life*42.), sin(ang)*rad);
+    a = uJet*(1. - life)*smoothstep(0., .04, life);
+    vCol = mix(vec3(.55,.75,1.), vec3(1.,.45,.9), uPal)*2.6;
+  }
+  vec4 mv = modelViewMatrix*vec4(pos, 1.);
+  gl_Position = projectionMatrix*mv;
+  // hide what sits behind the shadow of the hole
+  vec3 toP = pos - uCam, toC = -uCam; float dP = length(toP), dC = length(toC);
+  float perp = length(cross(toP/dP, toC));
+  if(dP > dC) a *= smoothstep(2.3*uHoriz, 2.8*uHoriz, perp);
+  vA = a;
+  gl_PointSize = max(1., uSize*(.6 + aSeed.x*1.3)*(1. + uKick*.9)*uPix/-mv.z);
+}`,
+  fragmentShader: `
+varying vec3 vCol; varying float vA;
+void main(){ vec2 c = gl_PointCoord - .5; float d = dot(c, c); if(d > .25) discard; gl_FragColor = vec4(vCol, exp(-d*14.)*vA); }`,
+  transparent: true, depthWrite: false, depthTest: false, blending: THREE.AdditiveBlending,
+});
+const particles = new THREE.Points(pGeo, pMat);
+particles.frustumCulled = false;
+scene.add(particles);
+
+/* ---------- spectrum crown: 144 filaments of light around the disk ---------- */
+const SPEC_N = 144, SPEC_R = 15.5;
+const specGeo = new THREE.BufferGeometry();
+const specPos = new Float32Array(SPEC_N * 4 * 3), specCol = new Float32Array(SPEC_N * 4 * 3), specVal = new Float32Array(SPEC_N);
+specGeo.setAttribute('position', new THREE.BufferAttribute(specPos, 3));
+specGeo.setAttribute('color', new THREE.BufferAttribute(specCol, 3));
+const lineMat = () => new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, depthWrite: false, depthTest: false, blending: THREE.AdditiveBlending });
+const spec = new THREE.LineSegments(specGeo, lineMat());
+spec.frustumCulled = false; scene.add(spec);
+
+/* ---------- oscilloscope halo hugging the photon sphere ---------- */
+const HALO_N = 256;
+const haloGeo = new THREE.BufferGeometry();
+const haloPos = new Float32Array(HALO_N * 3), haloCol = new Float32Array(HALO_N * 3);
+haloGeo.setAttribute('position', new THREE.BufferAttribute(haloPos, 3));
+haloGeo.setAttribute('color', new THREE.BufferAttribute(haloCol, 3));
+const halo = new THREE.LineLoop(haloGeo, lineMat());
+halo.frustumCulled = false; scene.add(halo);
+
+/* ---------- post: bloom + lens (chromatic aberration, flash, grain, vignette) ---------- */
+const composer = new EffectComposer(renderer);
+composer.setPixelRatio(renderer.getPixelRatio());
+composer.setSize(innerWidth, innerHeight);
+composer.addPass(new RenderPass(scene, camera));
+const bloom = new UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), 0.9, 0.55, 0.55);
+composer.addPass(bloom);
+const lens = new ShaderPass({
+  uniforms: { tDiffuse: { value: null }, uCA: { value: 0 }, uFlash: { value: 0 }, uTime: { value: 0 }, uAspect: { value: 1 } },
+  vertexShader: `varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix*modelViewMatrix*vec4(position, 1.); }`,
+  fragmentShader: `
+uniform sampler2D tDiffuse; uniform float uCA, uFlash, uTime, uAspect; varying vec2 vUv;
+float hs(vec2 p){ vec3 p3 = fract(vec3(p.xyx)*.1031); p3 += dot(p3, p3.yzx + 33.33); return fract((p3.x + p3.y)*p3.z); }
+void main(){
+  vec2 c = vUv - .5; float d = length(c*vec2(uAspect, 1.));
+  vec2 off = c*(.002 + uCA*.012)*(.4 + d*1.6);
+  vec3 col = vec3(texture2D(tDiffuse, vUv + off).r, texture2D(tDiffuse, vUv).g, texture2D(tDiffuse, vUv - off).b);
+  col *= 1. - smoothstep(.45, 1.2, d)*.8;
+  col += uFlash*vec3(1., .93, .85);
+  col += (hs(vUv*vec2(1733., 997.) + fract(uTime)*97.) - .5)*.025;
+  gl_FragColor = vec4(max(col, 0.), 1.);
+}`,
+});
+composer.addPass(lens);
+composer.addPass(new OutputPass());
+
+/* =====================================================================
+   DIRECTION — per-section looks, camera rig, audio → uniforms
+   ===================================================================== */
+const LOOKS = {
+  idle:   { dist: 30,   el: 0.20, spin: 0.35, disk: 0.85, jet: 0,    pal: 0,    bloom: 0.8,  drift: 0.035 },
+  intro:  { dist: 28,   el: 0.14, spin: 0.40, disk: 0.90, jet: 0,    pal: 0,    bloom: 0.85, drift: 0.04 },
+  build:  { dist: 23,   el: 0.07, spin: 0.90, disk: 1.10, jet: 0.12, pal: 0.1,  bloom: 1.0,  drift: 0.07 },
+  drop:   { dist: 21,   el: 0.13, spin: 1.40, disk: 1.35, jet: 1,    pal: 0.12, bloom: 1.2,  drift: 0.12 },
+  break:  { dist: 31,   el: 0.38, spin: 0.30, disk: 0.80, jet: 0,    pal: 0.65, bloom: 0.8,  drift: 0.03 },
+  build2: { dist: 21,   el: 0.05, spin: 1.10, disk: 1.15, jet: 0.3,  pal: 0.5,  bloom: 1.05, drift: 0.09 },
+  drop2:  { dist: 19.5, el: 0.24, spin: 1.80, disk: 1.45, jet: 1,    pal: 0.9,  bloom: 1.3,  drift: 0.16 },
+  switch: { dist: 25,   el: 0.52, spin: 1.20, disk: 1.20, jet: 0.5,  pal: 0.4,  bloom: 1.1,  drift: 0.10 },
+  final:  { dist: 19,   el: 0.10, spin: 2.00, disk: 1.55, jet: 1,    pal: 0.3,  bloom: 1.35, drift: 0.18 },
+  outro:  { dist: 34,   el: 0.26, spin: 0.35, disk: 0.70, jet: 0,    pal: 0.1,  bloom: 0.75, drift: 0.03 },
+};
+const P = Object.assign({ gapS: 0 }, LOOKS.idle);
+const rig = { uAz: 0, uEl: 0, zoom: 1 };
+const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
+let baseFov = 50;
+function fitCamera() {
+  const a = innerWidth / innerHeight;
+  baseFov = a < 1 ? Math.min(80, 2 * Math.atan(Math.tan(25 * Math.PI / 180) / a * 0.8) * 180 / Math.PI) : 50;
+  camera.aspect = a; camera.fov = baseFov; camera.updateProjectionMatrix();
+}
+
+/* ---------- pointer / wheel / pinch orbit ---------- */
+const ptrs = new Map(); let pinch0 = 0, zoom0 = 1;
+const pair = () => { const [a, b] = [...ptrs.values()]; return Math.hypot(a.x - b.x, a.y - b.y); };
+canvas.addEventListener('pointerdown', e => {
+  try { canvas.setPointerCapture(e.pointerId); } catch (_) {}
+  ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY }); canvas.classList.add('drag');
+  if (ptrs.size === 2) { pinch0 = pair(); zoom0 = rig.zoom; }
+});
+canvas.addEventListener('pointermove', e => {
+  const p = ptrs.get(e.pointerId); if (!p) return;
+  if (ptrs.size === 1) { rig.uAz -= (e.clientX - p.x) * 0.005; rig.uEl = clamp(rig.uEl + (e.clientY - p.y) * 0.004, -1.0, 1.1); }
+  p.x = e.clientX; p.y = e.clientY;
+  if (ptrs.size === 2 && pinch0 > 0) rig.zoom = clamp(zoom0 * pinch0 / Math.max(1, pair()), 0.55, 1.7);
+});
+const ptrUp = e => { ptrs.delete(e.pointerId); if (!ptrs.size) canvas.classList.remove('drag'); };
+canvas.addEventListener('pointerup', ptrUp); canvas.addEventListener('pointercancel', ptrUp);
+canvas.addEventListener('wheel', e => { e.preventDefault(); rig.zoom = clamp(rig.zoom * Math.exp(e.deltaY * 0.001), 0.55, 1.7); }, { passive: false });
+
+/* ---------- audio analysis + scheduled beat events ---------- */
+const fft = new Uint8Array(1024), wave = new Float32Array(2048);
+const lv = { bass: 0, mid: 0, high: 0, energy: 0, kick: 0, snare: 0, hat: 0, flash: 0, waveR: 30, waveA: 0, shake: 0, wob: 0 };
+let gapUntil = -1, hardSec = false;
+const follow = (cur, target, dt, att = 18, rel = 5) => cur + (target - cur) * (1 - Math.exp(-(target > cur ? att : rel) * dt));
+function bandAvg(a, b) { let s = 0; for (let i = a; i < b; i++) s += fft[i]; return s / ((b - a) * 255); }
+function analyse(dt) {
+  analyser.getByteFrequencyData(fft); analyser.getFloatTimeDomainData(wave);
+  const hz = ctx.sampleRate / analyser.fftSize, bi = f => Math.max(1, Math.round(f / hz));
+  lv.bass = follow(lv.bass, Math.pow(bandAvg(bi(30), bi(160)), 1.6), dt);
+  lv.mid = follow(lv.mid, Math.pow(bandAvg(bi(300), bi(2000)), 1.4), dt);
+  lv.high = follow(lv.high, Math.min(1, Math.pow(bandAvg(bi(4000), bi(12000)), 1.2) * 1.6), dt);
+  lv.energy = follow(lv.energy, (lv.bass + lv.mid + lv.high) / 3, dt, 4, 1.5);
+}
+function onVis(e) {
+  if (e.type === 'kick') { lv.kick = Math.max(lv.kick, e.v); lv.waveR = 2.6; lv.waveA = Math.max(lv.waveA, 0.6 * e.v); if (hardSec) lv.shake = Math.max(lv.shake, 0.35 * e.v); }
+  else if (e.type === 'snare') lv.snare = Math.max(lv.snare, e.v);
+  else if (e.type === 'hat') lv.hat = Math.max(lv.hat, e.v * 3);
+  else if (e.type === 'impact') { lv.flash = Math.max(lv.flash, 0.9 * e.v); lv.kick = 1; lv.waveR = 2.6; lv.waveA = 1.6; lv.shake = 0.9 * e.v; gapUntil = -1; }
+  else if (e.type === 'gap') gapUntil = e.t + SPB + 0.02;
+}
+function processVis(now, dt) {
+  for (let i = 0; i < visQ.length;) { const e = visQ[i]; if (e.t <= now) { onVis(e); visQ.splice(i, 1); } else i++; }
+  let w = 0;
+  for (let i = wobSegs.length - 1; i >= 0; i--) {
+    const s = wobSegs[i];
+    if (now > s.t0 + s.dur + 0.2) { wobSegs.splice(i, 1); continue; }
+    if (now >= s.t0 && now < s.t0 + s.dur) { const ph = (now - s.t0) / SPB * s.rate; w = lfo(s.shape, ph - Math.floor(ph)); }
+  }
+  lv.wob = follow(lv.wob, w, dt, 40, 14);
+}
+function idleLevels(dt) {
+  const beat = (T * 70 / 60) % 1, pulse = Math.pow(1 - beat, 4);
+  lv.kick = Math.max(lv.kick, 0.28 * pulse); lv.bass = follow(lv.bass, 0.12 + 0.12 * pulse, dt);
+  lv.high = follow(lv.high, 0.05, dt); lv.energy = follow(lv.energy, 0.12, dt); lv.wob = 0;
+}
+
+/* ---------- visual audio-reactive geometry updates ---------- */
+function updateSpec(dt, live) {
+  const half = SPEC_N / 2, hz = live ? ctx.sampleRate / analyser.fftSize : 1;
+  const pal = P.pal;
+  for (let i = 0; i < SPEC_N; i++) {
+    const k = i < half ? i : SPEC_N - 1 - i;
+    let v;
+    if (live) { const f = 40 * Math.pow(16000 / 40, k / (half - 1)); v = Math.pow(fft[Math.min(1023, Math.round(f / hz))] / 255, 2.2); }
+    else v = 0.035 + 0.03 * Math.sin(T * 1.7 + k * 0.35);
+    specVal[i] = follow(specVal[i], v, dt, 30, 6);
+    const s = specVal[i], a = i / SPEC_N * Math.PI * 2 + T * 0.04;
+    const x = Math.cos(a) * SPEC_R, z = Math.sin(a) * SPEC_R, h = 0.12 + s * 7.5 * (1 + lv.kick * 0.3);
+    const o = i * 12;
+    specPos[o] = x; specPos[o + 1] = 0; specPos[o + 2] = z; specPos[o + 3] = x; specPos[o + 4] = h; specPos[o + 5] = z;
+    specPos[o + 6] = x; specPos[o + 7] = 0; specPos[o + 8] = z; specPos[o + 9] = x; specPos[o + 10] = -h * 0.55; specPos[o + 11] = z;
+    const I = 0.18 + 1.9 * s;
+    const r = (1 - pal) * 1.0 + pal * (0.6 + 0.4 * s), g = (1 - pal) * (0.5 + 0.4 * s) + pal * (0.45 + 0.4 * s), b = (1 - pal) * (0.22 + 0.5 * s) + pal * 1.0;
+    for (const vi of [0, 2]) { specCol[o + vi * 3] = r * I; specCol[o + vi * 3 + 1] = g * I; specCol[o + vi * 3 + 2] = b * I; }
+    for (const vi of [1, 3]) { specCol[o + vi * 3] = r * 0.03; specCol[o + vi * 3 + 1] = g * 0.03; specCol[o + vi * 3 + 2] = b * 0.03; }
+  }
+  specGeo.attributes.position.needsUpdate = true; specGeo.attributes.color.needsUpdate = true;
+}
+function updateHalo(live) {
+  const R = 3.35, amp = live ? 1.1 * (0.5 + lv.energy) : 0.12;
+  const I = live ? 0.1 + lv.energy * 1.1 + lv.kick * 0.5 : 0.07;
+  const cr = 1 - P.pal * 0.35, cg = 0.72 + P.pal * 0.1, cb = 0.45 + P.pal * 0.55;
+  for (let i = 0; i < HALO_N; i++) {
+    const a = i / HALO_N * Math.PI * 2;
+    let s = live ? wave[i * 4] : Math.sin(a * 6 + T * 2) * 0.5;
+    s *= Math.min(1, Math.min(i, HALO_N - i) / 14);
+    const r = R + s * amp;
+    haloPos[i * 3] = Math.cos(a) * r; haloPos[i * 3 + 1] = Math.sin(a) * r; haloPos[i * 3 + 2] = 0;
+    haloCol[i * 3] = cr * I; haloCol[i * 3 + 1] = cg * I; haloCol[i * 3 + 2] = cb * I;
+  }
+  haloGeo.attributes.position.needsUpdate = true; haloGeo.attributes.color.needsUpdate = true;
+  halo.quaternion.copy(camera.quaternion);
+}
+
+/* ---------- sizing + adaptive quality ---------- */
+function applySize() {
+  const pr = Math.min(2, DPR * quality);
+  renderer.setPixelRatio(pr); renderer.setSize(innerWidth, innerHeight);
+  composer.setPixelRatio(pr); composer.setSize(innerWidth, innerHeight);
+  lens.uniforms.uAspect.value = innerWidth / innerHeight;
+  fitCamera();
+}
+addEventListener('resize', applySize);
+let qAcc = 0, qN = 0;
+function adapt(dt) {
+  qAcc += dt; qN++;
+  if (qN < 30 && qAcc < 1.5) return;
+  const avg = qAcc / qN; qAcc = 0; qN = 0;
+  if (avg > 0.034 && quality > 0.4) { quality = Math.max(0.4, quality - 0.12); applySize(); }
+  else if (avg < 0.018 && quality < 1) { quality = Math.min(1, quality + 0.07); applySize(); }
+}
+
+/* ---------- HUD ---------- */
+const fmt = s => Math.floor(s / 60) + ':' + String(Math.floor(s % 60)).padStart(2, '0');
+{
+  const pb = $('pbar');
+  for (const s of SECTIONS) if (s.from > 0) { const d = document.createElement('div'); d.className = 'tick'; d.style.left = (s.from / BARS * 100) + '%'; pb.appendChild(d); }
+  pb.addEventListener('pointerdown', e => { const r = pb.getBoundingClientRect(); seek(clamp((e.clientX - r.left) / r.width, 0, 1)); });
+}
+let lastName = '', lastTime = '';
+function updateUI(pos, sec) {
+  if (!started) return;
+  const p = Math.min(1, pos / SONG_LEN);
+  $('fill').style.width = (p * 100).toFixed(2) + '%';
+  const ts = fmt(Math.min(pos, SONG_LEN)) + ' / ' + fmt(SONG_LEN);
+  if (ts !== lastTime) { $('time').textContent = ts; lastTime = ts; }
+  const name = pos >= SONG_LEN ? '∞ — SILENCE' : sec.name;
+  if (name !== lastName) {
+    lastName = name; const el = $('sec'); el.classList.add('swap');
+    setTimeout(() => { el.textContent = name; el.classList.remove('swap'); }, 450);
+  }
+}
+$('go').addEventListener('click', startSong);
+$('pp').addEventListener('click', togglePlay);
+$('hide').addEventListener('click', () => $('hud').classList.add('off'));
+$('fs').addEventListener('click', () => { if (document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen?.().catch(() => {}); });
+addEventListener('keydown', e => {
+  if (e.code === 'Space') { e.preventDefault(); togglePlay(); }
+  else if (e.key === 'h' || e.key === 'H') $('hud').classList.toggle('off');
+  else if (e.key === 'f' || e.key === 'F') $('fs').click();
+  else if (e.key === 'Enter' && !started) startSong();
+});
+
+/* =====================================================================
+   FRAME LOOP
+   ===================================================================== */
+let T = 0, last = performance.now(), spinPhase = 0, flowPhase = 0, azAuto = 0.9, fpsS = 60;
+const U = bhMat.uniforms, PU = pMat.uniforms;
+function frame(now) {
+  requestAnimationFrame(frame);
+  const dt = Math.min(0.1, Math.max(0.001, (now - last) / 1000)); last = now; T += dt;
+  let look = LOOKS.idle, sec = SECTIONS[0], secP = 0, pos = 0;
+  const live = started && ctx && ctx.state === 'running';
+  if (started && ctx) {
+    const aNow = ctx.currentTime;
+    pos = songPos();
+    const barF = pos / BAR;
+    if (barF < BARS) { sec = secAt(Math.floor(barF)); secP = (barF - sec.from) / (sec.to - sec.from); look = LOOKS[sec.id]; }
+    hardSec = /drop|final|switch/.test(sec.id) && barF < BARS;
+    processVis(aNow, dt);
+    if (live) analyse(dt);
+    else { lv.bass = follow(lv.bass, 0, dt); lv.energy = follow(lv.energy, 0, dt); lv.high = follow(lv.high, 0, dt); }
+    P.gapS = follow(P.gapS, aNow < gapUntil ? 1 : 0, dt, 10, 6);
+  } else idleLevels(dt);
+  const buildP = /build/.test(sec.id) && started ? secP : 0;
+
+  // ease toward the section's look
+  const k = 1 - Math.exp(-dt * 0.9);
+  for (const key in look) P[key] += (look[key] - P[key]) * k;
+
+  // envelopes
+  lv.kick *= Math.exp(-dt * 6); lv.snare *= Math.exp(-dt * 8); lv.hat *= Math.exp(-dt * 14);
+  lv.flash *= Math.exp(-dt * 3.2); lv.shake *= Math.exp(-dt * 6);
+  lv.waveR += dt * (13 + 10 * lv.energy); lv.waveA *= Math.exp(-dt * 1.5);
+
+  spinPhase += dt * (P.spin + buildP * 0.8) * (1 + lv.bass * 0.8 + P.gapS * 2.5);
+  flowPhase += dt * 0.045 * (P.spin + buildP) * (1 + lv.bass * 2 + P.gapS * 4);
+
+  // black hole uniforms
+  U.uTime.value = T; U.uBass.value = lv.bass; U.uHigh.value = lv.high + lv.hat * 0.3; U.uKick.value = lv.kick; U.uEnergy.value = lv.energy;
+  U.uSpin.value = spinPhase; U.uPal.value = P.pal; U.uWob.value = lv.wob;
+  U.uDisk.value = P.disk * (1 - 0.8 * P.gapS) * (1 + 0.25 * lv.snare + buildP * 0.3);
+  U.uGrav.value = 1 + 0.07 * lv.kick + 0.12 * P.gapS + 0.03 * lv.wob;
+  U.uHoriz.value = 1 + 0.06 * lv.kick + 0.05 * lv.wob;
+  U.uWaveR.value = lv.waveR; U.uWaveA.value = lv.waveA;
+  U.uRing.value = 1 - 0.6 * P.gapS + buildP * 0.8;
+
+  // camera rig
+  azAuto += dt * P.drift * (1 + lv.energy * 0.6);
+  const az = azAuto + rig.uAz;
+  const el = clamp(P.el + rig.uEl + Math.sin(T * 0.13) * 0.05, -1.2, 1.35);
+  const dist = P.dist * rig.zoom * (1 - buildP * 0.14 + P.gapS * 0.05) * (1 + 0.03 * Math.sin(T * 0.21));
+  camera.position.set(Math.cos(el) * Math.cos(az) * dist, Math.sin(el) * dist, Math.cos(el) * Math.sin(az) * dist);
+  if (!REDUCED && lv.shake > 0.001) camera.position.add(new THREE.Vector3(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).multiplyScalar(lv.shake * 0.5));
+  const roll = hardSec ? Math.sin(T * 0.4) * 0.07 : Math.sin(T * 0.1) * 0.02;
+  camera.up.set(Math.sin(roll), Math.cos(roll), 0);
+  camera.lookAt(0, 0, 0);
+  camera.fov = baseFov * (1 + (hardSec ? 0.035 : 0.01) * lv.kick - buildP * 0.06);
+  camera.updateProjectionMatrix(); camera.updateMatrixWorld();
+  U.uCamPos.value.copy(camera.position); U.uCamMat.value.copy(camera.matrixWorld); U.uProjInv.value.copy(camera.projectionMatrixInverse);
+
+  // particles
+  PU.uTime.value = T; PU.uPhase.value = spinPhase; PU.uFlow.value = flowPhase; PU.uBass.value = lv.bass; PU.uKick.value = lv.kick;
+  PU.uJet.value = P.jet * (0.45 + 0.9 * lv.bass + 0.4 * lv.kick) * (1 - P.gapS); PU.uWob.value = lv.wob; PU.uCam.value.copy(camera.position);
+  PU.uPix.value = innerHeight * renderer.getPixelRatio() / (2 * Math.tan(camera.fov * Math.PI / 360));
+
+  updateSpec(dt, live); updateHalo(live);
+
+  // post
+  bloom.strength = P.bloom * (0.7 + 0.6 * lv.bass + 0.45 * lv.kick) * (1 - 0.4 * P.gapS) + lv.flash * 0.9;
+  bloom.radius = 0.45 + 0.25 * lv.energy;
+  renderer.toneMappingExposure = 1.0 + 0.2 * lv.bass + buildP * 0.15;
+  lens.uniforms.uCA.value = (hardSec ? lv.kick * 0.8 : lv.kick * 0.2) + lv.snare * 0.35 + lv.flash + buildP * 0.3;
+  lens.uniforms.uFlash.value = lv.flash * (REDUCED ? 0.15 : 0.55);
+  lens.uniforms.uTime.value = T;
+
+  composer.render(dt);
+  updateUI(pos, sec);
+  adapt(dt);
+  if (DEBUG) { fpsS = fpsS * 0.95 + (1 / dt) * 0.05; $('dbg').textContent = fpsS.toFixed(0) + ' fps · q ' + quality.toFixed(2) + ' · ' + (sec ? sec.id : '-'); }
+}
+
+window.__sg = {
+  get state() { return { started, audio: ctx ? ctx.state : 'none', pos: +songPos().toFixed(2), section: secAt(Math.floor(songPos() / BAR)).id, quality: +quality.toFixed(2), queued: visQ.length }; },
+  start: startSong, seek,
+};
+applySize();
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

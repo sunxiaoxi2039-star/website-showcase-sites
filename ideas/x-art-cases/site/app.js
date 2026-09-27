@@ -1,0 +1,410 @@
+// X 艺术案例十则 · 页面主逻辑
+// 数据：先读 site/cases.json（下一位合并的正式数据），缺失时退回 site/cases.sample.json（三条占位）。
+// 加 ?data=sample 可直接读占位数据（自测用，避免 cases.json 不存在时的 404 记录）。
+import { initHero } from './hero.js';
+
+const root = document.documentElement;
+const reducedMQ = window.matchMedia('(prefers-reduced-motion: reduce)');
+const reduced = reducedMQ.matches;
+const $ = (s, el = document) => el.querySelector(s);
+
+const VERSIONS = [
+  { key: 'oneshot', label: '一次成型' },
+  { key: 'fixed', label: '修正版' },
+  { key: 'final', label: '精修版' },
+];
+const CN_NUM = ['零', '一', '二', '三', '四', '五', '六', '七', '八', '九', '十'];
+const EXEC_MODEL = 'Claude Opus 5.5';
+const measurers = []; // 提示词折叠判断，渲染后与 resize、字体加载后各跑一次
+const remeasure = () => measurers.forEach((f) => f());
+
+/* ---------------- 小工具 ---------------- */
+function h(tag, attrs = {}, ...kids) {
+  const el = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (v == null || v === false) continue;
+    if (k === 'class') el.className = v;
+    else if (k === 'text') el.textContent = v;
+    else if (k.startsWith('on')) el.addEventListener(k.slice(2), v);
+    else if (k === 'style') el.style.cssText = v;
+    else el.setAttribute(k, v === true ? '' : v);
+  }
+  for (const kid of kids.flat()) if (kid != null && kid !== false) el.append(kid);
+  return el;
+}
+const pad2 = (n) => String(n ?? '').padStart(2, '0');
+const cnNum = (n) => (n >= 0 && n <= 10 ? CN_NUM[n] : String(n));
+const has = (v) => typeof v === 'string' ? v.trim() !== '' : v != null;
+const handleOf = (a) => (a ? '@' + String(a).trim().replace(/^@+/, '') : '');
+function safeHttp(u) {
+  try { const x = new URL(u, location.href); return /^https?:$/.test(x.protocol) ? x.href : null; } catch (_) { return null; }
+}
+// 现场地址：相对路径（相对 x-art/）或 data:text/html（占位数据用）；其余一律不收
+function safeSrc(u) {
+  if (!has(u)) return null;
+  const s = String(u).trim();
+  if (/^data:text\/html[;,]/i.test(s)) return s;
+  if (/^[a-z][a-z0-9+.-]*:/i.test(s)) return /^https?:/i.test(s) ? s : null;
+  return s;
+}
+function fmtScore(v) {
+  if (v == null || v === '') return null;
+  const n = Number(v);
+  if (!Number.isFinite(n)) return String(v);
+  if (n <= 10) return `${n} / 10`;
+  if (n <= 100) return `${n} / 100`;
+  return String(n);
+}
+function asList(v) {
+  if (Array.isArray(v)) return v.filter(has).map(String);
+  if (has(v)) return String(v).split(/\n+/).map((s) => s.replace(/^[-*·\s]+/, '').trim()).filter(Boolean);
+  return [];
+}
+
+/* ---------------- 数据 ---------------- */
+async function loadCases() {
+  const want = new URLSearchParams(location.search).get('data');
+  const tryLoad = async (url) => {
+    const r = await fetch(url, { cache: 'no-cache' });
+    if (!r.ok) throw new Error(url + ' ' + r.status);
+    const j = await r.json();
+    const arr = Array.isArray(j) ? j : Array.isArray(j?.cases) ? j.cases : null;
+    if (!arr || !arr.length) throw new Error(url + ' 为空');
+    return arr;
+  };
+  if (want === 'sample') return { cases: await tryLoad('site/cases.sample.json'), sample: true };
+  try { return { cases: await tryLoad('site/cases.json'), sample: false }; }
+  catch (err) {
+    console.info('[x-art] 正式数据暂缺，改读占位数据 cases.sample.json');
+    return { cases: await tryLoad('site/cases.sample.json'), sample: true };
+  }
+}
+function normalize(c, i) {
+  const nn = pad2(c.nn ?? i + 1);
+  const versions = VERSIONS.filter((v) => safeSrc(c[v.key])).map((v) => ({ ...v, src: safeSrc(c[v.key]) }));
+  return { ...c, nn, id: 'w-' + (c.slug ? String(c.slug).replace(/[^a-z0-9-]/gi, '') : nn), versions };
+}
+
+/* ---------------- 现场管理：全站同一时刻只开一个 iframe ---------------- */
+const Live = {
+  cur: null, // { work, iframe }
+  open(work) {
+    if (this.cur && this.cur.work === work) return;
+    this.close();
+    const v = work.versions.find((x) => x.key === work.ver) || work.versions[0];
+    if (!v) return;
+    const iframe = h('iframe', {
+      src: v.src, title: `${work.data.title_cn || work.data.title || ''} · ${v.label} · 现场`,
+      allow: 'autoplay; fullscreen; accelerometer; gyroscope', loading: 'eager',
+      referrerpolicy: 'no-referrer',
+    });
+    work.screen.append(iframe);
+    work.el.classList.add('is-live');
+    this.cur = { work, iframe };
+    // 重新观察一次：打开时若画框已不在视野里（例如键盘或脚本触发），立即收回
+    liveIO.unobserve(work.screen); liveIO.observe(work.screen);
+    iframe.focus({ preventScroll: true });
+  },
+  swap(work) {
+    if (!this.cur || this.cur.work !== work) return;
+    const v = work.versions.find((x) => x.key === work.ver);
+    if (v) this.cur.iframe.src = v.src;
+  },
+  close() {
+    if (!this.cur) return;
+    const { work, iframe } = this.cur;
+    try { iframe.src = 'about:blank'; } catch (_) {}
+    iframe.remove();
+    work.el.classList.remove('is-live');
+    this.cur = null;
+  },
+};
+const liveIO = new IntersectionObserver((entries) => {
+  for (const en of entries) {
+    if (!en.isIntersecting && Live.cur && Live.cur.work.screen === en.target) Live.close();
+  }
+}, { threshold: 0 });
+
+/* ---------------- 渲染 ---------------- */
+function renderStats(cases) {
+  const count = cases.length;
+  const clean = cases.filter((c) => c.oneshot_clean === true).length;
+  const mins = cases.reduce((s, c) => s + (Number(c.minutes_oneshot) || 0), 0);
+  const set = (k, v) => document.querySelectorAll(`[data-stat="${k}"]`).forEach((el) => { el.textContent = ''; el.append(...[].concat(v)); });
+  set('count', [String(count), h('small', { text: '件' })]);
+  set('clean', [String(clean), h('small', { text: `/ ${count}` })]);
+  set('minutes', mins ? [String(Math.round(mins)), h('small', { text: '分钟' })] : '—');
+  set('count-cn', cnNum(count));
+  const pending = 10 - count; // 十则里还没上墙的
+  set('pending-cn', cnNum(pending));
+  document.querySelectorAll('[data-pending]').forEach((el) => { el.hidden = pending <= 0; });
+}
+
+function renderCatalogue(works) {
+  const list = $('#catList');
+  const peek = $('#catPeek');
+  list.textContent = '';
+  for (const w of works) {
+    const c = w.data;
+    const meta = [c.oneshot_clean === true ? '一次成型' : c.oneshot_clean === false ? '修正后成型' : null,
+      has(c.minutes_oneshot) ? `${c.minutes_oneshot} 分钟` : null].filter(Boolean).join(' · ');
+    const a = h('a', { href: '#' + w.id },
+      h('span', { class: 'cat-nn', text: w.nn }),
+      h('span', { class: 'cat-t' }, h('strong', { text: c.title_cn || c.title || '未命名' }), has(c.title) && c.title_cn ? h('em', { text: c.title }) : null),
+      h('span', { class: 'cat-a', text: handleOf(c.author) }),
+      h('span', { class: 'cat-m', text: meta }),
+      h('span', { class: 'cat-go', 'aria-hidden': 'true', text: '→' }));
+    a.addEventListener('click', (e) => {
+      e.preventDefault();
+      document.getElementById(w.id)?.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'start' });
+      history.replaceState(null, '', '#' + w.id);
+    });
+    const img = c.thumb || c.poster;
+    if (img) {
+      a.addEventListener('pointerenter', (e) => { if (e.pointerType !== 'mouse') return; peek.src = img; peek.classList.add('is-on'); });
+      a.addEventListener('pointerleave', () => peek.classList.remove('is-on'));
+      a.addEventListener('pointermove', (e) => {
+        if (e.pointerType !== 'mouse') return;
+        const x = Math.min(window.innerWidth - 280, e.clientX + 24);
+        peek.style.transform = `translate3d(${x}px, ${e.clientY - 80}px, 0)`;
+      });
+    }
+    list.append(h('li', {}, a));
+  }
+}
+
+function renderWork(c, total) {
+  const w = { data: c, nn: c.nn, id: c.id, versions: c.versions, ver: null };
+  w.ver = (c.versions.find((v) => v.key === 'final') || c.versions[c.versions.length - 1] || {}).key || null;
+  const titleCn = c.title_cn || c.title || '未命名';
+
+  // —— 画框 ——
+  const poster = h('img', { class: 'poster', alt: `${titleCn} 海报`, loading: 'lazy', decoding: 'async' });
+  const screen = h('div', { class: 'screen' });
+  const frame = h('div', { class: 'frame' }, h('div', { class: 'mat' }, screen));
+  if (c.poster) {
+    poster.addEventListener('load', () => {
+      poster.classList.add('is-loaded');
+      const ar = poster.naturalWidth / poster.naturalHeight;
+      if (ar && Number.isFinite(ar)) frame.style.setProperty('--ar', Math.min(2.2, Math.max(0.8, ar)).toFixed(4));
+      cap.style.setProperty('--ar', frame.style.getPropertyValue('--ar'));
+    }, { once: true });
+    poster.addEventListener('error', () => screen.append(h('span', { class: 'poster-miss', text: '海报暂缺' })), { once: true });
+    poster.src = c.poster;
+    screen.append(poster);
+  } else {
+    screen.append(h('span', { class: 'poster-miss', text: '海报暂缺' }));
+  }
+  const canPlay = c.versions.length > 0;
+  const play = h('button', { class: 'play', type: 'button', 'aria-label': `开启现场：${titleCn}`, disabled: !canPlay },
+    h('span', { class: 'play-disc' }, h('span', {}, h('b', { text: '▶' }), canPlay ? '开启现场' : '暂无现场')));
+  screen.append(play);
+  play.addEventListener('click', () => Live.open(w));
+
+  // —— 版本切换 + 工具 ——
+  const openNew = h('a', { class: 't-new', target: '_blank', rel: 'noopener', text: '新窗口打开 ↗' });
+  const setOpenNew = () => {
+    const v = c.versions.find((x) => x.key === w.ver);
+    // data: 地址不能在新窗口直接打开，占位数据时隐藏该链接
+    if (v && !/^data:/i.test(v.src)) { openNew.href = v.src; openNew.hidden = false; } else { openNew.removeAttribute('href'); openNew.hidden = true; }
+  };
+  const verBox = h('div', { class: 'ver', role: 'group', 'aria-label': '版本切换' });
+  for (const v of c.versions) {
+    const b = h('button', { type: 'button', 'aria-pressed': String(v.key === w.ver), 'data-ver': v.key, text: v.label });
+    b.addEventListener('click', () => {
+      w.ver = v.key;
+      verBox.querySelectorAll('button').forEach((x) => x.setAttribute('aria-pressed', String(x.dataset.ver === v.key)));
+      setOpenNew();
+      Live.swap(w);
+    });
+    verBox.append(b);
+  }
+  setOpenNew();
+  const fsBtn = h('button', { type: 'button', class: 't-fs', text: '全屏' });
+  fsBtn.addEventListener('click', () => {
+    if (!Live.cur || Live.cur.work !== w) Live.open(w);
+    const el = screen;
+    (el.requestFullscreen || el.webkitRequestFullscreen)?.call(el);
+  });
+  const closeBtn = h('button', { type: 'button', class: 't-close', text: '关闭现场' });
+  closeBtn.addEventListener('click', () => Live.close());
+  const cap = h('figcaption', { class: 'cap' }, c.versions.length ? verBox : h('span', { class: 'tools', text: '暂无可运行版本' }),
+    h('div', { class: 'tools' }, closeBtn, fsBtn, openNew));
+  const stage = h('figure', { class: 'stage' }, frame, cap);
+
+  // —— 展签 ——
+  const handle = handleOf(c.author);
+  const postUrl = safeHttp(c.post_url);
+  const profile = handle ? `https://x.com/${handle.slice(1)}` : null;
+  const meta = h('dl', { class: 'lab-meta' });
+  const row = (k, ...v) => { if (v.flat().some((x) => x != null && x !== '')) meta.append(h('dt', { text: k }), h('dd', {}, ...v)); };
+  row('原帖作者', handle ? h('a', { href: profile, target: '_blank', rel: 'noopener noreferrer', text: handle }) : null,
+    has(c.author_name) ? `（${c.author_name}）` : null);
+  row('原帖', postUrl ? h('a', { href: postUrl, target: '_blank', rel: 'noopener noreferrer', text: '查看原帖 ↗' }) : null,
+    has(c.post_date) ? `　${c.post_date}` : null);
+  row('作者所用模型', has(c.model_used_by_author) ? String(c.model_used_by_author) : '未注明');
+  row('执行模型', EXEC_MODEL);
+  if (c.oneshot_clean === true || c.oneshot_clean === false) {
+    row('一次成型', c.oneshot_clean ? '是' : '否', h('span', { class: 'pill ' + (c.oneshot_clean ? 'ok' : 'no'), text: c.oneshot_clean ? '原样可跑' : '经过修正' }));
+  }
+  if (has(c.minutes_oneshot)) row('一次成型用时', `约 ${c.minutes_oneshot} 分钟`);
+  const sc = fmtScore(c.review_score_before);
+  if (sc) row('修前评分', sc);
+
+  const hls = asList(c.highlights_cn);
+  const techs = asList(c.techniques);
+  const label = h('aside', { class: 'label', 'aria-label': `展签 ${w.nn}` },
+    h('p', { class: 'lab-no', text: `No. ${w.nn} / ${pad2(total)}` }),
+    h('h3', { class: 'lab-title', id: w.id + '-t', text: titleCn }),
+    has(c.title) && c.title_cn ? h('p', { class: 'lab-en', lang: 'en', text: c.title }) : null,
+    meta,
+    has(c.art_direction_cn) ? h('p', { class: 'lab-dir', text: c.art_direction_cn }) : null,
+    has(c.summary_cn) ? h('blockquote', { class: 'verdict', text: c.summary_cn }) : null,
+    hls.length ? [h('p', { class: 'hl-head', text: '看点' }), h('ol', { class: 'hl' }, hls.map((t) => h('li', { text: t })))] : null,
+    techs.length ? [h('p', { class: 'tq-head', text: '技法' }), h('ul', { class: 'tags' }, techs.map((t) => h('li', { text: t })))] : null,
+    renderPrompt(c, postUrl),
+  );
+
+  const el = h('section', { class: 'work', id: w.id, 'aria-labelledby': w.id + '-t', 'data-nn': w.nn },
+    h('p', { class: 'work-num', 'aria-hidden': 'true', text: w.nn }),
+    h('div', { class: 'wrap work-grid' }, stage, label));
+  Object.assign(w, { el, screen, frame });
+  liveIO.observe(screen);
+  return w;
+}
+
+function renderPrompt(c, postUrl) {
+  if (!has(c.prompt_text)) return null;
+  const text = String(c.prompt_text);
+  const vb = c.verbatim === true ? '逐字原文' : c.verbatim === false ? '非逐字，按原帖整理' : has(c.verbatim) ? String(c.verbatim) : null;
+  const pre = h('pre', { class: 'prompt-text', lang: 'en', tabindex: '0', text });
+  const box = h('div', { class: 'prompt' });
+  const copy = h('button', { type: 'button', class: 'copy', text: '复制' });
+  copy.addEventListener('click', async () => {
+    let ok = false;
+    try { await navigator.clipboard.writeText(text); ok = true; } catch (_) {
+      const ta = h('textarea', { style: 'position:fixed;left:-9999px;top:0', readonly: true });
+      ta.value = text; document.body.append(ta); ta.select();
+      try { ok = document.execCommand('copy'); } catch (_) { ok = false; }
+      ta.remove();
+    }
+    copy.textContent = ok ? '已复制' : '复制失败';
+    copy.classList.toggle('is-done', ok);
+    setTimeout(() => { copy.textContent = '复制'; copy.classList.remove('is-done'); }, 1800);
+  });
+  const expand = h('button', { type: 'button', class: 'expand', 'aria-expanded': 'false', text: `展开全文（${text.length} 字符）` });
+  expand.addEventListener('click', () => {
+    const open = box.classList.toggle('is-open');
+    expand.setAttribute('aria-expanded', String(open));
+    expand.textContent = open ? '收起' : `展开全文（${text.length} 字符）`;
+  });
+  box.append(
+    h('div', { class: 'prompt-head' }, h('h4', {}, '原帖提示词', vb ? h('small', { text: vb }) : null), copy),
+    pre, expand);
+  // 默认收起（只露前四行）；排版后按实际高度判断是否需要「展开全文」，窗口变宽变窄时重算
+  measurers.push(() => {
+    if (!pre.isConnected || box.classList.contains('is-open')) return;
+    box.classList.toggle('is-long', pre.scrollHeight > pre.clientHeight + 2);
+  });
+  const note = h('p', { class: 'prompt-note' }, '原帖提示词仅作对照引用，版权归原作者',
+    postUrl ? ['　·　', h('a', { href: postUrl, target: '_blank', rel: 'noopener noreferrer', text: '原帖链接 ↗' })] : null);
+  return [box, note];
+}
+
+/* ---------------- 滚动：开场进度、视差、顶栏 ---------------- */
+function setupScroll(works, hero) {
+  const heroEl = $('#hero');
+  const heroText = $('#heroText');
+  const bar = $('#bar');
+  const barRoom = $('#barRoom');
+  const barProg = $('#barProgress');
+  const visible = new Set();
+
+  const io = new IntersectionObserver((entries) => {
+    for (const en of entries) {
+      const w = works.find((x) => x.el === en.target);
+      if (!w) continue;
+      if (en.isIntersecting) { visible.add(w); w.el.classList.add('is-in'); } else visible.delete(w);
+    }
+    tick();
+  }, { rootMargin: '10% 0px 10% 0px', threshold: 0 });
+  works.forEach((w) => io.observe(w.el));
+
+  const heroIO = new IntersectionObserver(([en]) => hero?.setVisible(en.isIntersecting), { threshold: 0 });
+  heroIO.observe(heroEl);
+
+  let ticking = false;
+  function tick() {
+    ticking = false;
+    const vh = window.innerHeight;
+    const y = window.scrollY;
+    // 开场
+    const heroSpan = Math.max(1, heroEl.offsetHeight - vh);
+    const s = Math.min(1, Math.max(0, y / heroSpan));
+    if (!reduced) {
+      hero?.setScroll(s);
+      heroText.style.transform = `translate3d(0, ${(-s * 22).toFixed(2)}vh, 0)`;
+      heroText.style.opacity = String(Math.max(0, 1 - s * 1.6).toFixed(3));
+    }
+    bar.classList.toggle('is-on', y > heroEl.offsetHeight - vh * 0.5);
+    const docH = document.documentElement.scrollHeight - vh;
+    barProg.style.transform = `scaleX(${docH > 0 ? (y / docH).toFixed(4) : 0})`;
+    // 视差（手机只动大号数字，幅度也小）
+    let cur = null;
+    for (const w of visible) {
+      const r = w.el.getBoundingClientRect();
+      const p = ((r.top + r.height / 2) - vh / 2) / (vh / 2 + r.height / 2);
+      if (!reduced) w.el.style.setProperty('--p', Math.max(-1, Math.min(1, p)).toFixed(4));
+      if (r.top < vh * 0.5 && r.bottom > vh * 0.5) cur = w;
+    }
+    barRoom.textContent = cur ? `展间 ${cur.nn} / ${pad2(works.length)} · ${cur.data.title_cn || cur.data.title || ''}` : '';
+  }
+  const onScroll = () => { if (!ticking) { ticking = true; requestAnimationFrame(tick); } };
+  window.addEventListener('scroll', onScroll, { passive: true });
+  window.addEventListener('resize', onScroll, { passive: true });
+  tick();
+}
+
+/* ---------------- 启动 ---------------- */
+async function main() {
+  const dataP = loadCases(); // 先发请求，再编译着色器，两边并行
+  dataP.catch(() => {});
+  let hero = null;
+  try { hero = initHero($('#heroCanvas'), { reduced }); } catch (err) { console.warn('[hero]', err); hero = null; }
+  if (!hero) root.classList.add('no-gl');
+
+  const status = $('#worksStatus');
+  let data;
+  try { data = await dataP; }
+  catch (err) {
+    status.textContent = '展品数据读取失败，请稍后刷新。';
+    console.warn('[x-art] 数据读取失败', err);
+    setupScroll([], hero);
+    return;
+  }
+  const cases = data.cases.map(normalize);
+  if (data.sample) root.classList.add('is-sample');
+  renderStats(cases);
+  const box = $('#works');
+  box.textContent = '';
+  if (data.sample) box.append(h('p', { class: 'sample-note', text: '当前展示的是占位数据（site/cases.sample.json），正式十件合并进 site/cases.json 后自动替换。' }));
+  const works = cases.map((c) => renderWork(c, cases.length));
+  works.forEach((w) => box.append(w.el));
+  renderCatalogue(works);
+  setupScroll(works, hero);
+  requestAnimationFrame(remeasure);
+  document.fonts?.ready.then(remeasure).catch(() => {});
+  let mt = 0;
+  window.addEventListener('resize', () => { clearTimeout(mt); mt = setTimeout(remeasure, 200); }, { passive: true });
+
+  // 带锚点进入时，渲染完再跳一次
+  if (location.hash && location.hash.length > 1) {
+    const t = document.getElementById(decodeURIComponent(location.hash.slice(1)));
+    if (t) t.scrollIntoView({ block: 'start' });
+  }
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && Live.cur && !document.fullscreenElement) Live.close(); });
+  // 自测钩子：只读，不改状态
+  window.__xart = { get liveCount() { return document.querySelectorAll('.screen iframe').length; }, works: works.length, sample: data.sample };
+}
+
+main();
