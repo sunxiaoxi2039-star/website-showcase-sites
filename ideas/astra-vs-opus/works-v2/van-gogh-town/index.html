@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="zh-CN">
+<html lang="zh-CN" data-title-en="Walk Through Van Gogh’s Town" data-desc-en="Six Van Gogh masterpieces reimagined as a small town you can walk through — every pixel is painted by brushstrokes computed in real time.">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -31,7 +31,10 @@
   #topbar a { color: var(--cream); text-decoration: none; opacity: 0.86; }
   #topbar a:hover { opacity: 1; color: var(--chrome); }
   #topbar .l { justify-self: start; overflow: hidden; text-overflow: ellipsis; }
-  #topbar .r { justify-self: end; overflow: hidden; text-overflow: ellipsis; }
+  #topbar .r { overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+  #topbar .rw { justify-self: end; display: flex; align-items: center; gap: 8px; min-width: 0; }
+  html[lang=en] .intro-card h1 { letter-spacing: .01em; }
+  html[lang=en] #label .cn { letter-spacing: .01em; }
   #topbar .c { display: flex; align-items: center; gap: 8px; min-width: 0; }
   #topbar .c strong { font-family: var(--serif); font-weight: 700; letter-spacing: 0.06em; font-size: 14px; }
   #topbar .tag { font-size: 11px; padding: 3px 7px; border-radius: 999px; background: rgba(242, 194, 58, 0.14); color: var(--chrome); border: 1px solid rgba(242, 194, 58, 0.35); }
@@ -146,14 +149,21 @@
     .chip .nm { font-size: 11px; }
     #btnHelp { display: none; }
   }
+  @media (max-width: 640px) {
+    #topbar { grid-template-columns: auto minmax(0, 1fr) auto; }
+    #topbar .c { flex-direction: column; justify-content: center; gap: 1px; line-height: 1.1; overflow: hidden; }
+    #topbar .c .long { display: none; }
+    #topbar .tag { padding: 1px 5px; }
+    #topbar .rw { gap: 6px; }
+  }
   @media (max-width: 380px) { #topbar .tag { display: none; } }
 </style>
 </head>
 <body>
   <header id="topbar">
-    <a class="l" href="../../compare/index.html">← 三方对照</a>
-    <div class="c"><strong>走进梵高的小镇</strong><span class="tag">Opus 5.5 · 独立逆向</span></div>
-    <a class="r" href="https://x.com/petergostev/status/2095776685807346105" target="_blank" rel="noopener">原作<span class="long"> @petergostev</span> ↗</a>
+    <a class="l" href="../../compare/index.html" data-en="← Compare">← 三方对照</a>
+    <div class="c"><strong data-en="&lt;span class=&quot;long&quot;&gt;Walk Through &lt;/span&gt;Van Gogh’s Town">走进梵高的小镇</strong><span class="tag" data-en="Opus 5.5 · Reverse-engineered">Opus 5.5 · 独立逆向</span></div>
+    <div class="rw" data-lang-slot><a class="r" href="https://x.com/petergostev/status/2095776685807346105" target="_blank" rel="noopener" data-en="Original<span class=&quot;long&quot;> @petergostev</span> ↗">原作<span class="long"> @petergostev</span> ↗</a></div>
   </header>
 
   <main id="app"></main>
@@ -161,13 +171,13 @@
   <section id="intro">
     <div class="intro-card">
       <div class="eyebrow">WALK THROUGH VAN GOGH</div>
-      <h1>走进<em>梵高</em>的小镇</h1>
-      <p>六幅画，一座镇。从星空下的咖啡座出发，穿过黄房子、走进他的卧室，到罗纳河边看灯影，再去麦田和山坡上的柏树。天空、光线和季节会随着你走进哪一幅画而改变——画面里的每一笔，都是此刻为你画的。</p>
+      <h1 data-en="Walk into <em>Van Gogh’s</em> town">走进<em>梵高</em>的小镇</h1>
+      <p data-en="Six paintings, one town. Set out from the café terrace under the stars, pass the Yellow House and step into his bedroom, watch the lights dance on the Rhône, then head out to the wheatfield and the cypresses on the hill. Sky, light and season change with whichever painting you walk into — and every brushstroke you see is being painted for you, right now.">六幅画，一座镇。从星空下的咖啡座出发，穿过黄房子、走进他的卧室，到罗纳河边看灯影，再去麦田和山坡上的柏树。天空、光线和季节会随着你走进哪一幅画而改变——画面里的每一笔，都是此刻为你画的。</p>
       <div class="btns">
-        <button class="cta primary" id="btnStart">开始漫步</button>
-        <button class="cta ghost" id="btnStartTour">跟随导览</button>
+        <button class="cta primary" id="btnStart" data-en="Start walking">开始漫步</button>
+        <button class="cta ghost" id="btnStartTour" data-en="Take the tour">跟随导览</button>
       </div>
-      <div class="keys">
+      <div class="keys" data-en="<kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> walk　<kbd>Shift</kbd> hurry　drag / click the view to look around<br><kbd>1</kbd>–<kbd>6</kbd> go to the painter’s spot　<kbd>T</kbd> tour　<kbd>F</kbd> frame it　<kbd>H</kbd> hide UI">
         <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> 行走　<kbd>Shift</kbd> 快走　拖动 / 点击画面 看四周<br>
         <kbd>1</kbd>–<kbd>6</kbd> 走到画家的位置　<kbd>T</kbd> 导览　<kbd>F</kbd> 装进画框　<kbd>H</kbd> 隐藏界面
       </div>
@@ -184,26 +194,27 @@
     <div class="src" id="lbl-src"></div>
   </aside>
 
-  <nav id="gallery" class="hud play-only" aria-label="六幅画"></nav>
+  <nav id="gallery" class="hud play-only" aria-label="六幅画" data-en-aria-label="Six paintings"></nav>
   <div id="tools" class="hud play-only">
-    <canvas id="minimap" width="264" height="264" aria-label="小镇地图"></canvas>
+    <canvas id="minimap" width="264" height="264" aria-label="小镇地图" data-en-aria-label="Town map"></canvas>
     <div class="tbtns">
-      <button class="tb" id="btnTour" title="自动导览 (T)">导览</button>
-      <button class="tb" id="btnFrame" title="装进画框 (F)">画框</button>
-      <button class="tb" id="btnSound" title="环境声 (M)">声音</button>
-      <button class="tb" id="btnHide" title="隐藏界面 (H)">隐藏</button>
-      <button class="tb" id="btnHelp" title="操作说明">?</button>
+      <button class="tb" id="btnTour" title="自动导览 (T)" data-en-title="Guided tour (T)" data-en="Tour">导览</button>
+      <button class="tb" id="btnFrame" title="装进画框 (F)" data-en-title="Frame the view (F)" data-en="Frame">画框</button>
+      <button class="tb" id="btnSound" title="环境声 (M)" data-en-title="Ambient sound (M)" data-en="Sound">声音</button>
+      <button class="tb" id="btnHide" title="隐藏界面 (H)" data-en-title="Hide UI (H)" data-en="Hide">隐藏</button>
+      <button class="tb" id="btnHelp" title="操作说明" data-en-title="Controls">?</button>
     </div>
   </div>
-  <div id="help" class="hud">
+  <div id="help" class="hud" data-en="<kbd>W A S D</kbd> / arrow keys walk　<kbd>Q</kbd><kbd>E</kbd> turn<br>Drag to look around; click to lock the mouse (<kbd>Esc</kbd> to release)<br><kbd>1</kbd>–<kbd>6</kbd> fly to an easel　<kbd>T</kbd> tour　<kbd>F</kbd> frame　<kbd>M</kbd> sound　<kbd>H</kbd> hide UI<br>Phone: left-side joystick to walk, drag on the right to look">
     <kbd>W A S D</kbd> / 方向键 行走　<kbd>Q</kbd><kbd>E</kbd> 转身<br>
     拖动画面看四周，单击锁定鼠标（<kbd>Esc</kbd> 释放）<br>
     <kbd>1</kbd>–<kbd>6</kbd> 飞到画架前　<kbd>T</kbd> 导览　<kbd>F</kbd> 画框　<kbd>M</kbd> 声音　<kbd>H</kbd> 隐藏界面<br>
     手机：左侧摇杆行走，右侧拖动环顾
   </div>
   <div id="joy"><i></i></div>
-  <div id="loading">正在调色……</div>
+  <div id="loading" data-en="Mixing the paints…">正在调色……</div>
 
+  <script src="./js/i18n.js"></script>
   <script type="importmap">
   { "imports": { "three": "./vendor/three/three.module.js" } }
   </script>

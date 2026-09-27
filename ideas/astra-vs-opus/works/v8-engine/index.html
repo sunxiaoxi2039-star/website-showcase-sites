@@ -3,9 +3,46 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>V8 四冲程剖面 · Opus 临摹</title>
-<meta name="description" content="对 @DilumSanjaya 用 GPT-6 Astra 做的交互式 V8 发动机可视化的临摹重写：曲轴、连杆、气门正时与点火顺序都按真实几何在跑。">
+<title data-en="Interactive V8 Engine · Opus copy">V8 四冲程剖面 · Opus 临摹</title>
+<meta name="description" data-en="An Opus rewrite of the interactive V8 engine @DilumSanjaya built with GPT-6 Astra: crankshaft, connecting rods, valve timing and firing order all run on real geometry." content="对 @DilumSanjaya 用 GPT-6 Astra 做的交互式 V8 发动机可视化的临摹重写：曲轴、连杆、气门正时与点火顺序都按真实几何在跑。">
 <link rel="stylesheet" href="../../assets/work.css">
+<script>
+/* 中英切换：?lang= → localStorage['avo-lang'] → navigator.language */
+(function () {
+  var d = document, h = d.documentElement, L, fns = [];
+  try { L = new URLSearchParams(location.search).get('lang'); } catch (e) {}
+  if (L !== 'zh' && L !== 'en') { try { L = localStorage.getItem('avo-lang'); } catch (e) {} }
+  if (L !== 'zh' && L !== 'en') L = /^zh/i.test(navigator.language || '') ? 'zh' : 'en';
+  var tt = d.querySelector('title'), md = d.querySelector('meta[name="description"]');
+  var M = { zh: { t: tt.textContent, d: md && md.content }, en: { t: tt.getAttribute('data-en'), d: md && md.getAttribute('data-en') } };
+  function head() { h.lang = L === 'zh' ? 'zh-CN' : 'en'; d.title = M[L].t; if (md) md.content = M[L].d; }
+  function apply() {
+    head();
+    var b = d.getElementById('langbtn');
+    if (b) { b.textContent = L === 'zh' ? 'EN' : '中'; b.setAttribute('aria-label', L === 'zh' ? 'Switch to English' : '切换到中文'); }
+    var as = d.querySelectorAll('a[href]:not([target])');
+    for (var i = 0; i < as.length; i++) {
+      var a = as[i], o = a.getAttribute('data-href') || a.getAttribute('href');
+      if (/^(https?:|#|mailto:)/.test(o)) continue;
+      a.setAttribute('data-href', o);
+      var p = o.split('#');
+      a.setAttribute('href', p[0] + (p[0].indexOf('?') < 0 ? '?' : '&') + 'lang=' + L + (p[1] ? '#' + p[1] : ''));
+    }
+    for (var j = 0; j < fns.length; j++) fns[j](L);
+  }
+  window.AVO = {
+    lang: function () { return L; },
+    t: function (o) { return o == null || typeof o !== 'object' ? o : o[L]; },
+    on: function (fn) { fns.push(fn); },
+    set: function (n) { L = n; try { localStorage.setItem('avo-lang', L); } catch (e) {} apply(); }
+  };
+  head();
+  d.addEventListener('DOMContentLoaded', apply);
+  d.addEventListener('click', function (e) {
+    if (e.target.closest && e.target.closest('#langbtn')) AVO.set(L === 'zh' ? 'en' : 'zh');
+  });
+})();
+</script>
 <style>
   body { background: radial-gradient(110% 80% at 50% 30%, #1b1f25 0%, #0c0e12 60%, #05070a 100%); }
   .firing {
@@ -23,49 +60,50 @@
   .order i.hot { background: #ff8a3d; border-color: #ff8a3d; color: #1a0d04; font-weight: 700; }
   .bars { display: grid; gap: 5px; }
   .bars div { display: flex; align-items: center; gap: 7px; font-size: 10.5px; color: var(--dim); }
-  .bars span { flex: 1; height: 6px; border-radius: 4px; background: rgba(255,255,255,.09); overflow: hidden; }
+  .bars div > span { flex: 1; height: 6px; border-radius: 4px; background: rgba(255,255,255,.09); overflow: hidden; }
   .bars span b { display: block; height: 100%; width: 0%; border-radius: 4px; background: linear-gradient(90deg, #4fd8ff, #ff8a3d); }
   .bars em { width: 52px; font-style: normal; letter-spacing: .02em; }
   .strokelead {
     position: fixed; z-index: 16; left: 50%; top: 60px; transform: translateX(-50%);
     text-align: center; pointer-events: none;
   }
-  .strokelead span { font-size: 10.5px; letter-spacing: .34em; text-transform: uppercase; color: rgba(242,245,248,.45); }
+  .strokelead > span { white-space: nowrap; font-size: 10.5px; letter-spacing: .34em; text-transform: uppercase; color: rgba(242,245,248,.45); }
   .strokelead b { display: block; margin-top: 5px; font-size: 18px; font-weight: 600; letter-spacing: .1em; }
   @media (max-width: 960px) { .firing { display: none; } }
 </style>
 </head>
 <body>
+<button type="button" class="lang-toggle" id="langbtn" aria-label="Switch to English">EN</button>
 
-<div class="loading" id="loading">装配发动机 · BUILDING THE V8</div>
+<div class="loading" id="loading"><span data-zh>装配发动机 · BUILDING THE V8</span><span data-en>Building the V8</span></div>
 
 <div class="topbar">
-  <a href="../../index.html">← 对照总览</a>
-  <div class="ttl">V8 四冲程剖面<span>OPUS 临摹</span></div>
+  <a href="../../index.html">← <span data-zh>对照总览</span><span data-en>Overview</span></a>
+  <div class="ttl"><span data-zh>V8 四冲程剖面</span><span data-en>Interactive V8 Engine</span><em class="tag"><span data-zh>OPUS 临摹</span><span data-en>OPUS COPY</span></em></div>
   <div class="spacer"></div>
-  <a href="https://x.com/DilumSanjaya/status/2096280244663775423" target="_blank" rel="noopener">原作 @DilumSanjaya ↗</a>
+  <a href="https://x.com/DilumSanjaya/status/2096280244663775423" target="_blank" rel="noopener"><span data-zh>原作</span><span data-en>Original by</span> @DilumSanjaya ↗</a>
 </div>
 
-<div class="strokelead"><span id="focusName">CYLINDER 1</span><b id="focusStroke">做功</b></div>
+<div class="strokelead"><span id="focusName">CYLINDER 1</span><b id="focusStroke"><span data-zh>做功</span><span data-en>Power</span></b></div>
 
 <div class="firing">
-  <h2>点火顺序 1-8-4-3-6-5-7-2</h2>
+  <h2><span data-zh>点火顺序 1-8-4-3-6-5-7-2</span><span data-en>Firing order</span></h2>
   <div class="order" id="order"></div>
-  <h2>缸内压力</h2>
+  <h2><span data-zh>缸内压力</span><span data-en>Cylinder pressure</span></h2>
   <div class="bars" id="bars"></div>
 </div>
 
 <div class="panel">
-  <h2>运行参数</h2>
-  <label>转速 <b id="rpmv">1200</b> rpm</label>
+  <h2><span data-zh>运行参数</span><span data-en>Engine controls</span></h2>
+  <label><span data-zh>转速</span><span data-en>Engine speed</span> <b id="rpmv">1200</b> rpm</label>
   <input type="range" id="rpm" min="0" max="6500" step="50" value="1200">
   <div class="btnrow">
-    <button class="btn on" id="cut">剖切缸体</button>
-    <button class="btn" id="slow">单步慢放</button>
+    <button class="btn on" id="cut"><span data-zh>剖切缸体</span><span data-en>Cutaway</span></button>
+    <button class="btn" id="slow"><span data-zh>单步慢放</span><span data-en>Slow motion</span></button>
   </div>
   <div class="btnrow">
-    <button class="btn on" id="phase">冲程配色</button>
-    <button class="btn on" id="spin">自动旋转</button>
+    <button class="btn on" id="phase"><span data-zh>冲程配色</span><span data-en>Stroke colors</span></button>
+    <button class="btn on" id="spin"><span data-zh>自动旋转</span><span data-en>Auto-rotate</span></button>
   </div>
 </div>
 
@@ -74,7 +112,7 @@
   <div class="sub">crank angle</div>
 </div>
 
-<div class="hint" id="hint">拖拽旋转 · 滚轮缩放 · 点击任意缸锁定观察</div>
+<div class="hint" id="hint"><span data-zh>拖拽旋转 · 滚轮缩放 · 点击任意缸锁定观察</span><span data-en>Drag to rotate · Scroll to zoom · Click a cylinder to follow it</span></div>
 
 <script src="../../assets/vendor/three.min.js"></script>
 <script>
@@ -292,10 +330,10 @@
   // ================= 四冲程逻辑 =================
   // 相位 0–720°：0–180 做功，180–360 排气，360–540 进气，540–720 压缩
   var STROKES = [
-    { to: 180, name: '做功', color: 0xff7a3c },
-    { to: 360, name: '排气', color: 0x9aa5b2 },
-    { to: 540, name: '进气', color: 0x4fd8ff },
-    { to: 720, name: '压缩', color: 0xffd166 }
+    { to: 180, name: { zh: '做功', en: 'Power' }, color: 0xff7a3c },
+    { to: 360, name: { zh: '排气', en: 'Exhaust' }, color: 0x9aa5b2 },
+    { to: 540, name: { zh: '进气', en: 'Intake' }, color: 0x4fd8ff },
+    { to: 720, name: { zh: '压缩', en: 'Compression' }, color: 0xffd166 }
   ];
   function strokeOf(phase) {
     for (var i = 0; i < STROKES.length; i++) if (phase < STROKES[i].to) return STROKES[i];
@@ -330,7 +368,7 @@
   });
   for (var ci = 1; ci <= 8; ci++) {
     var row = document.createElement('div');
-    var em = document.createElement('em'); em.textContent = '缸 ' + ci;
+    var em = document.createElement('em'); em.innerHTML = '<span data-zh>缸 ' + ci + '</span><span data-en>Cyl ' + ci + '</span>';
     var sp = document.createElement('span'); var bb = document.createElement('b');
     sp.appendChild(bb); row.appendChild(em); row.appendChild(sp);
     barsEl.appendChild(row);
@@ -487,8 +525,9 @@
       orderCells[u.c.id].classList.toggle('hot', phase < 90);
 
       if (u.c.id === focusCyl) {
-        focusNameEl.textContent = 'CYLINDER ' + u.c.id + (u.c.bank < 0 ? ' · 左列' : ' · 右列');
-        focusStrokeEl.textContent = st.name;
+        var en = AVO.lang() === 'en';
+        focusNameEl.textContent = 'CYLINDER ' + u.c.id + (u.c.bank < 0 ? (en ? ' · LEFT BANK' : ' · 左列') : (en ? ' · RIGHT BANK' : ' · 右列'));
+        focusStrokeEl.textContent = en ? st.name.en : st.name.zh;
         focusStrokeEl.style.color = '#' + st.color.toString(16).padStart(6, '0');
       }
     });

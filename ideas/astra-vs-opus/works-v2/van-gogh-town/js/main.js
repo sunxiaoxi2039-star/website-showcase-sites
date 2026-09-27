@@ -11,6 +11,9 @@ import { Ambience } from './audio.js';
 
 THREE.ColorManagement.enabled = false;
 const params = new URLSearchParams(location.search);
+const I18N = window.I18N || { lang: 'zh', t: (zh) => zh, on() {} };
+const isEn = () => I18N.lang === 'en';
+const nameOf = (p) => (isEn() ? p.en.name : p.cn);
 const $ = (id) => document.getElementById(id);
 
 // ------------------------------------------------------------------ renderer
@@ -202,11 +205,15 @@ const gallery = $('gallery');
 PAINTINGS.forEach((p) => {
   const b = document.createElement('button');
   b.className = 'chip'; b.dataset.id = p.id;
-  b.innerHTML = `<span class="sw">${p.swatch.map((c) => `<i style="background:${c}"></i>`).join('')}</span><span class="nm"><b>${p.key}</b>${p.cn}</span>`;
-  b.title = `前往《${p.cn}》的画架`;
+  b.innerHTML = `<span class="sw">${p.swatch.map((c) => `<i style="background:${c}"></i>`).join('')}</span><span class="nm"><b>${p.key}</b><span class="nm-t"></span></span>`;
+  chipText(b, p);
   b.addEventListener('click', (e) => { e.stopPropagation(); stopTour(); goTo(p); });
   gallery.appendChild(b);
 });
+function chipText(b, p) {
+  b.querySelector('.nm-t').textContent = nameOf(p);
+  b.title = isEn() ? `Go to the easel for “${p.en.name}”` : `前往《${p.cn}》的画架`;
+}
 function setBtn(id, on) { const el = $(id); if (el) el.classList.toggle('on', on); }
 
 let labelFor = null, labelTimer = 0;
@@ -214,12 +221,16 @@ function showLabel(p) {
   clearTimeout(labelTimer);
   labelTimer = setTimeout(() => $('label').classList.remove('show'), innerWidth < 640 ? 6500 : 11000);
   labelFor = p.id;
-  $('lbl-cn').textContent = p.cn;
-  $('lbl-orig').textContent = `${p.orig} · ${p.year}`;
-  $('lbl-place').textContent = `${p.place} ｜ 现藏：${p.museum}`;
-  $('lbl-quote').textContent = `“${p.quote}”`;
-  $('lbl-src').textContent = `—— ${p.quoteSrc}`;
+  fillLabel(p);
   $('label').classList.add('show');
+}
+function fillLabel(p) {
+  const en = isEn();
+  $('lbl-cn').textContent = nameOf(p);
+  $('lbl-orig').textContent = `${p.orig} · ${en ? p.en.year : p.year}`;
+  $('lbl-place').textContent = en ? `${p.en.place} | Collection: ${p.en.museum}` : `${p.place} ｜ 现藏：${p.museum}`;
+  $('lbl-quote').textContent = `“${en ? p.en.quote : p.quote}”`;
+  $('lbl-src').textContent = en ? `— ${p.en.quoteSrc}` : `—— ${p.quoteSrc}`;
 }
 function hideLabel() { labelFor = null; $('label').classList.remove('show'); }
 
@@ -239,7 +250,7 @@ function layoutFrame() {
   if (fh > h * 0.78) { fh = h * 0.78; fw = fh * p.aspect; }
   const f = $('frame-inner');
   f.style.width = fw + 'px'; f.style.height = fh + 'px';
-  $('frame-plaque').textContent = `${p.cn}　${p.orig}，${p.year.slice(0, 4)}`;
+  $('frame-plaque').textContent = isEn() ? `${p.en.name} · ${p.orig}, ${p.year.slice(0, 4)}` : `${p.cn}　${p.orig}，${p.year.slice(0, 4)}`;
 }
 function currentZone() {
   const w = zoneWeights(player.x, player.z);
@@ -278,6 +289,13 @@ function begin(withTour) {
 }
 $('btnStart').addEventListener('click', () => begin(false));
 $('btnStartTour').addEventListener('click', () => begin(true));
+
+// 中英切换：即时重写画作名、铭牌与展签
+I18N.on(() => {
+  document.querySelectorAll('.chip').forEach((b) => { const p = byId[b.dataset.id]; if (p) chipText(b, p); });
+  if (labelFor && byId[labelFor]) fillLabel(byId[labelFor]);
+  if (framed) layoutFrame();
+});
 
 // minimap
 const mm = $('minimap'); const mctx = mm.getContext('2d');

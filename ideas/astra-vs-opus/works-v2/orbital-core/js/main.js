@@ -193,11 +193,12 @@ layout();
 /* ------------------------------------------------------------------ */
 /* State                                                               */
 /* ------------------------------------------------------------------ */
+const I18N = window.I18N || { lang: 'zh', t: (zh) => zh, L: (o) => (o && typeof o === 'object' ? o.zh : o), on() {} };
 const MODES = {
-  orbit:   { a: 0.32, b: 0.52, cam: 0.55, label: '运行中' },
-  pulse:   { a: 0.85, b: 1.45, cam: 1.0,  label: '脉冲中' },
-  still:   { a: 0.0,  b: 0.0,  cam: 0.0,  label: '待机' },
-  explode: { a: 0.12, b: 0.0,  cam: 0.35, label: '拆解视图' },
+  orbit:   { a: 0.32, b: 0.52, cam: 0.55, label: { zh: '运行中', en: 'Running' } },
+  pulse:   { a: 0.85, b: 1.45, cam: 1.0,  label: { zh: '脉冲中', en: 'Pulsing' } },
+  still:   { a: 0.0,  b: 0.0,  cam: 0.0,  label: { zh: '待机', en: 'Standby' } },
+  explode: { a: 0.12, b: 0.0,  cam: 0.35, label: { zh: '拆解视图', en: 'Exploded' } },
 };
 const S = {
   mode: 'orbit', t: 0, wall: 0,
@@ -225,7 +226,7 @@ function setMode(next) {
     b.setAttribute('aria-pressed', String(on));
   });
   readout.classList.toggle('is-still', next === 'still');
-  $('#roState').textContent = MODES[next].label;
+  $('#roState').textContent = I18N.L(MODES[next].label);
   audio.blip(next === 'explode' ? 660 : next === 'pulse' ? 990 : 820);
 }
 buttons.forEach((b) => b.addEventListener('click', () => setMode(b.dataset.mode)));
@@ -241,8 +242,20 @@ soundBtn.addEventListener('click', async () => {
   const on = await audio.toggle();
   soundBtn.classList.toggle('is-on', on);
   soundBtn.setAttribute('aria-pressed', String(on));
-  soundBtn.querySelector('em').textContent = on ? '声音 · 开' : '声音 · 关';
+  soundLabel();
 });
+
+function soundLabel() {
+  const on = soundBtn.classList.contains('is-on');
+  soundBtn.querySelector('em').textContent = on ? I18N.t('声音 · 开', 'Sound · on') : I18N.t('声音 · 关', 'Sound · off');
+}
+// 中英切换：状态字、声音按钮、标注宽度缓存
+I18N.on(() => {
+  $('#roState').textContent = I18N.L(MODES[S.mode].label);
+  soundLabel();
+  if (typeof tagW !== 'undefined') tagW.clear();
+});
+if (I18N.lang === 'en') { $('#roState').textContent = I18N.L(MODES[S.mode].label); soundLabel(); }
 
 function resetView() {
   const off = camera.position.clone().sub(controls.target);
