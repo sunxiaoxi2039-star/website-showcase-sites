@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Koi Pond</title>
+<link rel="icon" href="data:,">
+<meta name="description" content="A full-screen interactive koi pond: caustics, refraction, ripples, rain and a movable whirlpool.">
+<meta name="theme-color" content="#0b3b40">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/cormorant-garamond@5.1.0/latin-500.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/cormorant-garamond@5.1.0/latin-500-italic.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/manrope@5.1.0/latin-500.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/manrope@5.1.0/latin-600.css">
+<style>
+  :root{
+    --glass: rgba(232, 250, 250, 0.13);
+    --glass-2: rgba(240, 253, 253, 0.2);
+    --stroke: rgba(255, 255, 255, 0.28);
+    --ink: #f3fbfa;
+    --ink-dim: rgba(236, 250, 248, 0.72);
+    --warm: rgba(255, 228, 186, 0.9);
+    --serif: "Cormorant Garamond", "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    --sans: "Manrope", "Avenir Next", "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;overflow:hidden;background:#0b3b40;color:var(--ink);font-family:var(--sans);
+    -webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none;overscroll-behavior:none}
+  #pond{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:crosshair}
+  button{font-family:inherit}
+
+  .topbar{position:fixed;top:max(14px, env(safe-area-inset-top));left:16px;right:16px;display:flex;align-items:flex-start;
+    justify-content:space-between;gap:12px;pointer-events:none;z-index:5;transition:opacity .6s ease, transform .6s ease}
+  .brand{pointer-events:auto;padding:10px 18px 11px;border-radius:18px;background:var(--glass);
+    -webkit-backdrop-filter:blur(14px) saturate(140%);backdrop-filter:blur(14px) saturate(140%);
+    border:1px solid var(--stroke);box-shadow:0 10px 30px rgba(0,30,34,.22), inset 0 1px 0 rgba(255,255,255,.25)}
+  .brand h1{margin:0;font-family:var(--serif);font-weight:500;font-size:28px;letter-spacing:.03em;line-height:1}
+  .brand h1 i{font-style:italic;color:var(--warm)}
+  .brand p{margin:4px 0 0;font-size:11.5px;color:var(--ink-dim);letter-spacing:.03em}
+  .controls{pointer-events:auto;display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end;padding:6px;border-radius:18px;
+    background:var(--glass);-webkit-backdrop-filter:blur(14px) saturate(140%);backdrop-filter:blur(14px) saturate(140%);
+    border:1px solid var(--stroke);box-shadow:0 10px 30px rgba(0,30,34,.22), inset 0 1px 0 rgba(255,255,255,.25)}
+  .ctl{appearance:none;-webkit-appearance:none;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.07);color:var(--ink);
+    font-size:12.5px;font-weight:500;letter-spacing:.01em;line-height:1;padding:9px 13px;border-radius:12px;display:inline-flex;align-items:center;gap:7px;
+    cursor:pointer;transition:background .25s, border-color .25s, box-shadow .25s, transform .2s;white-space:nowrap}
+  .ctl svg{width:17px;height:17px;flex:0 0 auto;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+  .ctl:hover{background:rgba(255,255,255,.16)}
+  .ctl:active{transform:scale(.97)}
+  .ctl:focus-visible,.card:focus-visible{outline:2px solid #fff;outline-offset:2px}
+  .ctl[aria-pressed="true"]{background:rgba(255,232,196,.26);border-color:rgba(255,231,196,.62);
+    box-shadow:inset 0 0 0 1px rgba(255,231,196,.2), 0 4px 18px rgba(255,208,150,.2)}
+
+  .panel{position:fixed;left:50%;bottom:max(16px, env(safe-area-inset-bottom));transform:translateX(-50%);z-index:5;
+    width:min(690px, calc(100% - 32px));padding:9px 12px 11px;border-radius:24px;
+    background:linear-gradient(180deg, rgba(240,255,254,.19), rgba(214,244,242,.09));
+    -webkit-backdrop-filter:blur(18px) saturate(150%);backdrop-filter:blur(18px) saturate(150%);
+    border:1px solid rgba(255,255,255,.3);box-shadow:0 24px 60px rgba(0,28,32,.34), inset 0 1px 0 rgba(255,255,255,.38);
+    transition:opacity .6s ease, transform .6s ease}
+  .panel-head{display:flex;justify-content:space-between;align-items:baseline;margin:0 6px 7px;font-size:10.5px;color:var(--ink-dim);
+    letter-spacing:.14em;text-transform:uppercase}
+  .panel-head b{font-weight:600;color:var(--ink)}
+  .cards{display:grid;grid-template-columns:repeat(4, 1fr);gap:9px}
+  .card{appearance:none;-webkit-appearance:none;position:relative;border:1px solid rgba(255,255,255,.22);
+    background:radial-gradient(120% 90% at 50% 20%, rgba(120,220,215,.18), rgba(255,255,255,.05) 70%);
+    border-radius:17px;padding:4px 8px 8px;color:var(--ink);cursor:grab;touch-action:none;display:flex;flex-direction:column;
+    align-items:center;gap:2px;transition:transform .3s cubic-bezier(.2,.8,.2,1), background .3s, box-shadow .3s, border-color .3s}
+  .card:hover{transform:translateY(-4px);border-color:rgba(255,255,255,.45);box-shadow:0 14px 30px rgba(0,36,40,.3)}
+  .card:active{cursor:grabbing}
+  .card.pulse{animation:pulse .5s ease}
+  @keyframes pulse{0%{transform:scale(1)}40%{transform:scale(.95)}100%{transform:scale(1)}}
+  .card canvas{width:100%;max-width:128px;aspect-ratio:16/10;display:block;pointer-events:none}
+  .card .name{font-family:var(--serif);font-style:italic;font-weight:500;font-size:19px;letter-spacing:.02em;line-height:1.05;pointer-events:none}
+  .card .sub{font-size:10.5px;color:var(--ink-dim);letter-spacing:.02em;pointer-events:none}
+
+  .ghost{position:fixed;left:0;top:0;width:170px;height:106px;margin:-53px 0 0 -85px;pointer-events:none;z-index:40;opacity:0;
+    transition:opacity .18s ease;filter:drop-shadow(0 22px 16px rgba(0,26,32,.45))}
+  .ghost.on{opacity:1}
+  .target{position:fixed;left:0;top:0;width:84px;height:84px;margin:-42px 0 0 -42px;border-radius:50%;pointer-events:none;z-index:39;
+    border:1.5px dashed rgba(255,255,255,.8);opacity:0;transition:opacity .2s;box-shadow:0 0 0 6px rgba(255,255,255,.08)}
+  .target.on{opacity:1}
+  .target.bad{border-color:rgba(255,160,150,.9)}
+
+  .whirl-handle{position:fixed;left:0;top:0;width:58px;height:58px;margin:-29px 0 0 -29px;border-radius:50%;z-index:4;display:none;
+    align-items:center;justify-content:center;border:1.5px solid rgba(255,255,255,.62);background:rgba(255,255,255,.08);
+    -webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);cursor:grab;touch-action:none;color:#fff;
+    box-shadow:0 6px 20px rgba(0,30,35,.3);transition:opacity .5s}
+  .whirl-handle svg{width:26px;height:26px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;opacity:.9}
+  .whirl-handle:active{cursor:grabbing}
+  body.whirl-on .whirl-handle{display:flex}
+
+  #showUi{position:fixed;top:max(10px, env(safe-area-inset-top));right:10px;z-index:9;opacity:0;pointer-events:none;
+    background:rgba(0,30,34,.35);transition:opacity .4s}
+  body.ui-hidden #showUi.peek, body.ui-hidden #showUi:focus-visible{opacity:.9;pointer-events:auto}
+  body.ui-hidden .topbar{opacity:0;transform:translateY(-16px);pointer-events:none}
+  body.ui-hidden .topbar *{pointer-events:none}
+  body.ui-hidden .panel{opacity:0;transform:translate(-50%, 24px);pointer-events:none}
+  body.ui-hidden .panel *{pointer-events:none}
+  body.ui-hidden .whirl-handle{opacity:0;pointer-events:none}
+
+  .toast{position:fixed;left:50%;top:92px;transform:translate(-50%, -8px);z-index:20;padding:9px 16px;border-radius:14px;font-size:13px;
+    background:rgba(4,40,44,.55);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.2);
+    opacity:0;pointer-events:none;transition:opacity .35s, transform .35s;white-space:nowrap}
+  .toast.show{opacity:1;transform:translate(-50%, 0)}
+  .fallback{position:fixed;inset:0;display:none;align-items:center;justify-content:center;text-align:center;padding:24px;font-size:16px}
+
+  @media (max-width: 720px){
+    .topbar{left:10px;right:10px;top:max(10px, env(safe-area-inset-top));align-items:center;gap:8px}
+    .brand{padding:7px 12px 8px;border-radius:15px;min-width:0}
+    .brand h1{font-size:22px}
+    .brand p{margin:2px 0 0;font-size:10.5px}
+    .brand .tip{display:none}
+    .controls{flex-wrap:nowrap;gap:3px;padding:4px;border-radius:15px}
+    .controls .ctl{padding:7px;border-radius:11px}
+    .controls .ctl span{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+    .ctl svg{width:18px;height:18px}
+    .panel{width:calc(100% - 20px);bottom:max(10px, env(safe-area-inset-bottom));padding:8px 8px 9px;border-radius:20px}
+    .panel-head{font-size:9.5px;margin:0 4px 6px;letter-spacing:.1em}
+    .cards{gap:6px}
+    .card{padding:4px 3px 7px;border-radius:14px}
+    .card .name{font-size:14.5px;white-space:nowrap;letter-spacing:0}
+    .card .sub{display:none}
+    .toast{top:78px;font-size:12px}
+    .ghost{width:136px;height:85px;margin:-70px 0 0 -68px}
+  }
+  @media (max-width: 360px){ .controls .ctl{padding:6px} .ctl svg{width:16px;height:16px} .card .name{font-size:13px;white-space:normal} }
+</style>
+</head>
+<body>
+<canvas id="pond" aria-label="Koi pond. Drag across the water to make ripples."></canvas>
+
+<header class="topbar">
+  <div class="brand">
+    <h1>Koi <i>Pond</i></h1>
+    <p><span id="count">0 koi</span><span class="tip"> · Drag across the water to make ripples</span></p>
+  </div>
+  <nav class="controls" aria-label="Pond controls">
+    <button class="ctl" id="btnSound" aria-pressed="false" title="Sound" aria-label="Sound">
+      <svg viewBox="0 0 24 24"><path d="M4 9.5v5h3.6L12 18.5v-13L7.6 9.5H4z"/><path class="w1" d="M15.5 9a4.2 4.2 0 0 1 0 6"/><path class="w2" d="M18.2 6.5a8 8 0 0 1 0 11"/></svg><span>Sound</span>
+    </button>
+    <button class="ctl" id="btnRain" aria-pressed="false" title="Rain" aria-label="Rain">
+      <svg viewBox="0 0 24 24"><path d="M7.2 14.5a3.8 3.8 0 0 1-.4-7.6 5.2 5.2 0 0 1 10 1.2 3.2 3.2 0 0 1 .4 6.4z"/><path d="M8.5 17.5l-1 2.5M12.5 17.5l-1 2.5M16.5 17.5l-1 2.5"/></svg><span>Rain</span>
+    </button>
+    <button class="ctl" id="btnWhirl" aria-pressed="false" title="Whirlpool" aria-label="Whirlpool">
+      <svg viewBox="0 0 24 24"><path d="M12 12a1 1 0 0 1 2 0a2 2 0 0 1-4 0a3 3 0 0 1 6 0a4 4 0 0 1-8 0a5 5 0 0 1 10 0a6 6 0 0 1-6 6"/></svg><span>Whirlpool</span>
+    </button>
+    <button class="ctl" id="btnCalm" aria-pressed="false" title="Calm" aria-label="Calm">
+      <svg viewBox="0 0 24 24"><path d="M3 10.5c3-2.2 6 2.2 9 0s6 2.2 9 0M3 15.5c3-2.2 6 2.2 9 0s6 2.2 9 0"/></svg><span>Calm</span>
+    </button>
+    <button class="ctl" id="btnClear" title="Clear pond" aria-label="Clear pond">
+      <svg viewBox="0 0 24 24"><path d="M4.5 12a7.5 7.5 0 1 0 2.2-5.3"/><path d="M4.5 4.5v4h4"/></svg><span>Clear pond</span>
+    </button>
+    <button class="ctl" id="btnHide" title="Hide UI (press H to toggle)" aria-label="Hide UI">
+      <svg viewBox="0 0 24 24"><path d="M3 3l18 18"/><path d="M10.4 5.2A9.6 9.6 0 0 1 12 5c5 0 8.6 4.3 9.6 7a13 13 0 0 1-2.9 3.9M6.5 6.6C4.4 8 3 10 2.4 12c1 2.7 4.6 7 9.6 7 1.8 0 3.4-.5 4.8-1.3"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg><span>Hide UI</span>
+    </button>
+  </nav>
+</header>
+
+<section class="panel" aria-label="Choose a koi">
+  <div class="panel-head"><b>Release a koi</b><span>Tap to release · Drag to place</span></div>
+  <div class="cards">
+    <button class="card" data-variety="0" aria-label="Release a Kohaku koi"><canvas></canvas><span class="name">Kohaku</span><span class="sub">Red on snow white</span></button>
+    <button class="card" data-variety="1" aria-label="Release a Showa koi"><canvas></canvas><span class="name">Showa</span><span class="sub">Black, red &amp; white</span></button>
+    <button class="card" data-variety="2" aria-label="Release a Golden Ogon koi"><canvas></canvas><span class="name">Golden Ogon</span><span class="sub">Metallic gold</span></button>
+    <button class="card" data-variety="3" aria-label="Release a Platinum koi"><canvas></canvas><span class="name">Platinum</span><span class="sub">Metallic white</span></button>
+  </div>
+</section>
+
+<div class="whirl-handle" id="whirlHandle" title="Drag to move the whirlpool">
+  <svg viewBox="0 0 24 24"><path d="M12 3.5a8.5 8.5 0 0 1 8.5 8.5"/><path d="M20.5 12a8.5 8.5 0 0 1-8.5 8.5"/><path d="M12 20.5A8.5 8.5 0 0 1 3.5 12"/><path d="M3.5 12A8.5 8.5 0 0 1 12 3.5"/><path d="M18 3.2l2.5.8-.2 2.6M6 20.8l-2.5-.8.2-2.6"/><circle cx="12" cy="12" r="1.6"/></svg>
+</div>
+<canvas class="ghost" id="ghost" width="340" height="212"></canvas>
+<div class="target" id="target"></div>
+<button class="ctl" id="showUi" title="Show UI (H)">Show UI</button>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<div class="fallback" id="fallback">This pond needs WebGL 2. Please open it in a current desktop or mobile browser.</div>
+
+<script type="importmap">
+{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js" } }
+</script>
+<script type="module" src="js/main.js"></script>
+</body>
+</html>

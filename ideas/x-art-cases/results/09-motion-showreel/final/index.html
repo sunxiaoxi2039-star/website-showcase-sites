@@ -291,7 +291,8 @@ function s4(lt){
  const u=seg(b,.15,3.9),zt=.14+11*Math.pow(1-u,1.8),tp=S*.14/zt,ta=clamp((zt-.14)/.5)*clamp(u*6);
  if(ta>0&&tp<S*3){c.globalAlpha=ta;kin('DEPTH',cx,cy+tp*.36,tp,99,{al:'center',col:PAPER,mask:false,tr:.08,w:800,wd:'expanded'});c.globalAlpha=1}
  mono(Math.max(9,S*.014));c.fillStyle='rgba(243,239,230,.55)';c.textAlign='center';c.textBaseline='alphabetic';
- c.fillText(`Z ${camZ.toFixed(2)}   V ${spd.toFixed(1)}   ROLL ${(roll*180/Math.PI%360).toFixed(1)}°   F ${F.toFixed(0)}`,cx,Math.min(H-96,cy+S*.36));
+ {const rd=`Z ${camZ.toFixed(2)}   V ${spd.toFixed(1)}   ROLL ${(roll*180/Math.PI%360).toFixed(1)}°   F ${F.toFixed(0)}`,fs=Math.max(9,S*.014),ry=Math.min(H-96,cy+S*.36),rw=c.measureText(rd).width+fs*1.6;
+  c.fillStyle='rgba(13,13,16,.78)';c.fillRect(cx-rw/2,ry-fs*1.25,rw,fs*1.85);c.fillStyle='rgba(243,239,230,.72)';c.fillText(rd,cx,ry)}
 }
 
 /* ---------- 06 TYPE AS TEXTURE: variable-width marquee rows + magnifying lens ---------- */
@@ -321,7 +322,7 @@ function s5(lt){
   c.fillStyle=ls;c.fillRect(W/2-R,H/2-R,R*2,R*2);c.restore();
   c.strokeStyle=PAPER;c.lineWidth=2;c.beginPath();c.arc(W/2,H/2,R+8+Math.sin(lt*8)*2,0,TAU);c.stroke();
   mono(Math.max(9,S*.013));c.fillStyle=PAPER;c.textAlign='left';c.textBaseline='alphabetic';c.globalAlpha=seg(b,2.2,2.5)*(1-seg(b,3.1,3.3));
-  c.fillText('LENS ×1.22',W/2+R*.74+12,H/2-R*.74);c.globalAlpha=1;
+  {const fs=Math.max(9,S*.013),lx=W/2+R*.74+12,ly=H/2-R*.74,lw=c.measureText('LENS ×1.22').width;c.fillStyle=INK;c.fillRect(lx-fs*.5,ly-fs*1.2,lw+fs,fs*1.75);c.fillStyle=LEM;c.fillText('LENS ×1.22',lx,ly)}c.globalAlpha=1;
  }
 }
 
@@ -379,7 +380,7 @@ function s7(lt){
  const r=kin('CLAUDE',cx,yb,px,lt-.3*BEAT,{al:'center',col:INK,st:.05,du:.6,tr:-.012,out:lt-2.95*BEAT,w:800});
  const lp=eIOExpo(seg(b,.9,1.5))*(1-out);
  c.fillStyle=INK;c.fillRect(cx-r.tw/2*lp,yb+px*.14,r.tw*lp,2);
- const fs=clamp(px*.075,10,15),ly=yb+px*.14;mono(fs);c.globalAlpha=1-out;c.textBaseline='alphabetic';
+ const fs=inBoard?Math.max(10,px*.15):clamp(px*.075,10,15),ly=yb+px*.14;/* board cells are shrunk, so the résumé lines are set relatively larger there */mono(fs);c.globalAlpha=1-out;c.textBaseline='alphabetic';
  const ty=seg(b,1.15,1.8),t1='MOTION DESIGNER',t2='SHOWREEL 2026 — 00:15';
  c.textAlign='left';c.fillText(t1.slice(0,Math.round(t1.length*ty)),r.x0,ly+fs*2);
  c.textAlign='right';c.fillText(t2.slice(0,Math.round(t2.length*ty)),r.x0+r.tw,ly+fs*2);
@@ -488,12 +489,15 @@ function drawBoard(T){
  const land=W>=H,cols=land?4:2,rw=8/cols,g=land?20:12,top=land?72:64,bot=land?108:112,lab=18;
  const cw=Math.floor((W-g*(cols+1))/cols),ch=Math.max(20,Math.floor((H-top-bot-(g+lab)*rw+g)/rw));
  if(off.width!==Math.round(cw*DPR)||off.height!==Math.round(ch*DPR)){off.width=Math.round(cw*DPR);off.height=Math.round(ch*DPR)}
- const lt=T%BAR,bi=Math.min(7,Math.floor(T/BAR)),sv=[W,H,S];cells=[];
+ const lt=T%BAR,bi=Math.min(7,Math.floor(T/BAR)),sv=[W,H,S],dp=DPR;cells=[];
+ /* small cells (phones): lay each scene out on a larger virtual frame (short side 400) and shrink it into the cell,
+    so the scene's minimum type sizes and margins scale down with it instead of piling up in a 130 px box */
+ const m=Math.min(cw,ch),vk=m>=330?1:400/m;
  for(let i=0;i<8;i++){
   const x=g+(i%cols)*(cw+g),y=top+Math.floor(i/cols)*(ch+g+lab);
-  W=cw;H=ch;S=Math.min(W,H);c=ox;ox.setTransform(DPR,0,0,DPR,0,0);ox.globalAlpha=1;ox.globalCompositeOperation='source-over';
+  W=cw*vk;H=ch*vk;S=Math.min(W,H);DPR=dp/vk;c=ox;ox.setTransform(DPR,0,0,DPR,0,0);ox.globalAlpha=1;ox.globalCompositeOperation='source-over';
   run(i,sheet?HERO[i]*BEAT:lt);
-  [W,H,S]=sv;c=main;main.drawImage(off,x,y+lab,cw,ch);
+  [W,H,S]=sv;DPR=dp;c=main;main.drawImage(off,x,y+lab,cw,ch);
   mono(10.5);c.textBaseline='alphabetic';c.fillStyle=!sheet&&i===bi?VERM:PAPER;c.textAlign='left';c.fillText(`${pad(i+1)}  ${NAMES[i]}`,x,y+12);
   c.textAlign='right';c.fillText(`${(i*BAR+(sheet?HERO[i]*BEAT:0)).toFixed(2)}s`,x+cw,y+12);
   if(!sheet&&i===bi){c.strokeStyle=VERM;c.lineWidth=2;c.strokeRect(x-1,y+lab-1,cw+2,ch+2)}
@@ -592,9 +596,10 @@ const canRec=!!(window.MediaRecorder&&cv.captureStream&&window.MediaStream);
 const $=id=>document.getElementById(id),bS=$('snd'),bP=$('pp'),bB=$('grid'),bR=$('rec'),ctl=$('ctl'),stat=$('status'),live=$('live');
 function startExport(){
  if(rec||!canRec||!ready)return;
+ const prev={t:curT(),paused,on:!!(A&&A.on),muted,board,sheet};/* restored if the export is cancelled */
  board=false;sheet=false;soundOn();
  if(paused){const k=clk();base=k-pT;paused=false;if(A&&A.on)A.ac.resume().catch(()=>{})}
- const r={mr:null,vs:null,chunks:[],cancel:false};rec=r;resize();
+ const r={mr:null,vs:null,chunks:[],cancel:false,prev};rec=r;resize();
  try{
   r.vs=cv.captureStream(60);const tracks=r.vs.getVideoTracks().slice();
   if(A){if(!A.dest){A.dest=A.ac.createMediaStreamDestination();A.comp.connect(A.dest)}tracks.push(...A.dest.stream.getAudioTracks())}
@@ -612,7 +617,10 @@ function finish(r){
  if(!r.cancel&&r.chunks.length){const blob=new Blob(r.chunks,{type:(r.mr&&r.mr.mimeType)||'video/webm'}),a=document.createElement('a');
   a.href=URL.createObjectURL(blob);a.download='claude-showreel-2026.webm';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),8000);
   live.textContent='Export finished: claude-showreel-2026.webm'}
- else live.textContent='Export cancelled';
+ else{live.textContent='Export cancelled';
+  /* put the reel back the way the viewer left it: position, pause, sound, board */
+  const p=r.prev;if(p){seek(p.t);if(A&&(!p.on||p.muted)){muted=p.muted;A.master.gain.setTargetAtTime(0,A.ac.currentTime,.02);if(!p.on){A.on=false;A.ac.suspend().catch(()=>{})}}
+   if(p.paused)setPause(true);board=p.board;sheet=p.sheet;ui()}}
 }
 
 /* ---------- controls ---------- */

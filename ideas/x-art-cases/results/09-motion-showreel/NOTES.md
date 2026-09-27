@@ -22,14 +22,20 @@
 ## fixed 改了什么
 - 无（未建 fixed/）。
 
-## 已知问题
+## 一次成型版的已知问题（oneshot/）
+
+下面几条写于一次成型时，说的是 oneshot/。final/ 里 1、2、3 已修掉，见“精修”。
+
 1. 长时间音频测试那次 console 多出一条 `favicon.ico 404`。原因是静态服务器根目录没有 favicon，不是页面脚本错误；两次规定自检中都没有出现。
 2. 进入分镜模式后，前 12 秒的顶部操作提示（Click for sound…）会压住第一行分镜的标题文字；提示约 12 秒后自动淡出。
 3. 字体只用系统字体（Helvetica Neue 系列 + 等宽栈）。在没有 Helvetica Neue Condensed 的系统上会退回普通 Helvetica/Arial，粗压缩字形的冲击力会弱一些。
 4. 截图环境是软件渲染，实际帧率低于真机，画面时间以实时时钟为准，所以截图里的时刻比 --wait 略晚或略早；真机 60fps 无此问题。
 5. 声音须点击后才开启（按要求不自动播放），无头截图里听不到，只验证了音频图能正常运行。
 
-## 用到的技术
+## 用到的技术（一次成型版）
+
+这一节描述的是 oneshot/。final/ 在此基础上的改动见“精修”，例如 final/ 用了 jsDelivr 上的可变字体，也去掉了 difference 混合。
+
 - **纯 Canvas2D + WebAudio**：零外部库、零外部字体、零素材。所有图形、字形动画、颗粒、声音都由代码生成。devicePixelRatio 上限 2。
 - **时间线**：128 BPM，8 小节 × 4 拍，正好 15.0 秒，一小节一个场景，首尾无缝循环。
   - 01 HELLO：点 → 线 → 带 → 满屏
@@ -125,10 +131,39 @@ final/ 从 oneshot/ 复制后改写，oneshot/ 一个字没动。
 - **无障碍**
   - 画布旁有 .sr 说明文字，aria-live 播报当前场景，REC 状态胶囊用 role=status。
   - 四个按钮都有 aria-label，并跟随 aria-pressed 状态。
+- **补修（2026-09-27）**
+  - DEPTH 场景底部的 Z / V / ROLL / F 读数原来直接压在最外圈白环上，看不清。现在读数下面垫一块墨色底板，字色调到 0.72 透明度。
+  - TYPE AS TEXTURE 里的 LENS ×1.22 标签原来是细小纸色字，压在滚动大字上。现在改成墨色底板上的柠檬黄字。
+  - 只改了这两处绘制，没有动时间轴、转场和其他场景。
+- **补修 2（2026-09-27，复评验收之后）**
+  - 验收查出的阻断问题：375 宽的手机上，联系表和分镜每格只有约 169×132 像素，但各场景的字号和边距有下限（例如最小 10 像素），格子太小时就挤在一起。HELLO 的 MOTION DESIGN — SHOWREEL 和 WDTH 125 · 2026 压在大字上；END CARD 的 MOTION DESIGNER 和 SHOWREEL 2026 — 00:15 重叠，左边还露出半个被切掉的 L；SHAPE 的 W/H/R/EASE、DEPTH 的 Z…F 读数和 LENS ×1.22 标签被格子边缘切掉。
+  - 改法：drawBoard 里，格子短边小于 330 像素时，每个场景先在短边 400 的虚拟画面上排版（W、H 乘以 vk=400/短边，DPR 除以 vk），再用 drawImage 缩回格子大小。这样字号下限和边距跟着整幅画面一起缩小，版式和大屏一致。离屏画布的实际像素数不变。桌面上格子约 335×332，vk=1，排版和原来一样。
+  - END CARD 在分镜和联系表里，求职信息那几行的字号由 clamp(px×0.075, 10, 15) 改成 max(10, px×0.15)，缩小后仍然看得清。正常播放时的片尾不受影响。
+  - 导出取消后恢复原状：点 Rec 时会跳回开头、开声、退出联系表，原来取消后这些状态都留着。现在 startExport 先记下播放位置、是否暂停、声音开关和静音、分镜和联系表状态，取消时 finish 按记录恢复：跳回原位置，原来暂停就重新暂停，原来没开声就把音量拉到 0，并把 AudioContext 挂起，A.on 复位，这样“点任意处开声”仍然有效，最后恢复分镜或联系表。
 
 怎么验证的：
-- **截图**：用 tools/snap.mjs（同一套 CDP 截图脚本），截了 evidence/final-desktop.png（1440×900，4 秒）、final-desktop-late.png（11 秒，和前一张不同）、final-mobile.png（375×812）、final-reduced.png（--reduced 1，联系表）。对应的 console.txt 全部为空，即 0 报错、0 资源错误。
-- **交互**：通过 `window.__reel` 在无头浏览器里逐项调用 seek、pause/play、board、exportStart/cancelExport 和方向键，检查 t 和状态都符合预期，控制台无报错。
-- **海报**：`?t=…&freeze=1&clean=1` 定帧、1600×900 截图得到 poster.png，再用 sips 生成 poster.jpg 和 thumb.jpg。
-- **性能**：这台机器上的无头 Chrome 走 SwiftShader 软件渲染，负载常在 350 以上，一次成型版和精修版都只有每场景约 4 到 6 帧，没法可靠比较。这里只能说明做过的事：每帧分配已经去掉，大面积 shadowBlur 已经换掉。真实 GPU 上的帧率要在正常浏览器里复测。
-- **导出**：导出流程在无头环境下能正常开始和取消，但没有真的下载一份完整的 webm，所以录出来的画质和音画同步还没实测。
+- **截图（2026-09-27 07:47–07:51，都晚于 final/index.html 的最后修改时间 07:45:29）**：用 tools/snap.mjs，SNAP_PORT=9340，这台 Chrome 用 tools/chrome.mjs --gpu 启动，一张一张拍。
+  - evidence/final-desktop.png：1440×900，等 4 秒，画面是 I MAKE / THI… 逐字出场，时间码 00:00:02:11。
+  - final-desktop-late.png：同一地址，等 14 秒，画面是蒙太奇里的 RHYTHM，时间码 00:00:12:10，和前一张明显不同。
+  - final-mobile.png：375×812，画面是 HELLO，时间码 00:00:01:13。
+  - final-reduced.png：1440×900，加 --reduced 1，显示 8 格联系表，和补修 2 之前一样。
+  - 这四个 console.txt 都只有 1 个字节（空行），也就是 0 报错、0 异常、0 失败请求。
+- **手机上的阻断问题**：
+  - final-mobile-reduced.png（375×812，--reduced 1）和 final-mobile-reduced-2x.png（同样条件，--scale 2）：8 格里的文字都没有重叠，也没有被格子边缘切掉。HELLO 的两行标签分别在大字上方和下方；END CARD 的 MOTION DESIGNER / SHOWREEL 2026 — 00:15、100% CODE 那一行和 AVAILABLE FOR WORK 胶囊各占一行；SHAPE、DEPTH 的读数和 LENS ×1.22 都完整地落在格子里。页面 scrollWidth 为 375，等于窗口宽度，没有横向滚动。
+  - final-mobile-board.png（375×812，--scale 2，seek 5.2 后暂停并打开分镜）：分镜模式同样没有重叠和切字，scrollWidth 375。
+  - HELLO 标签、SHAPE 和 DEPTH 读数这类小字，在 1 倍截图里只剩几像素高，看不清字；在 2 倍截图里能读出来。常见手机是 2 到 3 倍屏，但真机没有看过。
+  - TYPE AS TEXTURE 格子里，镜片中的大字在镜片边缘被截断，这是放大镜本身的效果，桌面上也是这样，不是格子切字。
+  - 三份 console.txt 除了记录测试脚本返回值的 [action] 行，没有别的内容。
+- **导出取消**：final-rec-cancel.png，1440×900。先 seek 到 4 秒并暂停，声音关着，然后调用 exportStart，1.4 秒后 cancelExport。脚本返回：录制中 t=1.35、按钮显示 Pause、Sound on；取消后 recording=false，t=4，按钮回到 Play（暂停），Sound off，状态播报 Export cancelled，0.8 秒后 t 仍是 4。截图时间码 00:00:04:00，控制台为空。另外在草稿区测过手机 375 宽、减少动态模式下的取消：联系表恢复，t=0，暂停，声音关。
+- **交互（2026-09-26）**：通过 `window.__reel` 在浏览器里逐项调用 seek、pause/play、board、exportStart/cancelExport 和方向键，检查 t 和状态都符合预期，控制台无报错。补修 2 之后重跑了 seek、pause、board 和导出取消，方向键和拖动进度条没有重跑。
+- **海报**：07:33 那一版是第一次真正用 final/ 的定帧生成海报。更早写过“已生成 poster.png/jpg 和 thumb.jpg”，但当时并没有这三个文件，只有另一套 build-poster，画面也不是 final/ 的定帧，那套文件已挪到 evidence/_old/。补修 2 改了 final/，所以海报按同样参数重拍：
+  - 用 `?t=10.6&freeze=1&clean=1` 定在 TYPE AS TEXTURE 的放大镜那一拍（钴蓝底、柠檬黄镜片），1600×900 截图得到 evidence/poster.png，控制台为空。
+  - 再用 sips 生成 poster.jpg（1600×900，质量 80）和 thumb.jpg（640×360）。
+  - 镜片边缘能看到几块被截断的描边字母碎片，没有处理。
+- **旧证据**：2026-09-27 07:32–07:34 的上一版 final-* 截图、poster.png/jpg 和 thumb.jpg 已挪到 evidence/_old/r3-0927-0733/。evidence/verify-*.png 是复评验收时拍的，早于这次修改，保留原样作对照。
+- **性能**：用 GPU 版 Chrome（Metal）在 1440×900 下测了 rAF 帧率。
+  - 8 个场景各自都测到过约 60 帧/秒，最差单帧 16.8 毫秒。
+  - 同一批测试里也出现过几秒到 41 秒的整页停顿。这种停顿在最简单的第 0 场景出现过，在 oneshot/ 里也出现过（t=9.38 处卡了 5 秒）。当时机器负载约 30，这台 Chrome 也被别的任务共用，所以判断是环境争用，不是页面本身的问题。但没有在干净环境下复测，不能完全排除。
+  - 帧率是在两轮补修之前测的，之后没有重测。第一轮只多了两个 fillRect；补修 2 只改了分镜和联系表的绘制和片尾在格子里的字号，正常播放的绘制路径没动。
+  - 真手机上的帧率没测，375 宽只看了截图。
+- **导出**：导出流程在浏览器里能正常开始和取消，取消后能恢复原状，但没有真的录完并下载一份完整的 webm，所以录出来的画质和音画同步还没实测。
