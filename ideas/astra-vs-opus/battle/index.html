@@ -146,6 +146,12 @@
   .score tr.total td { border-bottom: 0; font-weight: 700; }
   .score td a { color: var(--ink); text-decoration-color: rgba(242,244,247,.3); text-underline-offset: 3px; }
   #recheck table.score { min-width: 480px; }
+  #recheck .score td.n, #recheck .score th.n { width: auto; white-space: nowrap; padding: 8px 10px; }
+  @media (max-width: 560px) {
+    #recheck table.score { min-width: 0; font-size: 12.5px; }
+    #recheck .score th.n { white-space: normal; }
+    #recheck .score td.n, #recheck .score th.n { padding: 8px 4px; }
+  }
 
   /* 题目网格 */
   .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 14px; }
@@ -548,7 +554,7 @@ function duel(slug, scroll) {
   $('#duel').innerHTML = `
     <div class="dhead">
       <span class="no">${String(i + 1).padStart(2, '0')} / ${DATA.length}</span>
-      <h2>${esc(nameOf(d))}</h2>${(LANG === 'en' ? (d.title !== d.titleEn ? d.title : '') : d.title) ? `<span class="alt">${esc(LANG === 'en' ? d.title : d.title)}</span>` : ''}
+      <h2>${esc(nameOf(d))}</h2>${d.title !== nameOf(d) ? `<span class="alt">${esc(d.title)}</span>` : ''}
       <div class="nav"><a class="pill" href="#${prev.slug}">← ${esc(nameOf(prev))}</a><a class="pill" href="#${next.slug}">${esc(nameOf(next))} →</a></div>
     </div>
     <div class="tags">${J ? `<span class="win-${J.winner}">${res(J.winner)} · ${fmt(tA)} : ${fmt(tC)}</span>` : ''}${d.heavy ? `<span class="heavy">${T('重量级', 'Heavyweight')}</span>` : ''}<span>${T('原作者 ', 'By ')}${esc(d.author)}</span><span>${d.format === 'single-html' ? T('单文件 HTML', 'Single-file HTML') : T('多文件静态站', 'Multi-file static site')}</span>${d.refine ? `<span>${T('含追加反馈', 'Includes follow-up feedback')}</span>` : ''}${note ? `<span>${esc(note)}</span>` : ''}${d.size ? `<span>${T('体积', 'Size')}: Astra ${d.origSize} · 5.5 ${d.size}</span>` : ''}${d.mins ? `<span>${T(`5.5 耗时 ${d.mins} 分钟 · 约 ${d.ktok}k token`, `5.5: ${d.mins} min · ~${d.ktok}k tokens`)}</span>` : ''}</div>
