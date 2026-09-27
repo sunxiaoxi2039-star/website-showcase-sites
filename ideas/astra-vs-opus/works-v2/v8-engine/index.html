@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>交互式 V8 发动机</title>
+<meta name="description" content="可动手拆解的 V8 四冲程发动机：实时切换进气/压缩/做功/排气，查看曲轴、凸轮轴、点火顺序、气门正时与气缸压力。">
+<meta name="theme-color" content="#0b0e13">
+<link rel="stylesheet" href="./style.css">
+<script type="importmap">
+{ "imports": {
+  "three": "./vendor/three/build/three.module.js",
+  "three/addons/": "./vendor/three/examples/jsm/"
+} }
+</script>
+</head>
+<body>
+<header class="topbar" id="topbar">
+  <a class="tb-back" href="../../compare/index.html">← 三方对照</a>
+  <div class="tb-title"><span class="tb-name">交互式 V8 发动机</span><span class="tb-tag">Opus 5.5 · 独立逆向</span></div>
+  <a class="tb-orig" href="https://x.com/DilumSanjaya/status/2096280244663775423" target="_blank" rel="noopener">原作 @DilumSanjaya ↗</a>
+</header>
+
+<main id="app">
+  <section id="stage" aria-label="三维发动机视图">
+    <canvas id="gl"></canvas>
+    <div id="labels"></div>
+    <svg id="annot" aria-hidden="true"></svg>
+    <div id="bp-title" aria-hidden="true">
+      <div class="bpt-row"><b>V8 · 前视原理图</b><span>FRONT ELEVATION</span></div>
+      <div class="bpt-grid">
+        <span>缸径 × 行程</span><em>94 × 92 mm</em>
+        <span>V 夹角</span><em>90°</em>
+        <span>连杆长度</span><em>150 mm</em>
+        <span>压缩比</span><em>11.0 : 1</em>
+      </div>
+      <div class="bpt-foot">拖动可旋转 · 线稿中仍可看到活塞与气体实时运动</div>
+    </div>
+    <div id="tip" role="tooltip"></div>
+    <div id="hud-stroke" aria-live="polite">
+      <div class="hs-cyl">第 <b id="hs-cyl">1</b> 缸</div>
+      <div class="hs-name" id="hs-name">做功</div>
+      <div class="hs-en" id="hs-en">POWER</div>
+    </div>
+    <div id="loading"><div class="ld-ring"></div><span>正在生成 V8 模型…</span></div>
+  </section>
+
+  <aside id="left" class="panel">
+    <div class="brand">
+      <div class="brand-mark">V8</div>
+      <div>
+        <div class="brand-t">5.1 L · DOHC 32 气门</div>
+        <div class="brand-s">90° 横置平面曲轴 · 点火顺序 1-8-4-3-6-5-7-2</div>
+      </div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-h"><span>四冲程</span><small>点击切换 · 聚焦缸</small></div>
+      <div class="strokes" id="strokes">
+        <button data-stroke="intake" style="--c:var(--intake)"><i></i><b>进气</b><small>INTAKE</small></button>
+        <button data-stroke="compression" style="--c:var(--compression)"><i></i><b>压缩</b><small>COMPRESSION</small></button>
+        <button data-stroke="power" style="--c:var(--power)"><i></i><b>做功</b><small>POWER</small></button>
+        <button data-stroke="exhaust" style="--c:var(--exhaust)"><i></i><b>排气</b><small>EXHAUST</small></button>
+      </div>
+      <div class="stroke-card" id="stroke-card">
+        <p id="sc-text"></p>
+        <div class="sc-facts">
+          <div><span>进气门</span><b id="f-iv">—</b></div>
+          <div><span>排气门</span><b id="f-ev">—</b></div>
+          <div><span>活塞</span><b id="f-pis">—</b></div>
+          <div><span>缸压</span><b id="f-p">—</b></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-h"><span>聚焦气缸</span><small>快捷键 1–8</small></div>
+      <div class="cylpick" id="cylpick">
+        <div class="cp-row"><em>左列</em><span data-bank="even"></span></div>
+        <div class="cp-row"><em>右列</em><span data-bank="odd"></span></div>
+      </div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-h"><span>视图</span><small>原理图 ⇄ 3D</small></div>
+      <div class="seg" id="modes">
+        <button data-mode="solid">外观</button>
+        <button data-mode="section" class="on">剖切</button>
+        <button data-mode="xray">透视</button>
+        <button data-mode="blueprint">原理图</button>
+      </div>
+      <div class="seg seg-sm" id="cams">
+        <button data-cam="hero">全景</button>
+        <button data-cam="front">前视</button>
+        <button data-cam="top">俯视</button>
+        <button data-cam="side">侧视</button>
+      </div>
+      <label class="chk"><input type="checkbox" id="flow" checked> 显示气流粒子</label>
+    </div>
+
+    <div class="sec">
+      <div class="sec-h"><span>部件</span><small>点击模型或下方标签</small></div>
+      <div class="chips" id="parts"></div>
+      <div class="part-card" id="part-card" hidden>
+        <div class="pc-h"><b id="pc-name"></b><button id="pc-close" aria-label="关闭">×</button></div>
+        <p id="pc-text"></p>
+      </div>
+    </div>
+  </aside>
+
+  <aside id="right" class="panel">
+    <div class="metrics">
+      <div><span>转速</span><b id="m-rpm">3000</b><small>rpm</small></div>
+      <div><span>扭矩</span><b id="m-tq">—</b><small>N·m</small></div>
+      <div><span>功率</span><b id="m-pw">—</b><small>kW</small></div>
+      <div><span>IMEP</span><b id="m-imep">—</b><small>bar</small></div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-h"><span>工作循环 · <em id="cc-cyl">1</em> 缸</span>
+        <div class="seg seg-xs" id="cview">
+          <button data-v="ptheta" class="on">p–θ</button><button data-v="log">对数</button><button data-v="pv">p–V</button>
+        </div>
+      </div>
+      <canvas id="c-cycle" class="cv" style="height:196px"></canvas>
+      <div class="readout">
+        <span>当前 <b id="r-p">—</b> bar</span>
+        <span>峰值 <b id="r-peak">—</b></span>
+        <span id="knock" class="knock" hidden>爆震风险</span>
+      </div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-h"><span>气门正时</span><small>凸轮轴 = ½ 曲轴转速</small></div>
+      <div class="wheel-wrap">
+        <canvas id="c-wheel" class="cv" style="height:176px"></canvas>
+        <dl class="vt" id="vt"></dl>
+      </div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-h"><span>点火顺序</span><small>每 90° 曲轴转角点火一次</small></div>
+      <div class="fo" id="fo"></div>
+      <canvas id="c-firing" class="cv click" style="height:132px"></canvas>
+    </div>
+
+    <div class="sec">
+      <div class="sec-h"><span>动手调参</span><button class="link" id="reset">恢复默认</button></div>
+      <div class="sl"><label for="s-rpm">发动机转速</label><output id="o-rpm"></output><input type="range" id="s-rpm" min="700" max="7000" step="50" value="3000"></div>
+      <div class="sl"><label for="s-thr">节气门开度</label><output id="o-thr"></output><input type="range" id="s-thr" min="0" max="1" step="0.01" value="1"></div>
+      <div class="sl"><label for="s-adv">点火提前角</label><output id="o-adv"></output><input type="range" id="s-adv" min="0" max="45" step="1" value="26"></div>
+      <div class="sl"><label for="s-vvt">进气凸轮相位 VVT</label><output id="o-vvt"></output><input type="range" id="s-vvt" min="-20" max="40" step="1" value="0"></div>
+      <p class="hint" id="tune-hint"></p>
+    </div>
+  </aside>
+
+  <div id="transport">
+    <button id="play" class="tp-btn" aria-label="播放/暂停"><svg viewBox="0 0 24 24"><path id="play-ico" d="M7 5h3.5v14H7zM13.5 5H17v14h-3.5z"/></svg></button>
+    <button id="stepb" class="tp-btn sm" aria-label="后退 5°"><svg viewBox="0 0 24 24"><path d="M11 6 5 12l6 6V6zm8 0-6 6 6 6V6z"/></svg></button>
+    <button id="stepf" class="tp-btn sm" aria-label="前进 5°"><svg viewBox="0 0 24 24"><path d="m13 6 6 6-6 6V6zM5 6l6 6-6 6V6z"/></svg></button>
+    <div class="tp-scrub"><canvas id="c-scrub" class="cv"></canvas></div>
+    <div class="tp-read">
+      <div><span>曲轴</span><b id="t-theta">0°</b></div>
+      <div><span>本缸</span><b id="t-psi">0°</b></div>
+    </div>
+    <div class="tp-speed">
+      <label for="speed">慢放</label>
+      <select id="speed">
+        <option value="0.0025">1/400</option>
+        <option value="0.00667" selected>1/150</option>
+        <option value="0.02">1/50</option>
+        <option value="0.1">1/10</option>
+        <option value="1">实时</option>
+      </select>
+    </div>
+    <button id="sound" class="tp-btn sm" aria-label="声音" title="声音（按左右两列排气脉冲合成）"><svg viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path id="snd-x" d="m16 9 5 6m0-6-5 6" stroke="currentColor" stroke-width="1.8" fill="none"/><path id="snd-w" d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" stroke="currentColor" stroke-width="1.8" fill="none" style="display:none"/></svg></button>
+  </div>
+</main>
+
+<script type="module" src="./js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,942 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Feel the Pull</title>
+<meta name="description" content="An interactive magnetic direction field: a canvas of compass needles oriented by a two-pole source/sink approximation. Drag a pole, change its position, rescale the visual strength, reverse polarity.">
+<meta name="theme-color" content="#c0501c">
+<style>
+  :root{
+    --orange:#c0501c;
+    --orange-deep:#93390f;
+    --orange-hot:#e0662a;
+    --ochre:#c9952c;
+    --ochre-deep:#a67618;
+    --paper:#efdcaa;
+    --paper-2:#e8d096;
+    --graphite:#24221f;
+    --graphite-2:#3b3833;
+    --graphite-soft:rgba(36,34,31,.72);
+    --cream:#fbf1d6;
+    --rail-w:clamp(272px, 23vw, 336px);
+    --sans:"Helvetica Neue", Helvetica, Arial, "Liberation Sans", "Nimbus Sans", "Nimbus Sans L", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --mono:ui-monospace, "SFMono-Regular", Menlo, Consolas, "Liberation Mono", "DejaVu Sans Mono", monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{
+    background:var(--graphite);
+    color:var(--graphite);
+    font-family:var(--sans);
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+  }
+  .app{
+    display:grid;
+    grid-template-columns:var(--rail-w) minmax(0,1fr);
+    height:100vh;
+    height:100dvh;
+    min-height:560px;
+  }
+
+  /* ---------- rail ---------- */
+  .rail{
+    background:var(--orange);
+    color:var(--graphite);
+    display:flex;
+    flex-direction:column;
+    overflow-y:auto;
+    overflow-x:hidden;
+    position:relative;
+    border-right:4px solid var(--graphite);
+    scrollbar-width:thin;
+    scrollbar-color:var(--orange-deep) transparent;
+  }
+  .rail > section{padding:0 24px}
+  .head{padding-top:22px !important}
+  .kicker{
+    display:flex;justify-content:space-between;align-items:center;
+    font:700 10.5px/1 var(--mono);
+    letter-spacing:.14em;text-transform:uppercase;
+    color:var(--graphite);
+    border-bottom:2px solid var(--graphite);
+    padding-bottom:9px;
+  }
+  .kicker b{
+    background:var(--graphite);color:var(--orange-hot);
+    padding:3px 6px 2px;border-radius:2px;font-weight:700;
+  }
+  h1{
+    margin:16px 0 12px;
+    font-family:var(--sans);
+    font-weight:900;
+    font-size:clamp(56px, 5.7vw, 84px);
+    line-height:.8;
+    letter-spacing:-.065em;
+    color:var(--graphite);
+    text-transform:none;
+    word-spacing:-.02em;
+  }
+  h1 > span{display:block}
+  h1 .dot{color:var(--cream)}
+  .lede{
+    margin:0 0 16px;
+    font-size:14px;line-height:1.36;font-weight:600;
+    color:var(--graphite);
+    max-width:28ch;
+  }
+
+  .controls{padding-bottom:4px}
+  .ctl{
+    border-top:2px solid var(--graphite);
+    padding:10px 0 11px;
+  }
+  .ctl-top{
+    display:flex;justify-content:space-between;align-items:baseline;gap:8px;
+    margin-bottom:6px;
+  }
+  .ctl label, .ctl .lab{
+    font-weight:800;font-size:13px;letter-spacing:.02em;text-transform:uppercase;
+  }
+  .ctl output{
+    font:700 13px/1 var(--mono);
+    background:var(--graphite);color:var(--paper);
+    padding:4px 7px 3px;border-radius:2px;min-width:52px;text-align:right;
+  }
+  .hint{font-size:11.5px;line-height:1.3;margin:4px 0 0;color:rgba(36,34,31,.8);font-weight:600}
+
+  input[type=range]{
+    -webkit-appearance:none;appearance:none;
+    width:100%;height:28px;margin:0;background:transparent;cursor:pointer;
+    touch-action:pan-y;
+  }
+  input[type=range]:focus{outline:none}
+  input[type=range]::-webkit-slider-runnable-track{
+    height:6px;border-radius:0;
+    background:linear-gradient(90deg,var(--graphite) 0 var(--fill,50%), rgba(36,34,31,.28) var(--fill,50%) 100%);
+  }
+  input[type=range]::-moz-range-track{height:6px;background:rgba(36,34,31,.28)}
+  input[type=range]::-moz-range-progress{height:6px;background:var(--graphite)}
+  input[type=range]::-webkit-slider-thumb{
+    -webkit-appearance:none;appearance:none;
+    width:22px;height:22px;margin-top:-8px;border-radius:50%;
+    background:var(--paper);border:4px solid var(--graphite);
+    box-shadow:0 0 0 0 rgba(251,241,214,0);
+    transition:box-shadow .15s, transform .15s;
+  }
+  input[type=range]::-moz-range-thumb{
+    width:14px;height:14px;border-radius:50%;
+    background:var(--paper);border:4px solid var(--graphite);
+  }
+  input[type=range]:focus-visible::-webkit-slider-thumb{box-shadow:0 0 0 5px var(--cream)}
+  input[type=range]:focus-visible::-moz-range-thumb{box-shadow:0 0 0 5px var(--cream)}
+  input[type=range]:active::-webkit-slider-thumb{transform:scale(1.12)}
+
+  .btns{display:flex;gap:8px;padding:2px 0 14px}
+  button{
+    font:800 13px/1 var(--sans);letter-spacing:.03em;text-transform:uppercase;
+    border:2px solid var(--graphite);border-radius:2px;cursor:pointer;
+    padding:12px 12px 11px;
+    transition:background .15s,color .15s,transform .08s;
+  }
+  button:active{transform:translateY(1px)}
+  button:focus-visible{outline:3px solid var(--cream);outline-offset:2px}
+  .flip{
+    flex:1 1 auto;min-width:0;
+    background:var(--graphite);color:var(--paper);
+    display:flex;align-items:center;justify-content:center;gap:8px;
+    white-space:nowrap;letter-spacing:.01em;font-size:12.5px;padding-left:8px;padding-right:10px;
+  }
+  .flip:hover{background:#000}
+  .flip svg{width:18px;height:18px;flex:none;transition:transform .45s cubic-bezier(.5,-0.3,.3,1.4)}
+  .flip[aria-pressed="true"] svg{transform:rotate(180deg)}
+  .ghost{background:transparent;color:var(--graphite);font-size:12.5px;padding-left:11px;padding-right:11px}
+  .ghost:hover{background:rgba(36,34,31,.12)}
+  .state{
+    display:flex;gap:6px;align-items:center;margin:0 0 14px;
+    font:700 11px/1.2 var(--mono);letter-spacing:.06em;text-transform:uppercase;
+  }
+  .chip{display:inline-flex;align-items:center;gap:5px;padding:4px 7px 3px;border:1.5px solid var(--graphite);border-radius:2px}
+  .chip i{width:9px;height:9px;border-radius:50%;display:inline-block;border:1.5px solid var(--graphite)}
+  .chip .n{background:var(--orange-hot)}
+  .chip .s{background:var(--graphite)}
+
+  .note{
+    margin-top:auto;
+    padding-bottom:18px !important;padding-top:4px !important;
+  }
+  .note .box{
+    background:var(--graphite);color:var(--paper);
+    padding:14px 15px 15px;border-radius:2px;
+    font-size:11.5px;line-height:1.42;
+  }
+  .note h2{
+    margin:0 0 6px;font:800 11px/1 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--orange-hot);
+  }
+  .note p{margin:0 0 7px}
+  .note p:last-child{margin:0}
+  .note code{font:600 11.5px/1 var(--mono);color:var(--cream);white-space:nowrap}
+  .keys{margin:10px 0 0;white-space:nowrap;font:600 10.5px/1.5 var(--mono);color:rgba(36,34,31,.85);letter-spacing:.02em}
+  kbd{font:700 10px/1 var(--mono);border:1.5px solid var(--graphite);border-bottom-width:2.5px;border-radius:3px;padding:2px 4px 1px;background:rgba(251,241,214,.35)}
+
+  /* ---------- stage ---------- */
+  .stage{
+    position:relative;
+    background:var(--paper);
+    overflow:hidden;
+    min-width:0;
+    touch-action:none;
+    outline:none;
+  }
+  .stage:focus-visible{box-shadow:inset 0 0 0 4px var(--orange)}
+  .stage canvas{position:absolute;inset:0;width:100%;height:100%;display:block;cursor:crosshair}
+  .stage.grab canvas{cursor:grab}
+  .stage.dragging canvas{cursor:grabbing}
+  .tag{
+    position:absolute;pointer-events:none;
+    font:700 10.5px/1.25 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--graphite);
+  }
+  .tag.tl{top:30px;left:18px;background:rgba(239,220,170,.88);padding:6px 8px 7px;border-radius:2px}
+  .tag.tl strong{display:block;font:900 22px/1 var(--sans);letter-spacing:-.03em;text-transform:none;margin-bottom:4px}
+  .tag.br{
+    right:18px;bottom:16px;text-align:right;
+    background:rgba(239,220,170,.86);padding:8px 10px;border:2px solid var(--graphite);border-radius:2px;
+    min-width:190px;
+  }
+  .tag.br .v{font-size:15px;letter-spacing:.02em;display:block;margin-top:3px}
+  .legend{
+    position:absolute;left:18px;bottom:16px;pointer-events:none;
+    display:flex;align-items:center;gap:10px;
+    background:rgba(239,220,170,.86);padding:8px 10px;border:2px solid var(--graphite);border-radius:2px;
+    font:700 10.5px/1.3 var(--mono);letter-spacing:.06em;text-transform:uppercase;
+  }
+  .legend svg{width:46px;height:14px;flex:none}
+  .coach{
+    position:absolute;pointer-events:none;
+    font:800 12px/1 var(--sans);letter-spacing:.06em;text-transform:uppercase;
+    background:var(--graphite);color:var(--paper);padding:7px 9px 6px;border-radius:2px;
+    transform:translate(-50%, 0);white-space:nowrap;
+    transition:opacity .5s;
+  }
+  .coach::before{
+    content:"";position:absolute;left:50%;top:-6px;margin-left:-6px;
+    border:6px solid transparent;border-top:0;border-bottom-color:var(--graphite);
+  }
+  .coach.gone{opacity:0}
+  .sr{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+  /* ---------- small screens ---------- */
+  @media (max-width: 820px){
+    .app{display:flex;flex-direction:column;height:auto;min-height:0}
+    .rail{display:contents}
+    .rail > section{background:var(--orange);padding:0 18px}
+    .head{order:0;padding-top:18px !important;padding-bottom:4px !important;border-bottom:4px solid var(--graphite)}
+    .stage{order:1;height:62vh;height:62svh;min-height:380px;max-height:640px}
+    .controls{order:2;border-top:4px solid var(--graphite);padding-top:4px !important}
+    .note{order:3;padding-top:0 !important}
+    h1{font-size:clamp(50px, 15.5vw, 72px);margin:14px 0 10px}
+    h1 > span{display:inline}
+    .lede{max-width:none;font-size:13.5px;margin-bottom:14px}
+    .tag.tl{top:24px;left:10px;padding:5px 7px 6px}
+    .tag.tl strong{font-size:17px}
+    .tag.br{right:10px;bottom:10px;min-width:0;padding:5px 7px;font-size:9px;letter-spacing:.05em}
+    .tag.br .v{font-size:12px}
+    .legend{left:10px;bottom:10px;padding:5px 7px;font-size:9px;gap:6px;letter-spacing:.03em}
+    .legend svg{width:36px}
+    .keys{display:none}
+  }
+  @media (prefers-reduced-motion: reduce){
+    *{transition:none !important}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="rail">
+    <section class="head">
+      <div class="kicker"><span>Direction field</span><b id="badge">Drag N · Fixed S</b></div>
+      <h1 aria-label="Feel the pull."><span>Feel</span> <span>the</span> <span>pull<span class="dot">.</span></span></h1>
+      <p class="lede">Every needle on the sheet swings to the combined pull of two magnetic poles. Grab the ringed one and drag it through the field.</p>
+    </section>
+
+    <section class="controls" aria-label="Field controls">
+      <div class="ctl">
+        <div class="ctl-top">
+          <label for="posX">Pole position&nbsp;·&nbsp;x</label>
+          <output id="posOut" for="posX">0.30</output>
+        </div>
+        <input id="posX" type="range" min="0" max="1000" step="5" value="300" aria-describedby="posHint">
+        <p class="hint" id="posHint">Slides the ringed pole left and right. Drag it to roam freely.</p>
+      </div>
+      <div class="ctl">
+        <div class="ctl-top">
+          <label for="gain">Visual strength</label>
+          <output id="gainOut" for="gain">55</output>
+        </div>
+        <input id="gain" type="range" min="0" max="100" step="1" value="55" aria-describedby="gainHint">
+        <p class="hint" id="gainHint">Ink and length only. Low shows the near field; high lights the whole sheet.</p>
+      </div>
+      <div class="btns">
+        <button id="flip" class="flip" type="button" aria-pressed="false">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2 L16.5 12 L12 12 Z" fill="#e0662a"/><path d="M12 2 L7.5 12 L12 12 Z" fill="#e0662a"/><path d="M12 22 L16.5 12 L7.5 12 Z" fill="#efdcaa"/><circle cx="12" cy="12" r="1.6" fill="#24221f"/></svg>
+          <span>Reverse polarity</span>
+        </button>
+        <button id="reset" class="ghost" type="button">Reset</button>
+      </div>
+    </section>
+
+    <section class="note">
+      <div class="box">
+        <h2>A visual approximation</h2>
+        <p>Needles follow <code>B&nbsp;∝&nbsp;Σ&nbsp;q·r̂&nbsp;/&nbsp;r²</code> from one point source (N,&nbsp;+q) and one point sink (S,&nbsp;−q): Gilbert’s pole model, sampled on a flat plane.</p>
+        <p>Real magnets are extended 3-D dipoles. “Visual strength” only changes ink and length; it is not a physical field strength.</p>
+      </div>
+      <p class="keys">Canvas: <kbd>←</kbd><kbd>→</kbd><kbd>↑</kbd><kbd>↓</kbd> move pole · <kbd>R</kbd> flip</p>
+    </section>
+  </div>
+
+  <main class="stage" id="stage" tabindex="0" aria-label="Magnetic direction field. Focus here and use arrow keys to move the draggable pole, R to reverse polarity." aria-describedby="fieldDesc">
+    <canvas id="field" role="img" aria-label="Compass needles oriented by two magnetic poles"></canvas>
+    <div class="tag tl" aria-hidden="true"><strong>Point-pole field</strong>source&nbsp;+&nbsp;sink · <span id="countTag">— needles</span></div>
+    <div class="legend" aria-hidden="true">
+      <svg viewBox="0 0 46 14"><path d="M46 7 L23 2.2 L23 11.8 Z" fill="#c0501c"/><path d="M0 7 L23 2.2 L23 11.8 Z" fill="#24221f"/></svg>
+      <span>Orange tip<br>= field direction</span>
+    </div>
+    <div class="tag br" id="probe" aria-hidden="true">Pointer · relative pull<span class="v" id="probeV">&nbsp;</span></div>
+    <p class="sr" id="fieldDesc" aria-live="polite"></p>
+  </main>
+</div>
+
+<script>
+(() => {
+  'use strict';
+
+  // ---------- palette (kept in sync with CSS tokens) ----------
+  const C = {
+    orange: '#c0501c', orangeHot: '#e0662a', orangeDeep: '#93390f',
+    ochre: '#c9952c', ochreDeep: '#a67618',
+    paper: '#efdcaa', graphite: '#24221f', cream: '#fbf1d6'
+  };
+
+  const stage = document.getElementById('stage');
+  const canvas = document.getElementById('field');
+  const ctx = canvas.getContext('2d', { alpha: false });
+  const posX = document.getElementById('posX');
+  const posOut = document.getElementById('posOut');
+  const gain = document.getElementById('gain');
+  const gainOut = document.getElementById('gainOut');
+  const flipBtn = document.getElementById('flip');
+  const resetBtn = document.getElementById('reset');
+  const probeV = document.getElementById('probeV');
+  const countTag = document.getElementById('countTag');
+  const desc = document.getElementById('fieldDesc');
+  const badge = document.getElementById('badge');
+
+  const coarse = !!(window.matchMedia && window.matchMedia('(hover: none)').matches);
+  const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // ---------- state (pole positions stored as fractions of the stage) ----------
+  const DEFAULTS = { mx: 0.30, my: 0.46, fx: 0.68, fy: 0.54, gain: 55 };
+  // tall (portrait) canvases get a diagonal layout so the poles are not cramped
+  function applyDefaults() {
+    const tall = H > W * 1.1;
+    state.moving.x = tall ? 0.28 : DEFAULTS.mx; state.moving.y = tall ? 0.36 : DEFAULTS.my;
+    state.fixed.x  = tall ? 0.70 : DEFAULTS.fx; state.fixed.y  = tall ? 0.64 : DEFAULTS.fy;
+  }
+  const state = {
+    moving: { x: DEFAULTS.mx, y: DEFAULTS.my },   // draggable pole
+    fixed:  { x: DEFAULTS.fx, y: DEFAULTS.fy },
+    reversed: false,          // false: moving = N (+q, source); true: moving = S (−q, sink)
+    gain: DEFAULTS.gain,
+    pointer: null,            // {x,y} in css px, when hovering
+    dragging: false,
+    hoverPole: false,
+    touched: false
+  };
+
+  let W = 0, H = 0, DPR = 1;
+  let needles = [];           // {x, y, a (current angle), t (target), s (target intensity), v (current), delay}
+  let spacing = 24;
+  let fieldLines = [];        // array of Float32Array polylines (css px)
+  let raf = 0;
+  let lastT = 0;
+  let dirtyStatic = true;
+
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+  const qMoving = () => state.reversed ? -1 : 1;
+  const poleR = () => Math.max(15, Math.min(24, Math.min(W, H) * 0.032));
+
+  function poles() {
+    const q = qMoving();
+    return [
+      { x: state.moving.x * W, y: state.moving.y * H, q, moving: true },
+      { x: state.fixed.x * W,  y: state.fixed.y * H,  q: -q, moving: false }
+    ];
+  }
+
+  // Field from point poles: B = Σ q (r − p) / |r − p|³  (softened near the core).
+  // Returned in "scene units" where lengths are normalised by L = min(W,H),
+  // so the magnitude is independent of the screen size.
+  function field(px, py, P, L, out) {
+    let bx = 0, by = 0;
+    const soft = 0.018 * 0.018;
+    for (let i = 0; i < P.length; i++) {
+      const dx = (px - P[i].x) / L, dy = (py - P[i].y) / L;
+      const r2 = dx * dx + dy * dy + soft;
+      const inv = P[i].q / (r2 * Math.sqrt(r2));
+      bx += dx * inv; by += dy * inv;
+    }
+    out[0] = bx; out[1] = by;
+    return out;
+  }
+
+  // visual strength → gain curve (log scale); returns 0..1 ink for a magnitude
+  function inkFor(m) {
+    const g = 0.012 * Math.pow(10, state.gain / 42);   // 0.012 … ~2.9
+    return 1 - Math.exp(-m * g);
+  }
+
+  // ---------- layout ----------
+  function resize() {
+    const r = stage.getBoundingClientRect();
+    const w = Math.max(1, Math.round(r.width));
+    const h = Math.max(1, Math.round(r.height));
+    const dpr = Math.min(3, window.devicePixelRatio || 1);
+    if (w === W && h === H && dpr === DPR) return;
+    const first = needles.length === 0;
+    W = w; H = h; DPR = dpr;
+    canvas.width = Math.round(W * DPR);
+    canvas.height = Math.round(H * DPR);
+    if (first) applyDefaults();
+    buildGrid();
+    dirtyStatic = true;
+    retarget(!first);
+    draw();
+  }
+
+  function buildGrid() {
+    spacing = Math.max(19, Math.min(30, Math.sqrt((W * H) / 1500)));
+    const rowH = spacing * 0.87;
+    const rows = Math.ceil(H / rowH) + 1;
+    const cols = Math.ceil(W / spacing) + 1;
+    const offX = (W - (cols - 1) * spacing) / 2;
+    const offY = (H - (rows - 1) * rowH) / 2;
+    const old = needles;
+    needles = [];
+    for (let j = 0; j < rows; j++) {
+      const shift = (j % 2) ? spacing / 2 : 0;
+      for (let i = 0; i < cols; i++) {
+        const x = offX + i * spacing + shift - spacing / 4;
+        const y = offY + j * rowH;
+        if (x < -2 || x > W + 2 || y < -2 || y > H + 2) continue;
+        needles.push({ x, y, a: 0, t: 0, s: 0, v: 0, delay: 0 });
+      }
+    }
+    // keep motion continuous if we rebuilt: seed from old field where possible
+    if (old.length === 0) {
+      // first build: start slightly "unmagnetised" so the field visibly pulls them into line
+      for (const n of needles) {
+        n.a = reduceMotion ? 0 : Math.sin(n.x * 0.131 + n.y * 0.071) * 3.1;
+        n.delay = 0;
+      }
+    }
+    countTag.textContent = needles.length.toLocaleString('en-US') + ' needles';
+  }
+
+  // ---------- targets ----------
+  const tmp = [0, 0];
+  function retarget(snap, ripple) {
+    const P = poles();
+    const L = Math.min(W, H);
+    const rCore = poleR() * 1.05;
+    const now = performance.now();
+    const origin = P[0];
+    for (const n of needles) {
+      field(n.x, n.y, P, L, tmp);
+      const m = Math.hypot(tmp[0], tmp[1]);
+      n.t = Math.atan2(tmp[1], tmp[0]);
+      let s = inkFor(m);
+      // hide needles under a pole disc
+      for (const p of P) {
+        const d = Math.hypot(n.x - p.x, n.y - p.y);
+        if (d < rCore + 6) s = 0;
+        else if (d < rCore + 16) s *= (d - rCore - 6) / 10;
+      }
+      n.s = s;
+      if (ripple && !reduceMotion) {
+        n.delay = now + Math.hypot(n.x - origin.x, n.y - origin.y) * 0.9;
+      }
+      if (snap || reduceMotion) { n.a = n.t; n.v = n.s; }
+    }
+    dirtyStatic = true;
+    buildFieldLines(P, L);
+    updateReadouts();
+    kick();
+  }
+
+  // Field lines: seeded around each pole, integrated along the normalised field.
+  function buildFieldLines(P, L) {
+    fieldLines = [];
+    const seeds = W < 600 ? 14 : 18;
+    const h = Math.max(3, L / 170);
+    const r0 = poleR() * 1.25;
+    const maxSteps = Math.ceil((W + H) * 2.4 / h);
+    const margin = 40;
+    for (let pi = 0; pi < P.length; pi++) {
+      const src = P[pi], other = P[1 - pi];
+      const dir = src.q > 0 ? 1 : -1; // integrate away from the pole in both cases
+      for (let k = 0; k < seeds; k++) {
+        const ang = (k + 0.5) / seeds * Math.PI * 2 + (pi ? 0.09 : 0);
+        let x = src.x + Math.cos(ang) * r0, y = src.y + Math.sin(ang) * r0;
+        const pts = [x, y];
+        let reached = false;
+        for (let s = 0; s < maxSteps; s++) {
+          // midpoint (RK2) step
+          field(x, y, P, L, tmp);
+          let m = Math.hypot(tmp[0], tmp[1]) || 1;
+          const mx = x + dir * tmp[0] / m * h * 0.5, my = y + dir * tmp[1] / m * h * 0.5;
+          field(mx, my, P, L, tmp);
+          m = Math.hypot(tmp[0], tmp[1]) || 1;
+          x += dir * tmp[0] / m * h; y += dir * tmp[1] / m * h;
+          pts.push(x, y);
+          if (Math.hypot(x - other.x, y - other.y) < r0) { reached = true; break; }
+          if (x < -margin || x > W + margin || y < -margin || y > H + margin) break;
+        }
+        // lines from the second pole that close on the first are duplicates; drop them
+        if (pi === 1 && reached) continue;
+        fieldLines.push(new Float32Array(pts));
+      }
+    }
+  }
+
+  // ---------- drawing ----------
+  let staticCanvas = document.createElement('canvas');
+  let sctx = staticCanvas.getContext('2d');
+
+  function drawStatic() {
+    if (staticCanvas.width !== canvas.width || staticCanvas.height !== canvas.height) {
+      staticCanvas.width = canvas.width; staticCanvas.height = canvas.height;
+      sctx = staticCanvas.getContext('2d');
+    }
+    const g = sctx;
+    g.setTransform(DPR, 0, 0, DPR, 0, 0);
+    // paper
+    g.fillStyle = C.paper;
+    g.fillRect(0, 0, W, H);
+    // soft warm vignette pooling around each pole
+    const P = poles();
+    for (const p of P) {
+      const rg = g.createRadialGradient(p.x, p.y, 0, p.x, p.y, Math.min(W, H) * 0.42);
+      rg.addColorStop(0, p.q > 0 ? 'rgba(224,102,42,0.20)' : 'rgba(36,34,31,0.10)');
+      rg.addColorStop(1, 'rgba(239,220,170,0)');
+      g.fillStyle = rg;
+      g.fillRect(0, 0, W, H);
+    }
+    // field lines
+    g.lineWidth = 1.1;
+    g.strokeStyle = 'rgba(166,118,24,0.42)';
+    g.lineJoin = 'round';
+    for (const pl of fieldLines) {
+      g.beginPath();
+      g.moveTo(pl[0], pl[1]);
+      for (let i = 2; i < pl.length; i += 2) g.lineTo(pl[i], pl[i + 1]);
+      g.stroke();
+    }
+    // rulers along top and bottom edges
+    drawRuler(g, P);
+    dirtyStatic = false;
+  }
+
+  function drawRuler(g, P) {
+    g.save();
+    g.fillStyle = C.graphite;
+    g.strokeStyle = C.graphite;
+    const ticks = 40;
+    for (let i = 0; i <= ticks; i++) {
+      const x = Math.round(i / ticks * (W - 1)) + 0.5;
+      const major = i % 10 === 0, mid = i % 5 === 0;
+      const len = major ? 14 : mid ? 9 : 5;
+      g.lineWidth = major ? 2 : 1;
+      g.beginPath(); g.moveTo(x, 0); g.lineTo(x, len); g.stroke();
+      g.beginPath(); g.moveTo(x, H); g.lineTo(x, H - len); g.stroke();
+    }
+    // moving pole x marker on the top ruler
+    const mp = P[0];
+    g.fillStyle = mp.q > 0 ? C.orange : C.graphite;
+    g.beginPath();
+    g.moveTo(mp.x, 20); g.lineTo(mp.x - 7, 8); g.lineTo(mp.x + 7, 8); g.closePath(); g.fill();
+    g.setLineDash([2, 4]);
+    g.lineWidth = 1;
+    g.strokeStyle = 'rgba(36,34,31,0.35)';
+    g.beginPath(); g.moveTo(mp.x + 0.5, 22); g.lineTo(mp.x + 0.5, mp.y - poleR() - 10); g.stroke();
+    g.setLineDash([]);
+    g.restore();
+  }
+
+  function drawNeedles(g) {
+    const len0 = spacing * 0.4, len1 = spacing * 0.9;
+    const w0 = Math.max(1.5, spacing * 0.08), w1 = Math.max(2.2, spacing * 0.13);
+    const ALPHA_STEPS = 8;
+    // bucket by ink so we set fill style sparingly
+    const buckets = [];
+    for (let b = 0; b < ALPHA_STEPS; b++) buckets.push([]);
+    for (const n of needles) {
+      if (n.v < 0.015) continue;
+      const b = Math.min(ALPHA_STEPS - 1, Math.floor(n.v * ALPHA_STEPS));
+      buckets[b].push(n);
+    }
+    for (let b = 0; b < ALPHA_STEPS; b++) {
+      const list = buckets[b];
+      if (!list.length) continue;
+      const ink = (b + 0.5) / ALPHA_STEPS;
+      const alpha = 0.26 + 0.74 * ink;
+      const north = new Path2D(), south = new Path2D();
+      for (const n of list) {
+        const v = n.v;
+        const hl = (len0 + (len1 - len0) * v) * 0.5;
+        const hw = (w0 + (w1 - w0) * v);
+        const c = Math.cos(n.a), s = Math.sin(n.a);
+        const tx = n.x + c * hl, ty = n.y + s * hl;       // north tip
+        const bx = n.x - c * hl, by = n.y - s * hl;       // south tip
+        const px = -s * hw, py = c * hw;                  // perpendicular
+        north.moveTo(tx, ty); north.lineTo(n.x + px, n.y + py); north.lineTo(n.x - px, n.y - py); north.closePath();
+        south.moveTo(bx, by); south.lineTo(n.x + px, n.y + py); south.lineTo(n.x - px, n.y - py); south.closePath();
+      }
+      g.globalAlpha = alpha;
+      g.fillStyle = C.graphite; g.fill(south);
+      g.fillStyle = ink > 0.55 ? C.orange : C.orangeDeep; g.fill(north);
+    }
+    g.globalAlpha = 1;
+  }
+
+  function drawPoles(g) {
+    const P = poles();
+    const r = poleR();
+    const placed = [];
+    for (const p of P) {
+      const isN = p.q > 0;
+      // halo rings
+      g.save();
+      if (p.moving) {
+        const hot = state.dragging || state.hoverPole;
+        g.lineWidth = hot ? 3 : 2;
+        g.setLineDash([5, 5]);
+        g.strokeStyle = C.graphite;
+        g.beginPath(); g.arc(p.x, p.y, r + (hot ? 12 : 9), 0, Math.PI * 2); g.stroke();
+        g.setLineDash([]);
+      } else {
+        g.lineWidth = 1.5;
+        g.strokeStyle = 'rgba(36,34,31,0.55)';
+        g.beginPath(); g.arc(p.x, p.y, r + 8, 0, Math.PI * 2); g.stroke();
+      }
+      // body
+      g.shadowColor = 'rgba(36,34,31,0.35)';
+      g.shadowBlur = 10; g.shadowOffsetY = 3;
+      g.fillStyle = isN ? C.orange : C.graphite;
+      g.beginPath(); g.arc(p.x, p.y, r, 0, Math.PI * 2); g.fill();
+      g.shadowColor = 'transparent';
+      g.lineWidth = 3;
+      g.strokeStyle = isN ? C.graphite : C.orange;
+      g.stroke();
+      // letter
+      g.fillStyle = isN ? C.graphite : C.paper;
+      g.font = `900 ${Math.round(r * 1.15)}px ${sansFamily}`;
+      g.textAlign = 'center'; g.textBaseline = 'middle';
+      g.fillText(isN ? 'N' : 'S', p.x, p.y + r * 0.06);
+      g.restore();
+
+      placed.push(plate(g, p, isN, r, P, placed));
+    }
+  }
+
+  // Label plate beside a pole: try the side facing away from the other pole first,
+  // then the other side, below, above; keep the first that stays on-canvas and clear.
+  function plate(g, p, isN, r, P, placed) {
+    const title = isN ? 'N · SOURCE  +q' : 'S · SINK  \u2212q';
+    const sub = p.moving ? 'DRAG ME' : 'FIXED';
+    g.save();
+    g.font = `700 11px ${monoFamily}`;
+    const tw = Math.ceil(Math.max(g.measureText(title).width, g.measureText(sub).width) + 16);
+    const th = 34, gap = r + 14;
+    const other = P.find(q => q !== p);
+    const away = other.x >= p.x ? -1 : 1;
+    const below = other.y >= p.y ? -1 : 1;
+    const cands = [
+      { x: away > 0 ? p.x + gap : p.x - gap - tw, y: p.y - th / 2 },
+      { x: away > 0 ? p.x - gap - tw : p.x + gap, y: p.y - th / 2 },
+      { x: p.x - tw / 2, y: below > 0 ? p.y + gap : p.y - gap - th },
+      { x: p.x - tw / 2, y: below > 0 ? p.y - gap - th : p.y + gap }
+    ];
+    const top = 26, bottom = H - (W < 600 ? 60 : 70);
+    const hitsDisc = (b, q) => {
+      const cx = clamp(q.x, b.x, b.x + tw), cy = clamp(q.y, b.y, b.y + th);
+      return Math.hypot(cx - q.x, cy - q.y) < r + 10;
+    };
+    const hitsBox = (b, o) => b.x < o.x + o.w + 6 && b.x + tw + 6 > o.x && b.y < o.y + o.h + 6 && b.y + th + 6 > o.y;
+    let pick = null;
+    for (const c of cands) {
+      const b = { x: clamp(c.x, 8, W - tw - 8), y: clamp(c.y, top, bottom - th) };
+      const bad = P.some(q => hitsDisc(b, q)) || placed.some(o => hitsBox(b, o));
+      if (!bad) { pick = b; break; }
+      if (!pick) pick = b;
+    }
+    g.fillStyle = isN ? C.orange : C.graphite;
+    g.fillRect(pick.x, pick.y, tw, th);
+    g.lineWidth = 1.5; g.strokeStyle = C.graphite;
+    g.strokeRect(pick.x + 0.75, pick.y + 0.75, tw - 1.5, th - 1.5);
+    g.fillStyle = isN ? C.graphite : C.paper;
+    g.textAlign = 'left'; g.textBaseline = 'alphabetic';
+    g.fillText(title, pick.x + 8, pick.y + 14);
+    g.globalAlpha = 0.8;
+    g.font = `700 9.5px ${monoFamily}`;
+    g.fillText(sub, pick.x + 8, pick.y + 27);
+    g.restore();
+    return { x: pick.x, y: pick.y, w: tw, h: th };
+  }
+
+  // one streamline through the pointer (a "probe" that makes the pull legible)
+  function drawProbe(g) {
+    if (!state.pointer || state.dragging) return;
+    const P = poles();
+    const L = Math.min(W, H);
+    const h = Math.max(3, L / 200);
+    const r0 = poleR();
+    g.save();
+    g.lineWidth = 2.2;
+    g.strokeStyle = C.graphite;
+    g.lineCap = 'round';
+    for (const dir of [1, -1]) {
+      let x = state.pointer.x, y = state.pointer.y;
+      g.beginPath(); g.moveTo(x, y);
+      for (let s = 0; s < 1400; s++) {
+        field(x, y, P, L, tmp);
+        const m = Math.hypot(tmp[0], tmp[1]) || 1;
+        x += dir * tmp[0] / m * h; y += dir * tmp[1] / m * h;
+        g.lineTo(x, y);
+        if (P.some(p => Math.hypot(x - p.x, y - p.y) < r0 + 4)) break;
+        if (x < -20 || x > W + 20 || y < -20 || y > H + 20) break;
+      }
+      g.stroke();
+    }
+    // probe compass
+    const px = state.pointer.x, py = state.pointer.y;
+    field(px, py, P, L, tmp);
+    const a = Math.atan2(tmp[1], tmp[0]);
+    g.translate(px, py); g.rotate(a);
+    g.fillStyle = C.paper; g.strokeStyle = C.graphite; g.lineWidth = 2.5;
+    g.beginPath(); g.arc(0, 0, 17, 0, Math.PI * 2); g.fill(); g.stroke();
+    g.fillStyle = C.orange;
+    g.beginPath(); g.moveTo(14, 0); g.lineTo(0, 4.5); g.lineTo(0, -4.5); g.closePath(); g.fill();
+    g.fillStyle = C.graphite;
+    g.beginPath(); g.moveTo(-14, 0); g.lineTo(0, 4.5); g.lineTo(0, -4.5); g.closePath(); g.fill();
+    g.restore();
+  }
+
+  const sansFamily = getComputedStyle(document.body).fontFamily || 'sans-serif';
+  const monoFamily = getComputedStyle(document.documentElement).getPropertyValue('--mono').trim() || 'monospace';
+
+  function draw() {
+    if (dirtyStatic) drawStatic();
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.drawImage(staticCanvas, 0, 0);
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    drawNeedles(ctx);
+    drawProbe(ctx);
+    drawPoles(ctx);
+  }
+
+  // ---------- animation: needles swing toward their targets, then the loop sleeps ----------
+  function step(ts) {
+    raf = 0;
+    const dt = Math.min(0.05, lastT ? (ts - lastT) / 1000 : 0.016);
+    lastT = ts;
+    const k = 1 - Math.exp(-dt * 11);
+    const kv = 1 - Math.exp(-dt * 9);
+    const now = performance.now();
+    let moving = false;
+    for (const n of needles) {
+      if (n.delay > now) { moving = true; continue; }
+      let d = n.t - n.a;
+      d = Math.atan2(Math.sin(d), Math.cos(d));
+      if (Math.abs(d) > 3.05) d = Math.abs(d); // a full reversal always swings the same way
+      if (Math.abs(d) > 0.002) { n.a += d * k; moving = true; } else n.a = n.t;
+      const dv = n.s - n.v;
+      if (Math.abs(dv) > 0.003) { n.v += dv * kv; moving = true; } else n.v = n.s;
+    }
+    draw();
+    if (moving) raf = requestAnimationFrame(step); else lastT = 0;
+  }
+  function kick() {
+    if (!raf) { lastT = 0; raf = requestAnimationFrame(step); }
+  }
+
+  // ---------- readouts ----------
+  function setFill(input) {
+    const p = (input.value - input.min) / (input.max - input.min) * 100;
+    input.style.setProperty('--fill', p + '%');
+  }
+  function updateReadouts() {
+    posOut.textContent = state.moving.x.toFixed(2);
+    posX.value = Math.round(state.moving.x * 1000);
+    posX.setAttribute('aria-valuetext', `x ${state.moving.x.toFixed(2)} of canvas width`);
+    gainOut.textContent = String(state.gain);
+    gain.setAttribute('aria-valuetext', `visual strength ${state.gain} of 100`);
+    setFill(posX); setFill(gain);
+    const mv = state.reversed ? 'S' : 'N', fx = state.reversed ? 'N' : 'S';
+    badge.textContent = `Drag ${mv} · Fixed ${fx}`;
+    flipBtn.setAttribute('aria-pressed', String(state.reversed));
+    placeCoach();
+    updateProbe();
+  }
+  let descTimer = 0;
+  function announce() {
+    clearTimeout(descTimer);
+    descTimer = setTimeout(() => {
+      const mv = state.reversed ? 'south (sink)' : 'north (source)';
+      const fx = state.reversed ? 'north (source)' : 'south (sink)';
+      const sep = Math.hypot((state.moving.x - state.fixed.x) * W, (state.moving.y - state.fixed.y) * H) / Math.min(W, H);
+      desc.textContent = `Draggable ${mv} pole at ${Math.round(state.moving.x * 100)}% across, ${Math.round(state.moving.y * 100)}% down. Fixed ${fx} pole at ${Math.round(state.fixed.x * 100)}% across. Separation ${sep.toFixed(2)} canvas heights.`;
+    }, 350);
+  }
+  function updateProbe() {
+    if (!state.pointer) { probeV.textContent = state.dragging ? 'dragging pole' : (coarse ? 'tap the field' : 'hover the field'); return; }
+    field(state.pointer.x, state.pointer.y, poles(), Math.min(W, H), tmp);
+    const m = Math.hypot(tmp[0], tmp[1]);
+    let deg = Math.round(-Math.atan2(tmp[1], tmp[0]) * 180 / Math.PI);
+    if (deg < 0) deg += 360;
+    probeV.textContent = `|B| ${m < 100 ? m.toFixed(1) : Math.round(m)} · ${String(deg).padStart(3, '0')}°`;
+  }
+  function placeCoach() {
+    /* the in-canvas plate carries the "drag me" cue */
+  }
+
+  // ---------- interaction ----------
+  function local(e) {
+    const r = canvas.getBoundingClientRect();
+    return { x: e.clientX - r.left, y: e.clientY - r.top };
+  }
+  function nearMoving(pt, extra) {
+    const r = poleR();
+    return Math.hypot(pt.x - state.moving.x * W, pt.y - state.moving.y * H) < r + (extra || 14);
+  }
+  let grabOff = { x: 0, y: 0 };
+
+  function setMoving(fx, fy, ripple) {
+    state.moving.x = clamp(fx, 0, 1);
+    state.moving.y = clamp(fy, 0.04, 0.96);
+    retarget(false, ripple);
+    announce();
+  }
+  function touched() {
+    state.touched = true;
+  }
+
+  canvas.addEventListener('pointerdown', (e) => {
+    const pt = local(e);
+    const coarse = e.pointerType !== 'mouse';
+    if (!nearMoving(pt, coarse ? 30 : 14)) {
+      // tap elsewhere: pull the pole to that spot on touch? keep it explicit — only probe
+      state.pointer = pt; updateProbe(); kick();
+      return;
+    }
+    e.preventDefault();
+    canvas.setPointerCapture(e.pointerId);
+    grabOff = { x: state.moving.x * W - pt.x, y: state.moving.y * H - pt.y };
+    state.dragging = true;
+    stage.classList.add('dragging');
+    touched();
+    state.pointer = null;
+    updateProbe();
+    kick();
+  });
+  canvas.addEventListener('pointermove', (e) => {
+    const pt = local(e);
+    if (state.dragging) {
+      setMoving((pt.x + grabOff.x) / W, (pt.y + grabOff.y) / H);
+      return;
+    }
+    const over = nearMoving(pt, 14);
+    if (over !== state.hoverPole) { state.hoverPole = over; stage.classList.toggle('grab', over); }
+    state.pointer = over ? null : pt;
+    updateProbe();
+    kick();
+  });
+  function endDrag(e) {
+    if (!state.dragging) return;
+    state.dragging = false;
+    stage.classList.remove('dragging');
+    try { canvas.releasePointerCapture(e.pointerId); } catch (_) {}
+    updateProbe(); kick();
+  }
+  canvas.addEventListener('pointerup', endDrag);
+  canvas.addEventListener('pointercancel', endDrag);
+  canvas.addEventListener('pointerleave', () => {
+    if (state.dragging) return;
+    state.pointer = null; state.hoverPole = false; stage.classList.remove('grab');
+    updateProbe(); kick();
+  });
+
+  posX.addEventListener('input', () => {
+    touched();
+    setMoving(posX.value / 1000, state.moving.y);
+  });
+  gain.addEventListener('input', () => {
+    state.gain = +gain.value;
+    retarget(false);
+  });
+  function flip() {
+    state.reversed = !state.reversed;
+    retarget(false, true);
+    announce();
+  }
+  flipBtn.addEventListener('click', flip);
+  resetBtn.addEventListener('click', () => {
+    applyDefaults();
+    state.gain = DEFAULTS.gain; gain.value = DEFAULTS.gain;
+    const wasRev = state.reversed;
+    state.reversed = false;
+    retarget(false, wasRev);
+    announce();
+  });
+
+  stage.addEventListener('keydown', (e) => {
+    if (e.target !== stage) return;
+    const stepPx = e.shiftKey ? 40 : 8;
+    let dx = 0, dy = 0;
+    switch (e.key) {
+      case 'ArrowLeft': dx = -stepPx; break;
+      case 'ArrowRight': dx = stepPx; break;
+      case 'ArrowUp': dy = -stepPx; break;
+      case 'ArrowDown': dy = stepPx; break;
+      case 'r': case 'R': e.preventDefault(); flip(); return;
+      default: return;
+    }
+    e.preventDefault();
+    touched();
+    setMoving(state.moving.x + dx / W, state.moving.y + dy / H);
+  });
+  document.addEventListener('keydown', (e) => {
+    if ((e.key === 'r' || e.key === 'R') && !e.metaKey && !e.ctrlKey && !e.altKey) {
+      const t = e.target;
+      if (t === stage || (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'BUTTON'))) return;
+      flip();
+    }
+  });
+
+  // ---------- boot ----------
+  if ('ResizeObserver' in window) new ResizeObserver(() => resize()).observe(stage);
+  window.addEventListener('resize', resize);
+  // DPR changes (moving between screens / zoom)
+  (function watchDpr() {
+    if (!window.matchMedia) return;
+    const mq = window.matchMedia(`(resolution: ${window.devicePixelRatio || 1}dppx)`);
+    const on = () => { resize(); watchDpr(); };
+    if (mq.addEventListener) mq.addEventListener('change', on, { once: true });
+  })();
+  resize();
+  announce();
+})();
+</script>
+</body>
+</html>

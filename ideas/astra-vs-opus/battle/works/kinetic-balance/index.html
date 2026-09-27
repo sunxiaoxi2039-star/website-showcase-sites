@@ -1,0 +1,759 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Suspended Balance</title>
+<meta name="description" content="A midcentury kinetic sculpture study: an inline SVG hanging mobile whose beam you turn around its suspension point. An artistic composition, not a physics model.">
+<meta name="color-scheme" content="light">
+<style>
+  :root {
+    --wall: #f3eee4;
+    --wall-hi: #fbf8f2;
+    --wall-lo: #e9e1d3;
+    --ink: #1c1a17;
+    --ink-2: #4f4940;
+    --ink-3: #857c6f;
+    --rule: #d9cfbf;
+    --rule-soft: #e6ddcf;
+    --terracotta: #b8583a;
+    --ocher: #c8912b;
+    --teal: #2b7872;
+    --olive: #4a4f22;
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", "Charter", "Bitstream Charter", "Sitka Text", Cambria, Georgia, "DejaVu Serif", serif;
+    --gutter: clamp(16px, 4vw, 56px);
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--wall);
+    color: var(--ink);
+    font-family: var(--serif);
+    font-size: 17px;
+    line-height: 1.55;
+    font-kerning: normal;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+  /* faint plaster grain, generated inline */
+  body::before {
+    content: "";
+    position: fixed; inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    opacity: .5;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .35 0 0 0 0 .3 0 0 0 0 .24 0 0 0 .07 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  .room {
+    position: relative; z-index: 1;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "head" "plate" "console" "lede" "notes";
+    max-width: 1560px;
+    margin: 0 auto;
+  }
+
+  /* ---------- the wall / plate ---------- */
+  .plate {
+    grid-area: plate;
+    position: relative;
+    margin: 0;
+    padding: 8px var(--gutter) 18px;
+    overflow: hidden;
+    background: radial-gradient(60% 52% at 52% 42%, rgba(252,250,245,.95) 0%, rgba(251,248,242,.55) 45%, rgba(243,238,228,0) 100%);
+    display: flex; flex-direction: column;
+  }
+  .plate svg {
+    display: block;
+    width: 100%;
+    height: auto;
+    overflow: visible;
+    user-select: none; -webkit-user-select: none;
+  }
+  .plate figcaption {
+    display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+    padding-top: 10px;
+    border-top: 1px solid var(--rule);
+    font-size: 13px; color: var(--ink-3);
+    letter-spacing: .01em;
+  }
+  .plate figcaption i { color: var(--ink-2); }
+  .fig-angle { font-variant-numeric: tabular-nums lining-nums; }
+
+  .wire { fill: none; stroke: var(--ink); stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
+  .beam { fill: none; stroke: var(--ink); stroke-width: 2.3; stroke-linecap: round; vector-effect: non-scaling-stroke; }
+  .loop { fill: none; stroke: var(--ink); stroke-width: 1.4; vector-effect: non-scaling-stroke; }
+  .crimp { fill: var(--ink); }
+  .annot { fill: none; stroke: #9a8f7f; stroke-width: 1; vector-effect: non-scaling-stroke; }
+  .annot-dash { stroke-dasharray: 3 5; }
+  .annot-text { fill: #8a7f70; font-family: var(--serif); font-style: italic; font-size: 20px; font-variant-numeric: tabular-nums; }
+  .pivot-ring { fill: var(--wall-hi); stroke: var(--ink); stroke-width: 1.3; vector-effect: non-scaling-stroke; }
+  #hit { stroke: transparent; stroke-width: 34; fill: none; cursor: grab; pointer-events: stroke; touch-action: none; }
+  #hit:active, .dragging #hit { cursor: grabbing; }
+  #hit:focus { outline: none; }
+
+  /* ---------- text ---------- */
+  .head { grid-area: head; padding: 28px var(--gutter) 6px; }
+  .intro { grid-area: lede; padding: 0 var(--gutter); }
+  .console { grid-area: console; padding: 4px var(--gutter) 0; }
+  .notes { grid-area: notes; padding: 8px var(--gutter) 44px; }
+
+  .eyebrow {
+    margin: 0 0 14px;
+    font-size: 12px; letter-spacing: .2em; text-transform: uppercase;
+    color: var(--ink-3);
+    display: flex; gap: .75em; align-items: center; flex-wrap: wrap;
+  }
+  .eyebrow .dots { display: inline-flex; gap: 5px; }
+  .eyebrow .dots i { width: 7px; height: 7px; border-radius: 50%; display: block; }
+  h1 {
+    margin: 0;
+    font-weight: 400;
+    font-size: clamp(38px, 5.2vw, 64px);
+    line-height: 1.02;
+    letter-spacing: -.012em;
+  }
+  h1 em { font-style: italic; color: var(--terracotta); }
+  .lede {
+    margin: 14px 0 0;
+    font-size: clamp(17px, 1.35vw, 19px);
+    color: var(--ink-2);
+    max-width: 34em;
+  }
+
+  .console-card {
+    border-top: 1.5px solid var(--ink);
+    border-bottom: 1px solid var(--rule);
+    padding: 16px 0 18px;
+    margin-top: 10px;
+  }
+  .readout {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 4px 26px;
+    align-items: end;
+  }
+  .lbl {
+    display: block;
+    font-size: 11.5px; letter-spacing: .18em; text-transform: uppercase;
+    color: var(--ink-3);
+    margin-bottom: 2px;
+  }
+  #angleOut {
+    display: block;
+    font-size: clamp(44px, 4.6vw, 58px);
+    line-height: 1;
+    font-variant-numeric: tabular-nums lining-nums;
+    letter-spacing: -.02em;
+    min-width: 3.7ch;
+  }
+  .state-word {
+    display: block;
+    font-style: italic;
+    font-size: clamp(24px, 2.3vw, 30px);
+    line-height: 1.05;
+  }
+  .state-detail { display: block; font-size: 14.5px; color: var(--ink-2); margin-top: 4px; min-height: 2.9em; }
+
+  .slider-block { margin-top: 18px; }
+  .slider-label { display: flex; justify-content: space-between; gap: 10px; align-items: baseline; font-size: 14.5px; color: var(--ink-2); }
+  .slider-label kbd { font-family: inherit; font-size: 12px; color: var(--ink-3); }
+  input[type=range] {
+    --pct-a: 50%; --pct-b: 50%;
+    -webkit-appearance: none; appearance: none;
+    display: block;
+    width: 100%;
+    height: 40px;
+    margin: 4px 0 0;
+    background: transparent;
+    cursor: pointer;
+    touch-action: pan-y;
+  }
+  input[type=range]:focus { outline: none; }
+  input[type=range]::-webkit-slider-runnable-track {
+    height: 3px;
+    background:
+      linear-gradient(90deg, transparent var(--pct-a), var(--terracotta) var(--pct-a), var(--terracotta) var(--pct-b), transparent var(--pct-b)),
+      linear-gradient(90deg, var(--ink) 0 1px, transparent 1px calc(50% - .5px), var(--ink) calc(50% - .5px) calc(50% + .5px), transparent calc(50% + .5px) calc(100% - 1px), var(--ink) calc(100% - 1px)) 0 0 / 100% 3px,
+      linear-gradient(var(--ink), var(--ink)) 0 1px / 100% 1px no-repeat;
+  }
+  input[type=range]::-moz-range-track {
+    height: 3px;
+    background:
+      linear-gradient(90deg, transparent var(--pct-a), var(--terracotta) var(--pct-a), var(--terracotta) var(--pct-b), transparent var(--pct-b)),
+      linear-gradient(var(--ink), var(--ink)) 0 1px / 100% 1px no-repeat;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 22px; height: 22px; margin-top: -9.5px;
+    border-radius: 50%;
+    background: var(--ink);
+    border: 5px solid var(--wall-hi);
+    box-shadow: 0 0 0 1px var(--ink), 0 3px 8px rgba(40,30,20,.18);
+    transition: transform .18s ease;
+  }
+  input[type=range]::-moz-range-thumb {
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    background: var(--ink);
+    border: 5px solid var(--wall-hi);
+    box-shadow: 0 0 0 1px var(--ink), 0 3px 8px rgba(40,30,20,.18);
+  }
+  input[type=range]:active::-webkit-slider-thumb { transform: scale(1.12); }
+  input[type=range]:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 1px var(--ink), 0 0 0 4px var(--wall), 0 0 0 5.5px var(--teal); }
+  input[type=range]:focus-visible::-moz-range-thumb { box-shadow: 0 0 0 1px var(--ink), 0 0 0 4px var(--wall), 0 0 0 5.5px var(--teal); }
+  .ticks { display: flex; justify-content: space-between; font-size: 12.5px; color: var(--ink-3); font-variant-numeric: tabular-nums; margin-top: -4px; }
+  .ticks span:nth-child(2) { transform: translateX(-2px); }
+
+  .actions { display: flex; gap: 10px 14px; flex-wrap: wrap; margin-top: 16px; }
+  .btn {
+    font: inherit; font-size: 14.5px;
+    color: var(--ink);
+    background: transparent;
+    border: 1px solid var(--ink);
+    border-radius: 999px;
+    padding: 7px 16px 8px;
+    min-height: 40px;
+    cursor: pointer;
+    transition: background-color .2s ease, color .2s ease;
+  }
+  .btn:hover { background: var(--ink); color: var(--wall-hi); }
+  .btn:focus-visible { outline: 1.5px solid var(--teal); outline-offset: 3px; }
+  .btn[aria-pressed="true"] { background: var(--ink); color: var(--wall-hi); }
+  .btn:disabled, .btn:disabled:hover { opacity: .55; cursor: default; background: transparent; color: var(--ink); border-style: dashed; }
+
+  .arms {
+    display: grid; grid-template-columns: repeat(3, minmax(0, 1fr));
+    margin: 18px 0 0; padding: 12px 0 0;
+    border-top: 1px dotted var(--rule);
+  }
+  .arms div { min-width: 0; }
+  .arms dt { font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: var(--ink-3); }
+  .arms dd { margin: 2px 0 0; font-size: 19px; font-variant-numeric: tabular-nums lining-nums; }
+
+  .statement {
+    margin: 26px 0 0;
+    padding-left: 18px;
+    border-left: 2px solid var(--terracotta);
+    max-width: 36em;
+  }
+  .statement h2 {
+    margin: 0 0 6px;
+    font-size: 12px; font-weight: 400; letter-spacing: .2em; text-transform: uppercase; color: var(--ink-3);
+  }
+  .statement p { margin: 0; font-size: 16.5px; color: var(--ink-2); }
+  .statement p + p { margin-top: 8px; }
+  .statement strong { font-weight: 400; font-style: italic; color: var(--ink); }
+
+  .legend { list-style: none; margin: 26px 0 0; padding: 0; display: grid; gap: 0; }
+  .legend li {
+    display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 12px; align-items: center;
+    padding: 9px 0;
+    border-bottom: 1px solid var(--rule-soft);
+    font-size: 15px; color: var(--ink-2);
+  }
+  .legend li:first-child { border-top: 1px solid var(--rule-soft); }
+  .legend b { font-weight: 400; color: var(--ink); }
+  .legend svg { width: 34px; height: 26px; display: block; }
+
+  .placard {
+    margin-top: 26px;
+    padding: 14px 16px 15px;
+    background: #fdfbf7;
+    box-shadow: 0 1px 0 rgba(60,45,30,.06), 0 8px 22px -14px rgba(60,45,30,.28);
+    max-width: 330px;
+    font-size: 13.5px; line-height: 1.45; color: var(--ink-2);
+  }
+  .placard p { margin: 0; }
+  .placard .t { font-style: italic; font-size: 16px; color: var(--ink); }
+  .placard .sm { margin-top: 8px; font-size: 12px; color: var(--ink-3); }
+
+  .sr-only { position: absolute !important; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+
+  /* ---------- wide screens: wall on the left, catalogue on the right ---------- */
+  @media (min-width: 940px) {
+    .room {
+      grid-template-columns: minmax(0, 1.5fr) minmax(380px, 1fr);
+      grid-template-rows: auto auto auto 1fr;
+      grid-template-areas: "plate head" "plate lede" "plate console" "plate notes";
+    }
+    .plate {
+      position: sticky; top: 0;
+      align-self: start;
+      height: 100vh; height: 100svh;
+      min-height: 560px;
+      padding: 18px clamp(20px, 3vw, 48px) 22px;
+      border-right: 1px solid var(--rule);
+      justify-content: center;
+    }
+    .plate svg { flex: 1 1 auto; min-height: 0; height: 100%; }
+    .head { padding: 44px clamp(28px, 3.4vw, 56px) 4px; }
+    .intro { padding: 0 clamp(28px, 3.4vw, 56px); }
+    .console { padding: 6px clamp(28px, 3.4vw, 56px) 0; }
+    .notes { padding: 6px clamp(28px, 3.4vw, 56px) 56px; }
+  }
+  @media (min-width: 940px) and (max-height: 900px) {
+    .head { padding-top: 30px; }
+    h1 { font-size: clamp(38px, 4.2vw, 56px); }
+    .lede { margin-top: 10px; }
+  }
+  @media (max-width: 939px) {
+    .plate { padding: 6px 0 12px; }
+    .intro { padding-top: 22px; }
+    .intro .lede { margin-top: 0; }
+    .plate figcaption { margin: 0 var(--gutter); }
+    .head { padding-bottom: 0; }
+  }
+  @media (max-width: 600px) {
+    .slider-label kbd, .fig-angle { display: none; }
+    .lede { font-size: 16.5px; }
+  }
+  @media (max-width: 420px) {
+    body { font-size: 16px; }
+    .readout { gap: 4px 18px; }
+    .arms dd { font-size: 17px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { transition: none !important; animation: none !important; scroll-behavior: auto !important; }
+  }
+</style>
+</head>
+<body>
+<main class="room">
+
+  <header class="head">
+    <p class="eyebrow">
+      <span class="dots" aria-hidden="true"><i style="background:var(--terracotta)"></i><i style="background:var(--ocher)"></i><i style="background:var(--teal)"></i><i style="background:var(--olive)"></i></span>
+      <span>Kinetic Study No. 4</span>
+    </p>
+    <h1>Suspended <em>Balance</em></h1>
+  </header>
+
+  <div class="intro">
+    <p class="lede">Four painted forms hang from one bent wire. Turn the beam about its suspension point and the arms below answer in a slower, softer register&thinsp;&mdash;&thinsp;less a calculation than a conversation between line and weight.</p>
+  </div>
+
+  <figure class="plate" id="plate">
+    <svg id="stage" viewBox="105 -50 895 700" role="img" aria-labelledby="figTitle figDesc">
+      <title id="figTitle">A hanging mobile on a gallery wall</title>
+      <desc id="figDesc">A thin dark wire drops from the ceiling to a long curved beam. The long left arm carries a terracotta ellipse. The short right arm carries a smaller beam with an ocher triangle, which in turn carries a third beam holding a teal semicircle and a deep olive disc.</desc>
+      <defs>
+        <filter id="wallShadow" x="-20%" y="-20%" width="140%" height="140%" color-interpolation-filters="sRGB">
+          <feColorMatrix type="matrix" values="0 0 0 0 .24  0 0 0 0 .19  0 0 0 0 .13  0 0 0 .2 0"/>
+          <feGaussianBlur stdDeviation="3.2"/>
+        </filter>
+        <linearGradient id="sheen" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#fff" stop-opacity=".16"/>
+          <stop offset=".55" stop-color="#fff" stop-opacity="0"/>
+          <stop offset="1" stop-color="#000" stop-opacity=".08"/>
+        </linearGradient>
+      </defs>
+
+      <!-- draughtsman's annotations -->
+      <g id="annot" aria-hidden="true">
+        <line class="annot annot-dash" x1="170" y1="150" x2="760" y2="150"/>
+        <path id="angleArc" class="annot" d=""/>
+        <text id="angleLabel" class="annot-text" x="0" y="0"></text>
+      </g>
+
+      <!-- the shadow the gallery light throws on the wall -->
+      <line x1="540" y1="-1600" x2="540" y2="180" stroke="#3d3025" stroke-opacity=".13" stroke-width="2" vector-effect="non-scaling-stroke" aria-hidden="true"/>
+      <use href="#mobile" transform="translate(20 30)" filter="url(#wallShadow)" aria-hidden="true"/>
+
+      <g id="mobile">
+        <line class="wire" x1="520" y1="-1600" x2="520" y2="150"/>
+
+        <!-- beam A: rotates about the suspension point -->
+        <g id="beamA" transform="rotate(0 520 150)">
+          <path class="beam" d="M220 156 Q370 138 520 150 Q615 145 710 158"/>
+          <circle class="loop" cx="220" cy="156" r="3.4"/>
+          <circle class="loop" cx="710" cy="158" r="3.4"/>
+        </g>
+
+        <line id="hE" class="wire"/>
+        <g id="shE"><g class="turn">
+          <ellipse cx="0" cy="50" rx="84" ry="50" fill="var(--terracotta)"/>
+          <ellipse cx="0" cy="50" rx="84" ry="50" fill="url(#sheen)"/>
+        </g></g>
+
+        <line id="hB" class="wire"/>
+        <g id="beamB">
+          <path class="beam" d="M-112 5 Q-55 -6 0 0 Q72 -3 142 7"/>
+          <circle class="loop" cx="-112" cy="5" r="3"/>
+          <circle class="loop" cx="142" cy="7" r="3"/>
+          <circle class="crimp" cx="0" cy="0" r="2.6"/>
+        </g>
+
+        <line id="hT" class="wire"/>
+        <g id="shT"><g class="turn">
+          <path d="M0 0 L54 92 L-50 88 Z" fill="var(--ocher)" stroke="var(--ocher)" stroke-width="1.5" stroke-linejoin="round"/>
+          <path d="M0 0 L54 92 L-50 88 Z" fill="url(#sheen)"/>
+        </g></g>
+
+        <line id="hC" class="wire"/>
+        <g id="beamC">
+          <path class="beam" d="M-80 4 Q-40 -4 0 0 Q34 -2 68 6"/>
+          <circle class="loop" cx="-80" cy="4" r="2.8"/>
+          <circle class="loop" cx="68" cy="6" r="2.8"/>
+          <circle class="crimp" cx="0" cy="0" r="2.4"/>
+        </g>
+
+        <line id="hS" class="wire"/>
+        <g id="shS"><g class="turn">
+          <path d="M-56 0 A56 56 0 0 0 56 0 Z" fill="var(--teal)"/>
+          <path d="M-56 0 A56 56 0 0 0 56 0 Z" fill="url(#sheen)"/>
+        </g></g>
+
+        <line id="hD" class="wire"/>
+        <g id="shD"><g class="turn">
+          <circle cx="0" cy="33" r="33" fill="var(--olive)"/>
+          <circle cx="0" cy="33" r="33" fill="url(#sheen)"/>
+        </g></g>
+      </g>
+
+      <!-- suspension point marker -->
+      <circle class="pivot-ring" cx="520" cy="150" r="5.5"/>
+
+      <!-- invisible grab handle along beam A -->
+      <g id="hitGroup" transform="rotate(0 520 150)">
+        <path id="hit" d="M220 156 Q370 138 520 150 Q615 145 710 158" aria-hidden="true"/>
+      </g>
+    </svg>
+    <figcaption>
+      <span><i>Fig. 1.</i> Drag the beam, or use the slider. The ring marks the suspension point.</span>
+      <span class="fig-angle" id="figAngle" aria-hidden="true">beam &minus;6.0°</span>
+    </figcaption>
+  </figure>
+
+  <section class="console" aria-labelledby="consoleTitle">
+    <h2 id="consoleTitle" class="sr-only">Beam rotation</h2>
+    <div class="console-card">
+      <div class="readout">
+        <div>
+          <span class="lbl">Angle</span>
+          <output id="angleOut" for="beam">&minus;6.0°</output>
+        </div>
+        <div>
+          <span class="lbl">State</span>
+          <span class="state-word" id="stateWord">Leaning</span>
+        </div>
+      </div>
+      <span class="state-detail" id="stateDetail">The terracotta ellipse settles lower; the cascade lifts.</span>
+
+      <div class="slider-block">
+        <label class="slider-label" for="beam"><span>Rotate the beam around its suspension point</span><kbd aria-hidden="true">← →</kbd></label>
+        <input type="range" id="beam" min="-30" max="30" step="0.5" value="-6" aria-describedby="stateDetail">
+        <div class="ticks" aria-hidden="true"><span>&minus;30°</span><span>0°</span><span>+30°</span></div>
+      </div>
+
+      <div class="actions">
+        <button class="btn" id="levelBtn" type="button">Return to level</button>
+        <button class="btn" id="stillBtn" type="button" aria-pressed="false">Still the air</button>
+      </div>
+
+      <dl class="arms" aria-label="Current arm angles">
+        <div><dt>Beam</dt><dd id="armA">&minus;6.0°</dd></div>
+        <div><dt>Second arm</dt><dd id="armB">+0.0°</dd></div>
+        <div><dt>Third arm</dt><dd id="armC">+0.0°</dd></div>
+      </dl>
+    </div>
+  </section>
+
+  <section class="notes" aria-label="About the study">
+    <div class="statement">
+      <h2>A note on method</h2>
+      <p><strong>This is an artistic study, not a physics model.</strong> No masses are weighed and no torques are solved. The lean you give the beam is a gesture; the lag and sway of the lower arms are composed by eye, the way a line in a drawing answers the one before it.</p>
+      <p>What it borrows from the midcentury mobile is its temperament: balance that is felt before it is measured, colour set against a quiet wall, and a wire thin enough to disappear.</p>
+    </div>
+
+    <ul class="legend" aria-label="The four forms">
+      <li><svg viewBox="0 0 34 26" aria-hidden="true"><ellipse cx="17" cy="13" rx="15" ry="9" fill="var(--terracotta)"/></svg><span><b>Terracotta ellipse</b> &mdash; the counterweight, alone at the end of the long arm.</span></li>
+      <li><svg viewBox="0 0 34 26" aria-hidden="true"><path d="M17 3 L28 23 L6 22 Z" fill="var(--ocher)"/></svg><span><b>Ocher triangle</b> &mdash; the first to answer when the beam turns.</span></li>
+      <li><svg viewBox="0 0 34 26" aria-hidden="true"><path d="M5 7 A12 12 0 0 0 29 7 Z" fill="var(--teal)"/></svg><span><b>Teal semicircle</b> &mdash; a shallow bowl held up to the light.</span></li>
+      <li><svg viewBox="0 0 34 26" aria-hidden="true"><circle cx="17" cy="13" r="9.5" fill="var(--olive)"/></svg><span><b>Deep olive disc</b> &mdash; the full stop at the far tip.</span></li>
+    </ul>
+
+    <div class="placard">
+      <p class="t">Suspended Balance</p>
+      <p>Study for a hanging mobile, after the 1950s</p>
+      <p>Steel wire and painted sheet, drawn as inline SVG</p>
+      <p>Dimensions variable</p>
+      <p class="sm">When your system asks for reduced motion, the arms go straight to their places and the forms stop turning.</p>
+    </div>
+  </section>
+</main>
+
+<script>
+(function () {
+  "use strict";
+
+  var $ = function (id) { return document.getElementById(id); };
+
+  /* ---- composition (hand-tuned, not physical) ---- */
+  var P = { x: 520, y: 150 };             // suspension point
+  var A_L = [-300, 6], A_R = [190, 8];     // beam A hang points, local
+  var B_L = [-112, 5], B_R = [142, 7];     // beam B
+  var C_L = [-80, 4],  C_R = [68, 6];      // beam C
+  var DROP = { E: 150, B: 86, T: 142, C: 78, S: 90, D: 138 };
+
+  var el = {
+    beamA: $("beamA"), hitGroup: $("hitGroup"), hit: $("hit"),
+    hE: $("hE"), shE: $("shE"),
+    hB: $("hB"), beamB: $("beamB"),
+    hT: $("hT"), shT: $("shT"),
+    hC: $("hC"), beamC: $("beamC"),
+    hS: $("hS"), shS: $("shS"),
+    hD: $("hD"), shD: $("shD"),
+    arc: $("angleArc"), arcLabel: $("angleLabel"),
+    slider: $("beam"), out: $("angleOut"), figAngle: $("figAngle"),
+    word: $("stateWord"), detail: $("stateDetail"),
+    armA: $("armA"), armB: $("armB"), armC: $("armC"),
+    level: $("levelBtn"), still: $("stillBtn"),
+    svg: $("stage"), plate: $("plate")
+  };
+  var turners = [
+    { g: el.shE.firstElementChild, w: 0.21, ph: 0.4, amp: 0.2 },
+    { g: el.shT.firstElementChild, w: 0.33, ph: 2.1, amp: 0.3 },
+    { g: el.shS.firstElementChild, w: 0.27, ph: 4.0, amp: 0.26 },
+    { g: el.shD.firstElementChild, w: 0.39, ph: 1.2, amp: 0.34 }
+  ];
+
+  /* ---- state ---- */
+  var target = parseFloat(el.slider.value) || 0;   // chosen by the viewer
+  var a = target, av = 0;                           // displayed beam angle
+  var b = 0, bv = 0, c = 0, cv = 0;                 // sympathetic arms
+  var t0 = performance.now(), last = t0, raf = 0;
+  var mq = window.matchMedia ? window.matchMedia("(prefers-reduced-motion: reduce)") : null;
+  var reduced = !!(mq && mq.matches);
+  var stilled = false;
+
+  function rad(d) { return d * Math.PI / 180; }
+  function rot(pt, cx, cy, deg) {
+    var r = rad(deg), co = Math.cos(r), si = Math.sin(r);
+    return { x: cx + pt[0] * co - pt[1] * si, y: cy + pt[0] * si + pt[1] * co };
+  }
+  function f1(n) { return (Math.round(n * 10) / 10).toFixed(1); }
+  function signed(n) {
+    var v = Math.round(n * 10) / 10;
+    if (v === 0) return "0.0°";
+    return (v > 0 ? "+" : "−") + Math.abs(v).toFixed(1) + "°";
+  }
+  function setLine(line, x1, y1, x2, y2) {
+    line.setAttribute("x1", x1.toFixed(2)); line.setAttribute("y1", y1.toFixed(2));
+    line.setAttribute("x2", x2.toFixed(2)); line.setAttribute("y2", y2.toFixed(2));
+  }
+  function hangAt(g, x, y) { g.setAttribute("transform", "translate(" + x.toFixed(2) + " " + y.toFixed(2) + ")"); }
+
+  /* The lower arms lean against the beam a little, then drift back.
+     Chosen for rhythm on the wall, not derived from mass. */
+  function targetsFor(aDeg) {
+    var bt = -0.46 * aDeg + 2.5;
+    var ct = -0.55 * bt + 0.22 * aDeg - 1.5;
+    return { b: bt, c: ct };
+  }
+
+  /* ---- words for the state ---- */
+  function describe(v) {
+    var m = Math.abs(v), word, detail;
+    if (m < 1) { word = "Poised"; detail = "The beam rests on the level line; the forms below hang in quiet agreement."; }
+    else {
+      word = m < 8 ? "Leaning" : m < 16 ? "Tilting" : m < 24 ? "Reaching" : "At the edge";
+      var soft = m < 8 ? "settles lower" : m < 16 ? "sinks" : m < 24 ? "swings low" : "drops to its lowest";
+      detail = v < 0
+        ? "The terracotta ellipse " + soft + "; the cascade of triangle, semicircle and disc lifts."
+        : "The cascade of triangle, semicircle and disc " + soft + "; the terracotta ellipse rises on the long arm.";
+    }
+    return { word: word, detail: detail };
+  }
+
+  var lastWord = "";
+  function updateText() {
+    var s = describe(target);
+    el.out.textContent = signed(target);
+    el.figAngle.textContent = "beam " + signed(target);
+    if (s.word !== lastWord) { el.word.textContent = s.word; lastWord = s.word; }
+    if (el.detail.textContent !== s.detail) el.detail.textContent = s.detail;
+    el.slider.setAttribute("aria-valuetext", signed(target).replace("−", "minus ").replace("+", "plus ").replace("°", " degrees") + ", " + s.word.toLowerCase());
+    var pct = (target + 30) / 60 * 100;
+    el.slider.style.setProperty("--pct-a", Math.min(50, pct) + "%");
+    el.slider.style.setProperty("--pct-b", Math.max(50, pct) + "%");
+    document.body.setAttribute("data-state", s.word.toLowerCase().replace(/\s+/g, "-"));
+  }
+
+  /* ---- drawing ---- */
+  var lastArms = ["", "", ""];
+  function draw(tSec) {
+    var tf = "rotate(" + a.toFixed(3) + " " + P.x + " " + P.y + ")";
+    el.beamA.setAttribute("transform", tf);
+    el.hitGroup.setAttribute("transform", tf);
+
+    var aL = rot(A_L, P.x, P.y, a), aR = rot(A_R, P.x, P.y, a);
+    // ellipse on the long arm
+    setLine(el.hE, aL.x, aL.y + 3.4, aL.x, aL.y + DROP.E);
+    hangAt(el.shE, aL.x, aL.y + DROP.E);
+    // beam B
+    var Bp = { x: aR.x, y: aR.y + DROP.B };
+    setLine(el.hB, aR.x, aR.y + 3.4, Bp.x, Bp.y);
+    el.beamB.setAttribute("transform", "translate(" + Bp.x.toFixed(2) + " " + Bp.y.toFixed(2) + ") rotate(" + b.toFixed(3) + ")");
+    var bL = rot(B_L, Bp.x, Bp.y, b), bR = rot(B_R, Bp.x, Bp.y, b);
+    setLine(el.hT, bL.x, bL.y + 3, bL.x, bL.y + DROP.T);
+    hangAt(el.shT, bL.x, bL.y + DROP.T);
+    // beam C
+    var Cp = { x: bR.x, y: bR.y + DROP.C };
+    setLine(el.hC, bR.x, bR.y + 3, Cp.x, Cp.y);
+    el.beamC.setAttribute("transform", "translate(" + Cp.x.toFixed(2) + " " + Cp.y.toFixed(2) + ") rotate(" + c.toFixed(3) + ")");
+    var cL = rot(C_L, Cp.x, Cp.y, c), cR = rot(C_R, Cp.x, Cp.y, c);
+    setLine(el.hS, cL.x, cL.y + 2.8, cL.x, cL.y + DROP.S);
+    hangAt(el.shS, cL.x, cL.y + DROP.S);
+    setLine(el.hD, cR.x, cR.y + 2.8, cR.x, cR.y + DROP.D);
+    hangAt(el.shD, cR.x, cR.y + DROP.D);
+
+    // the forms turn slowly in the air (a flat illusion of rotation)
+    for (var i = 0; i < turners.length; i++) {
+      var tr = turners[i], sx = 1;
+      if (tSec != null) sx = 1 - tr.amp * (0.5 - 0.5 * Math.cos(tSec * tr.w + tr.ph));
+      tr.g.setAttribute("transform", sx === 1 ? "" : "scale(" + sx.toFixed(4) + " 1)");
+    }
+
+    // annotation arc
+    var R = 96;
+    if (Math.abs(a) < 0.25) {
+      el.arc.setAttribute("d", "");
+      el.arcLabel.textContent = "";
+    } else {
+      var end = rot([R, 0], P.x, P.y, a);
+      el.arc.setAttribute("d", "M" + (P.x + R) + " " + P.y + " A" + R + " " + R + " 0 0 " + (a > 0 ? 1 : 0) + " " + end.x.toFixed(2) + " " + end.y.toFixed(2));
+      // label sits on the far side of the level line from the beam
+      el.arcLabel.setAttribute("x", (P.x + R + 10).toFixed(1));
+      el.arcLabel.setAttribute("y", (P.y + (a > 0 ? -9 : 22)).toFixed(1));
+      el.arcLabel.textContent = f1(Math.abs(a)) + "°";
+    }
+
+    var arms = [signed(a), signed(b), signed(c)];
+    if (arms[0] !== lastArms[0]) el.armA.textContent = arms[0];
+    if (arms[1] !== lastArms[1]) el.armB.textContent = arms[1];
+    if (arms[2] !== lastArms[2]) el.armC.textContent = arms[2];
+    lastArms = arms;
+  }
+
+  function motionOn() { return !reduced && !stilled; }
+
+  function snap() {
+    a = target; av = 0;
+    var tg = targetsFor(a);
+    b = tg.b; c = tg.c; bv = cv = 0;
+  }
+
+  function step(now) {
+    raf = 0;
+    var dt = Math.min(0.05, (now - last) / 1000);
+    last = now;
+    var tSec = (now - t0) / 1000;
+
+    // beam eases toward the chosen angle with a soft overshoot
+    av += (38 * (target - a) - 9.5 * av) * dt;
+    a += av * dt;
+    // a faint breath of air
+    var breeze = 0.9 * Math.sin(tSec * 0.37) + 0.5 * Math.sin(tSec * 0.23 + 1.3);
+    var tg = targetsFor(a);
+    bv += (16 * (tg.b + breeze - b) - 3.2 * bv) * dt;
+    b += bv * dt;
+    cv += (11 * (tg.c - 1.3 * breeze - c) - 2.4 * cv) * dt;
+    c += cv * dt;
+
+    draw(tSec);
+    if (motionOn()) raf = requestAnimationFrame(step);
+  }
+
+  function kick() {
+    if (motionOn()) {
+      if (!raf) { last = performance.now(); raf = requestAnimationFrame(step); }
+    } else {
+      if (raf) { cancelAnimationFrame(raf); raf = 0; }
+      snap();
+      draw(null);
+    }
+  }
+
+  function setTarget(v) {
+    v = Math.max(-30, Math.min(30, Math.round(v * 2) / 2));
+    target = v;
+    if (parseFloat(el.slider.value) !== v) el.slider.value = String(v);
+    updateText();
+    kick();
+  }
+
+  el.slider.addEventListener("input", function () { setTarget(parseFloat(el.slider.value)); });
+  el.level.addEventListener("click", function () { setTarget(0); });
+
+  function syncStillButton() {
+    if (reduced) {
+      el.still.disabled = true;
+      el.still.setAttribute("aria-pressed", "true");
+      el.still.textContent = "Motion reduced";
+      el.still.title = "Your system prefers reduced motion";
+    } else {
+      el.still.disabled = false;
+      el.still.setAttribute("aria-pressed", stilled ? "true" : "false");
+      el.still.textContent = stilled ? "Let the air move" : "Still the air";
+      el.still.removeAttribute("title");
+    }
+  }
+  el.still.addEventListener("click", function () {
+    stilled = !stilled;
+    syncStillButton();
+    kick();
+  });
+  if (mq) {
+    var onMq = function () { reduced = mq.matches; syncStillButton(); kick(); };
+    if (mq.addEventListener) mq.addEventListener("change", onMq);
+    else if (mq.addListener) mq.addListener(onMq);
+  }
+
+  /* ---- drag the beam directly ---- */
+  var drag = null;
+  function svgPoint(evt) {
+    var m = el.svg.getScreenCTM();
+    if (!m) return null;
+    var pt = el.svg.createSVGPoint();
+    pt.x = evt.clientX; pt.y = evt.clientY;
+    return pt.matrixTransform(m.inverse());
+  }
+  function angleTo(p) { return Math.atan2(p.y - P.y, p.x - P.x) * 180 / Math.PI; }
+  el.hit.addEventListener("pointerdown", function (e) {
+    var p = svgPoint(e); if (!p) return;
+    e.preventDefault();
+    drag = { id: e.pointerId, start: angleTo(p), from: target };
+    try { el.hit.setPointerCapture(e.pointerId); } catch (_) {}
+    el.plate.classList.add("dragging");
+  });
+  el.hit.addEventListener("pointermove", function (e) {
+    if (!drag || e.pointerId !== drag.id) return;
+    var p = svgPoint(e); if (!p) return;
+    var d = angleTo(p) - drag.start;
+    if (d > 180) d -= 360; else if (d < -180) d += 360;
+    setTarget(drag.from + d);
+  });
+  function endDrag(e) {
+    if (!drag || (e && e.pointerId !== drag.id)) return;
+    drag = null;
+    el.plate.classList.remove("dragging");
+  }
+  el.hit.addEventListener("pointerup", endDrag);
+  el.hit.addEventListener("pointercancel", endDrag);
+  el.hit.addEventListener("lostpointercapture", endDrag);
+
+  /* ---- start ---- */
+  syncStillButton();
+  updateText();
+  snap();
+  draw(motionOn() ? 0 : null);
+  kick();
+})();
+</script>
+</body>
+</html>
