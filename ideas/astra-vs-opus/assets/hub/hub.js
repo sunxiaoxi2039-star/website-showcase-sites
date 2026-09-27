@@ -126,7 +126,7 @@
         <div class="v2body">
           <h3>${L(w.name)}</h3>
           <p>${L(w.summary)}</p>
-          <span class="base ${w.higher ? 'higher' : 'same'}">${w.higher ? L({ zh: '起跑线更高', en: 'Higher starting line' }) : L({ zh: '同一起跑线', en: 'Same starting line' })} · ${L(w.base)}</span>
+          <span class="base ${w.higher ? 'higher' : 'same'}"><b>${w.higher ? L({ zh: '起跑线比第一版高', en: 'Higher starting line than round 1' }) : L({ zh: '与第一版同一起跑线', en: 'Same starting line as round 1' })}</b>${L(w.base)}</span>
         </div>
         <i class="gloss"></i>
       </a>

@@ -15,6 +15,7 @@
 }
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+@media (min-width: 901px) { section[id], .howto { scroll-margin-top: 64px; } }
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
 body {
   margin: 0; background: var(--bg); color: var(--ink);
@@ -325,9 +326,11 @@ html:not([lang=en]) .sechead h2 { letter-spacing: -.01em; line-height: 1.22; }
 .v2body { padding: 16px 18px 18px; }
 .v2body h3 { margin: 0; font-size: 18px; line-height: 1.3; }
 .v2body p { margin: 8px 0 0; font-size: 13.5px; color: var(--dim); line-height: 1.6; }
-.base { display: inline-flex; align-items: center; gap: 6px; margin-top: 12px; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; }
-.base.same { color: var(--astra); background: rgba(110,231,165,.1); }
-.base.higher { color: var(--amber); background: rgba(245,196,107,.1); }
+.base { display: block; margin-top: 12px; padding: 7px 12px; border-radius: 12px; font-size: 12.5px; line-height: 1.45; color: var(--dim); }
+.base b { display: block; font-size: 12px; letter-spacing: .06em; font-weight: 700; }
+.base.same b { color: var(--astra); } .base.higher b { color: var(--amber); }
+.base.same { background: rgba(110,231,165,.08); }
+.base.higher { background: rgba(245,196,107,.08); }
 .v2go { position: absolute; top: 12px; right: 12px; padding: 5px 11px; border-radius: 999px; font-size: 12px; font-weight: 600; background: rgba(7,8,11,.7); color: var(--o55); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
 @media (max-width: 900px) {
   .v2grid { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; gap: 12px; margin: 0 -16px; padding: 4px 16px 14px; scrollbar-width: none; }
