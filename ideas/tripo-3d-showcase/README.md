@@ -5,7 +5,7 @@
 我们的一次成型版（黑屏和报错也如实保留）、精细加工版（修正版 + v3 真模型版），并附一份给新手的逐步教程。
 
 - 在线查看：https://sunxiaoxi2039-star.github.io/website-showcase-sites/ideas/tripo-3d-showcase/
-- 最近更新：2026-09-25
+- 最近更新：2026-09-26
 
 ## 技术栈
 

@@ -40,7 +40,7 @@ img, video { display: block; max-width: 100%; }
 .topbar {
   position: fixed; top: 0; left: 0; right: 0; z-index: 80; display: flex; align-items: center; justify-content: space-between;
   padding: 18px clamp(16px, 3vw, 40px); pointer-events: none;
-  background: linear-gradient(to bottom, rgba(0,0,0,.45), transparent);
+  background: linear-gradient(to bottom, rgba(8,9,12,.9) 0%, rgba(8,9,12,.6) 60%, transparent 100%);
 }
 .topbar > * { pointer-events: auto; }
 .brand { text-decoration: none; font: 600 15px/1 var(--serif); letter-spacing: .08em; display: flex; gap: .5em; align-items: center; }
@@ -296,6 +296,15 @@ img, video { display: block; max-width: 100%; }
 .pending b { color: var(--ink); }
 .credits p { color: var(--ink-2); margin: 0 0 12px; }
 .muted { color: var(--ink-3) !important; font: 12px/1.6 var(--mono); }
+.next-work { display: grid; gap: 12px; margin-top: 80px; padding: clamp(24px, 4vw, 44px); border: 1px solid var(--line); border-radius: 18px;
+  text-decoration: none; color: var(--ink); background: linear-gradient(120deg, rgba(232,192,122,.10), rgba(255,255,255,.02) 60%);
+  transition: border-color .3s, transform .3s var(--ease); }
+.next-work:hover { border-color: var(--accent); transform: translateY(-2px); }
+.next-kicker { font: 12px/1 var(--mono); color: var(--accent); letter-spacing: .12em; }
+.next-title { font: 600 clamp(26px, 3.2vw, 44px)/1.15 var(--serif); }
+.next-sub { color: var(--ink-2); max-width: 46em; }
+.topnav a.nav-next { color: var(--accent); border-color: rgba(232,192,122,.35); }
+@media (prefers-reduced-motion: reduce) { .next-work:hover { transform: none; } }
 
 .live-hud { position: fixed; left: 16px; bottom: 16px; z-index: 85; display: flex; align-items: center; gap: 8px;
   font: 12px/1 var(--mono); color: var(--ink-3); padding: 8px 12px; border-radius: 99px; background: rgba(0,0,0,.55);
@@ -341,7 +350,7 @@ img, video { display: block; max-width: 100%; }
 /* 手机：简化视差，不 pin 章节舞台 */
 @media (max-width: 860px) {
   .topnav a { padding: 7px 9px; font-size: 11px; }
-  .topnav a:nth-child(3) { display: none; }
+  .topnav a:nth-child(2), .topnav a:nth-child(3) { display: none; }
   .vs-grid { grid-template-columns: 1fr; }
   .versions { padding: 0 20px 50px; }
   .tutorial { margin: 0 20px 80px; }
