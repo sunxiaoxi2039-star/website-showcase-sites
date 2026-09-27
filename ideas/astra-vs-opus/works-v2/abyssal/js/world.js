@@ -31,25 +31,25 @@ export function canyonX(z) {
 }
 
 export const SITES = {
-  reef: { id: 'reef', x: -560, z: -760, name: '珊瑚礁', title: '珊瑚大教堂', sub: '海浪之下的另一个世界。', key: 1 },
-  kelp: { id: 'kelp', x: 580, z: -700, name: '海藻林', title: '沉没的森林', sub: '整片森林随海水起伏。', key: 2 },
-  blue: { id: 'blue', x: -330, z: 30, name: '开阔大洋', title: '深入蔚蓝', sub: '在巨兽身边，你是如此渺小。', key: 3 },
-  deep: { id: 'deep', x: 0, z: 1180, name: '深渊', title: '午夜花园', sub: '光消失之后，生命仍在。', key: 4 },
+  reef: { id: 'reef', x: -560, z: -760, name: '珊瑚礁', title: '珊瑚大教堂', sub: '海浪之下的另一个世界。', nameEn: 'Coral Reef', titleEn: 'Coral Cathedral', subEn: 'Another world beneath the waves.', key: 1 },
+  kelp: { id: 'kelp', x: 580, z: -700, name: '海藻林', title: '沉没的森林', sub: '整片森林随海水起伏。', nameEn: 'Kelp Forest', titleEn: 'The Sunken Forest', subEn: 'A whole forest swaying with the sea.', key: 2 },
+  blue: { id: 'blue', x: -330, z: 30, name: '开阔大洋', title: '深入蔚蓝', sub: '在巨兽身边，你是如此渺小。', nameEn: 'Open Ocean', titleEn: 'Into the Blue', subEn: 'Beside the giants, you are very small.', key: 3 },
+  deep: { id: 'deep', x: 0, z: 1180, name: '深渊', title: '午夜花园', sub: '光消失之后，生命仍在。', nameEn: 'The Deep', titleEn: 'Midnight Garden', subEn: 'Where the light ends, life goes on.', key: 4 },
 };
 SITES.deep.x = canyonX(1180) + 30;
 
 export const PLACES = [
-  { id: 'reef-ridges', name: '珊瑚脊', x: -760, z: -1000, kind: 'reef', note: '石灰岩脊上的珊瑚群落最密集。' },
-  { id: 'reef-channels', name: '沙质水道', x: -360, z: -560, kind: 'reef', note: '珊瑚脊之间的白沙水道与海草。' },
-  { id: 'reef-gardens', name: '外礁花园', x: -1020, z: -520, kind: 'reef', note: '远离起点的外缘礁区。' },
-  { id: 'kelp-avenues', name: '海藻长廊', x: 470, z: -980, kind: 'kelp', note: '成排的巨藻夹出的通道。' },
-  { id: 'kelp-clearings', name: '林间空地', x: 800, z: -560, kind: 'kelp', note: '森林中的沙地空地。' },
-  { id: 'kelp-outer', name: '外缘海藻林', x: 1060, z: -1120, kind: 'kelp', note: '森林的东北外缘。' },
-  { id: 'shelf-edge', name: '陆架边缘', x: -160, z: -250, kind: 'blue', note: '浅海在这里突然坠入蓝色。' },
-  { id: 'canyon-wall', name: '峡谷岩壁', x: 0, z: 330, kind: 'slope', note: '陡峭的峡谷壁，约 500 米深。' },
-  { id: 'vent-belt', name: '热液带', x: -420, z: 1320, kind: 'vent', note: '沿断裂带排列的矿物烟囱。' },
-  { id: 'basalt-plain', name: '玄武岩平原', x: 720, z: 1420, kind: 'abyss', note: '起伏的深渊平原。' },
-  { id: 'far-vents', name: '远方热液区', x: -960, z: 1760, kind: 'vent', note: '海图最远处的一片热泉。' },
+  { id: 'reef-ridges', name: '珊瑚脊', nameEn: 'Coral Ridges', noteEn: 'Coral is densest on the limestone ridges.', x: -760, z: -1000, kind: 'reef', note: '石灰岩脊上的珊瑚群落最密集。' },
+  { id: 'reef-channels', name: '沙质水道', nameEn: 'Sand Channels', noteEn: 'White-sand channels and seagrass between the ridges.', x: -360, z: -560, kind: 'reef', note: '珊瑚脊之间的白沙水道与海草。' },
+  { id: 'reef-gardens', name: '外礁花园', nameEn: 'Outer Reef Gardens', noteEn: 'The outer reef, far from the starting point.', x: -1020, z: -520, kind: 'reef', note: '远离起点的外缘礁区。' },
+  { id: 'kelp-avenues', name: '海藻长廊', nameEn: 'Kelp Avenues', noteEn: 'Corridors between rows of giant kelp.', x: 470, z: -980, kind: 'kelp', note: '成排的巨藻夹出的通道。' },
+  { id: 'kelp-clearings', name: '林间空地', nameEn: 'Forest Clearings', noteEn: 'Sandy clearings inside the forest.', x: 800, z: -560, kind: 'kelp', note: '森林中的沙地空地。' },
+  { id: 'kelp-outer', name: '外缘海藻林', nameEn: 'Outer Kelp Forest', noteEn: 'The northeastern edge of the forest.', x: 1060, z: -1120, kind: 'kelp', note: '森林的东北外缘。' },
+  { id: 'shelf-edge', name: '陆架边缘', nameEn: 'Shelf Edge', noteEn: 'Where the shallows suddenly drop into the blue.', x: -160, z: -250, kind: 'blue', note: '浅海在这里突然坠入蓝色。' },
+  { id: 'canyon-wall', name: '峡谷岩壁', nameEn: 'Canyon Wall', noteEn: 'A steep canyon wall, about 500 m deep.', x: 0, z: 330, kind: 'slope', note: '陡峭的峡谷壁，约 500 米深。' },
+  { id: 'vent-belt', name: '热液带', nameEn: 'Vent Belt', noteEn: 'Mineral chimneys lined up along a fault.', x: -420, z: 1320, kind: 'vent', note: '沿断裂带排列的矿物烟囱。' },
+  { id: 'basalt-plain', name: '玄武岩平原', nameEn: 'Basalt Plain', noteEn: 'A rolling abyssal plain.', x: 720, z: 1420, kind: 'abyss', note: '起伏的深渊平原。' },
+  { id: 'far-vents', name: '远方热液区', nameEn: 'Far Vents', noteEn: 'A field of hot springs at the far edge of the chart.', x: -960, z: 1760, kind: 'vent', note: '海图最远处的一片热泉。' },
 ];
 PLACES.find((p) => p.id === 'canyon-wall').x = canyonX(330) + 55;
 

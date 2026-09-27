@@ -1,10 +1,14 @@
 <!doctype html>
-<html lang="zh-CN">
+<html lang="zh-CN"
+  data-title-zh="深渊：活的深海" data-title-en="ABYSSAL: The Living Deep"
+  data-desc-zh="从海面一路潜到 1400 米：同一颗种子生成的珊瑚礁、海藻林、陆坡峡谷与热液花园，以及在其中游动、觅食、躲避的程序化动物。"
+  data-desc-en="Dive from the surface all the way to 1,400 m: a coral reef, kelp forest, slope canyon and hydrothermal garden grown from a single seed, alive with procedural animals that swim, feed and flee.">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>深渊：活的深海</title>
 <meta name="description" content="从海面一路潜到 1400 米：同一颗种子生成的珊瑚礁、海藻林、陆坡峡谷与热液花园，以及在其中游动、觅食、躲避的程序化动物。">
+<script src="js/lang-boot.js"></script>
 <link rel="stylesheet" href="css/style.css">
 <script type="importmap">
 { "imports": { "three": "./vendor/three.module.js" } }
@@ -12,14 +16,17 @@
 </head>
 <body>
 <header id="topbar">
-  <a class="tb-left" href="../../compare/index.html">← 三方对照</a>
-  <div class="tb-mid"><span class="tb-title">深渊：活的深海</span><span class="tb-tag">Opus 5.5 · 独立逆向</span></div>
-  <a class="tb-right" href="https://x.com/emollick/status/2095673885605630429" target="_blank" rel="noopener">原作 @emollick ↗</a>
+  <a class="tb-left" href="../../compare/index.html" data-internal>← <span data-zh>三方对照</span><span data-en><span class="tb-long">Three-way comparison</span><span class="tb-short">Compare</span></span></a>
+  <div class="tb-mid"><span class="tb-title"><span data-zh>深渊：活的深海</span><span data-en>ABYSSAL: The Living Deep</span></span><span class="tb-tag"><span data-zh>Opus 5.5 · 独立逆向</span><span data-en>Opus 5.5 · Independent rebuild</span></span></div>
+  <div class="tb-end">
+    <a class="tb-right" href="https://x.com/emollick/status/2095673885605630429" target="_blank" rel="noopener"><span data-zh>原作</span><span data-en>Original</span><span class="tb-handle"> @emollick</span> ↗</a>
+    <button id="avoLang" class="avo-lang" type="button" aria-label="Switch to English">EN</button>
+  </div>
 </header>
 <div id="stage">
   <canvas id="gl"></canvas>
   <div id="ui"></div>
-  <div id="loading"><div class="ld-brand">ABYSSAL</div><div class="ld-msg">正在从种子生长海洋……</div><div class="ld-bar"><i></i></div></div>
+  <div id="loading"><div class="ld-brand">ABYSSAL</div><div class="ld-msg"><span data-zh>正在从种子生长海洋……</span><span data-en>Growing an ocean from its seed…</span></div><div class="ld-bar"><i></i></div></div>
 </div>
 <script type="module" src="js/main.js"></script>
 </body>

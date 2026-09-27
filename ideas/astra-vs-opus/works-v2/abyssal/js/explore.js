@@ -152,7 +152,7 @@ export class Explorer {
     if (f < -250) {
       const targetY = stopDepth ? Math.max(-stopDepth, f + 8) : f + 8;
       if (targetY >= p.y - 1) return false;
-      this.travelTo({ x: p.x, y: targetY, z: p.z }, stopDepth ? `${stopDepth} 米` : '海底');
+      this.travelTo({ x: p.x, y: targetY, z: p.z }, stopDepth ? { zh: `${stopDepth} 米`, en: `${stopDepth.toLocaleString('en-US')} m` } : { zh: '海底', en: 'the seafloor' });
       return true;
     }
     // 在陆架上：先去峡谷头部，再沿峡谷向下
@@ -170,13 +170,13 @@ export class Explorer {
     if (p.y > -1) pts.unshift(p.clone());
     this.smoothPath(pts, 2);
     const last = pts[pts.length - 1];
-    this.startJourney(pts, stopDepth ? `${stopDepth} 米` : '午夜花园', { x: last.x, y: last.y, z: last.z }, { slow: 1.0 });
+    this.startJourney(pts, stopDepth ? { zh: `${stopDepth} 米`, en: `${stopDepth.toLocaleString('en-US')} m` } : { zh: '午夜花园', en: 'Midnight Garden' }, { x: last.x, y: last.y, z: last.z }, { slow: 1.0 });
     return true;
   }
   ascend() {
     const p = this.pos;
     if (p.y > -1) return false;
-    this.travelTo({ x: p.x, y: EYE_HEIGHT, z: p.z }, '水面');
+    this.travelTo({ x: p.x, y: EYE_HEIGHT, z: p.z }, { zh: '水面', en: 'the surface' });
     return true;
   }
 

@@ -12,6 +12,8 @@ import { drawCycle, drawTimingWheel, drawFiring, drawScrubber, COLORS } from './
 const $ = (s) => document.querySelector(s);
 const $$ = (s) => [...document.querySelectorAll(s)];
 const params = new URLSearchParams(location.search);
+const I18N = window.I18N || { lang: 'zh', t: (zh) => zh, L: (o) => (o && typeof o === 'object' ? o.zh : o), on() {} };
+const T = (zh, en) => I18N.t(zh, en), L = (o) => I18N.L(o);
 if (params.has('shot')) document.body.classList.add('shot');
 
 // ---------------- 状态 ----------------
@@ -26,28 +28,30 @@ if (params.has('mode')) S.mode = params.get('mode');
 if (params.has('focus')) S.focus = +params.get('focus');
 let cycle = computeCycle(S);
 
+const STROKE_EN = { intake: 'Intake', compression: 'Compression', power: 'Power', exhaust: 'Exhaust' };
+const STROKE_NO = { intake: 1, compression: 2, power: 3, exhaust: 4 };
 const STROKE_TEXT = {
-  intake: '活塞从上止点下行，进气门打开，缸内形成负压，新鲜空气与燃油经进气道被“吸”进来。进气门要到下止点后约 48° 才关闭——借助气流惯性再多塞进一点空气。',
-  compression: '两个气门都关闭，活塞上行把混合气压缩到约 1/11 的体积，压力升到十几 bar、温度升至 600 K 以上。上止点前火花塞提前点火，给火焰留出传播时间。',
-  power: '火焰从火花塞向四周扩散，约 50° 曲轴转角内烧完混合气。缸压在上止点后十几度达到峰值，推动活塞下行，经连杆把直线运动变成曲轴的旋转——这是唯一产生功的冲程。',
-  exhaust: '排气门在下止点前约 52° 提前打开，高压废气先“自由冲出”，随后活塞上行把残余废气推进排气歧管。上止点附近进、排气门同时微开，这段时间叫“气门重叠”。',
+  intake: { zh: '活塞从上止点下行，进气门打开，缸内形成负压，新鲜空气与燃油经进气道被“吸”进来。进气门要到下止点后约 48° 才关闭——借助气流惯性再多塞进一点空气。', en: 'The piston travels down from TDC with the intake valves open. The falling pressure draws fresh air and fuel in through the intake port. The intake valves don’t close until about 48° after BDC — the momentum of the incoming charge packs in a little more air.' },
+  compression: { zh: '两个气门都关闭，活塞上行把混合气压缩到约 1/11 的体积，压力升到十几 bar、温度升至 600 K 以上。上止点前火花塞提前点火，给火焰留出传播时间。', en: 'Both valves are shut. The rising piston squeezes the mixture to about 1/11 of its volume, lifting pressure into the teens of bar and temperature above 600 K. The spark fires before TDC to give the flame time to spread.' },
+  power: { zh: '火焰从火花塞向四周扩散，约 50° 曲轴转角内烧完混合气。缸压在上止点后十几度达到峰值，推动活塞下行，经连杆把直线运动变成曲轴的旋转——这是唯一产生功的冲程。', en: 'The flame spreads out from the spark plug and burns through the charge in about 50° of crank rotation. Cylinder pressure peaks a dozen or so degrees after TDC and drives the piston down; the connecting rod turns that straight-line push into crankshaft rotation. This is the only stroke that produces work.' },
+  exhaust: { zh: '排气门在下止点前约 52° 提前打开，高压废气先“自由冲出”，随后活塞上行把残余废气推进排气歧管。上止点附近进、排气门同时微开，这段时间叫“气门重叠”。', en: 'The exhaust valves crack open about 52° before BDC, so the high-pressure gas blows down on its own; the rising piston then pushes the rest into the exhaust manifold. Around TDC the intake and exhaust valves are both slightly open at once — a window called valve overlap.' },
 };
 const STROKE_TARGET = { intake: 450, compression: 640, power: 16, exhaust: 270 };
 const PARTS = [
-  ['crank', '曲轴', '横置平面（cross-plane）曲轴：4 个曲柄销互成 90°（0°/90°/270°/180°），每个曲柄销同时驱动左右两列各一缸。配重块抵消旋转与一阶往复惯性力，让 V8 几乎完全平衡；前端是减振皮带轮，后端是飞轮与起动齿圈。'],
-  ['rod', '连杆', '连接活塞销与曲柄销，把活塞的往复直线运动转换为曲轴旋转。同一个曲柄销上并排装两根连杆，因此左右两列气缸前后错开约 22 mm。注意连杆摆角：它让活塞在上止点附近停留得更久。'],
-  ['piston', '活塞', '铝合金活塞，三道活塞环（两道气环密封燃气、一道油环刮油）。活塞顶在上止点时距缸盖仅约 1 mm；燃烧压力峰值时它承受约 4.5 吨的推力。'],
-  ['cam', '凸轮轴', '每列缸盖有两根顶置凸轮轴（DOHC）：谷侧为进气、外侧为排气。凸轮轴由正时链驱动，转速只有曲轴的一半——四冲程每缸每 720° 只需开关一次气门。模型中的凸轮型线是按真实升程曲线逐点生成的；进气凸轮前端是 VVT 相位器，拖动右侧 VVT 滑块可以看到它整体转动。'],
-  ['valvetrain', '气门机构', '每缸 4 气门：2 个较大的进气门（蓝色弹簧）+ 2 个排气门（橙色弹簧）。凸轮直接压下桶形挺柱把气门顶开，气门弹簧负责把它关回去。最大升程约 11.8 mm。'],
-  ['chain', '正时链', '曲轴链轮 20 齿、凸轮轴链轮 40 齿，2:1 减速。两条链条分别驱动左右两列缸盖。链条一旦跳齿，气门与活塞就会相撞——这就是“正时”二字的分量。'],
-  ['ignition', '火花塞 / 点火线圈', '每缸一个独立点火线圈（COP），按 1-8-4-3-6-5-7-2 的顺序每 90° 曲轴转角点火一次。点火提前角随转速和负荷变化：点得太早会爆震，太晚则浪费做功。'],
-  ['block', '缸体', '90° V 型缸体：缸径 94 mm、行程 92 mm，总排量约 5.1 L。剖切面（红色斜线）显示了缸壁、缸盖螺栓孔和下方的主轴承隔板。'],
-  ['head', '缸盖', '缸盖构成燃烧室顶部，内部布置进排气道、气门导管与凸轮轴承座。进气道全部朝向 V 型谷，排气道朝外——这就是“谷进外排”的典型布置。'],
-  ['accessory', '前端附件', '多楔带把曲轴减振皮带轮的动力分给水泵（冷却液循环）和发电机（给点火线圈与电子设备供电）。水泵皮带轮比曲轴小，所以转得更快。只有“外观”视图下显示。'],
-  ['intake', '进气歧管', '稳压腔 + 8 根独立进气道，前端节气门体控制进气量——拖动“节气门开度”可以看到蝶阀转动，歧管压力随之变化。'],
-  ['exhaust', '排气歧管', '每列 4 进 1 集管。横置平面曲轴让同一列的点火间隔不均匀（例如右列 1→3→5→7 的间隔为 270°/180°/90°/180°），排气脉冲在集管里“挤成一团”，这正是美式 V8 标志性“突突”声浪的来源。打开声音听听看。'],
+  ['crank', { zh: '曲轴', en: 'Crankshaft' }, { zh: '横置平面（cross-plane）曲轴：4 个曲柄销互成 90°（0°/90°/270°/180°），每个曲柄销同时驱动左右两列各一缸。配重块抵消旋转与一阶往复惯性力，让 V8 几乎完全平衡；前端是减振皮带轮，后端是飞轮与起动齿圈。', en: 'Cross-plane crankshaft: four crankpins set 90° apart (0°/90°/270°/180°), each driving one cylinder in each bank. Counterweights cancel the rotating and first-order reciprocating forces, leaving the V8 almost perfectly balanced. A torsional-damper pulley sits at the front; the flywheel and starter ring gear at the back.' }],
+  ['rod', { zh: '连杆', en: 'Connecting rods' }, { zh: '连接活塞销与曲柄销，把活塞的往复直线运动转换为曲轴旋转。同一个曲柄销上并排装两根连杆，因此左右两列气缸前后错开约 22 mm。注意连杆摆角：它让活塞在上止点附近停留得更久。', en: 'They link the wrist pin to the crankpin, turning the piston’s back-and-forth motion into crankshaft rotation. Two rods share each crankpin side by side, which is why the left and right banks are staggered by about 22 mm. Watch the rod angle: it makes the piston dwell longer around TDC.' }],
+  ['piston', { zh: '活塞', en: 'Pistons' }, { zh: '铝合金活塞，三道活塞环（两道气环密封燃气、一道油环刮油）。活塞顶在上止点时距缸盖仅约 1 mm；燃烧压力峰值时它承受约 4.5 吨的推力。', en: 'Aluminium-alloy pistons with three rings: two compression rings seal in the gas, one oil-control ring scrapes the bore. At TDC the crown comes within about 1 mm of the head; at peak combustion pressure it carries roughly 4.5 tonnes of force.' }],
+  ['cam', { zh: '凸轮轴', en: 'Camshafts' }, { zh: '每列缸盖有两根顶置凸轮轴（DOHC）：谷侧为进气、外侧为排气。凸轮轴由正时链驱动，转速只有曲轴的一半——四冲程每缸每 720° 只需开关一次气门。模型中的凸轮型线是按真实升程曲线逐点生成的；进气凸轮前端是 VVT 相位器，拖动右侧 VVT 滑块可以看到它整体转动。', en: 'Each head carries two overhead camshafts (DOHC): intake on the valley side, exhaust on the outside. Driven by the timing chain, they turn at half crank speed — a four-stroke only needs to open each valve once every 720°. The cam lobes in the model are generated point by point from a real lift curve; the unit on the nose of each intake cam is the VVT phaser — drag the VVT slider on the right to watch it rotate.' }],
+  ['valvetrain', { zh: '气门机构', en: 'Valvetrain' }, { zh: '每缸 4 气门：2 个较大的进气门（蓝色弹簧）+ 2 个排气门（橙色弹簧）。凸轮直接压下桶形挺柱把气门顶开，气门弹簧负责把它关回去。最大升程约 11.8 mm。', en: 'Four valves per cylinder: two larger intake valves (blue springs) and two exhaust valves (orange springs). The cam pushes directly on a bucket tappet to open the valve, and the valve spring closes it again. Maximum lift is about 11.8 mm.' }],
+  ['chain', { zh: '正时链', en: 'Timing chains' }, { zh: '曲轴链轮 20 齿、凸轮轴链轮 40 齿，2:1 减速。两条链条分别驱动左右两列缸盖。链条一旦跳齿，气门与活塞就会相撞——这就是“正时”二字的分量。', en: 'A 20-tooth crank sprocket drives 40-tooth cam sprockets for a 2:1 reduction, with one chain per bank. If a chain jumps a tooth, valves hit pistons — that is what “timing” really means.' }],
+  ['ignition', { zh: '火花塞 / 点火线圈', en: 'Spark plugs / coils' }, { zh: '每缸一个独立点火线圈（COP），按 1-8-4-3-6-5-7-2 的顺序每 90° 曲轴转角点火一次。点火提前角随转速和负荷变化：点得太早会爆震，太晚则浪费做功。', en: 'Every cylinder has its own coil-on-plug (COP) unit, firing once every 90° of crank rotation in the order 1-8-4-3-6-5-7-2. Spark advance changes with speed and load: too early and the engine knocks, too late and work is wasted.' }],
+  ['block', { zh: '缸体', en: 'Engine block' }, { zh: '90° V 型缸体：缸径 94 mm、行程 92 mm，总排量约 5.1 L。剖切面（红色斜线）显示了缸壁、缸盖螺栓孔和下方的主轴承隔板。', en: '90° V block: 94 mm bore, 92 mm stroke, about 5.1 L total displacement. The section face (red hatching) shows the cylinder walls, head-bolt bores and the main-bearing bulkheads below.' }],
+  ['head', { zh: '缸盖', en: 'Cylinder heads' }, { zh: '缸盖构成燃烧室顶部，内部布置进排气道、气门导管与凸轮轴承座。进气道全部朝向 V 型谷，排气道朝外——这就是“谷进外排”的典型布置。', en: 'The head forms the roof of the combustion chamber and houses the intake and exhaust ports, valve guides and cam bearing saddles. Every intake port faces into the V and every exhaust port faces out — the classic “intake inside, exhaust outside” layout.' }],
+  ['accessory', { zh: '前端附件', en: 'Front-end accessories' }, { zh: '多楔带把曲轴减振皮带轮的动力分给水泵（冷却液循环）和发电机（给点火线圈与电子设备供电）。水泵皮带轮比曲轴小，所以转得更快。只有“外观”视图下显示。', en: 'A serpentine belt takes power from the crank damper pulley to the water pump (coolant circulation) and the alternator (power for the coils and electronics). The water-pump pulley is smaller than the crank pulley, so it spins faster. Shown in Exterior view only.' }],
+  ['intake', { zh: '进气歧管', en: 'Intake manifold' }, { zh: '稳压腔 + 8 根独立进气道，前端节气门体控制进气量——拖动“节气门开度”可以看到蝶阀转动，歧管压力随之变化。', en: 'A plenum feeding eight individual runners, with the throttle body at the front metering the airflow — drag “Throttle opening” to watch the butterfly turn and the manifold pressure change.' }],
+  ['exhaust', { zh: '排气歧管', en: 'Exhaust manifolds' }, { zh: '每列 4 进 1 集管。横置平面曲轴让同一列的点火间隔不均匀（例如右列 1→3→5→7 的间隔为 270°/180°/90°/180°），排气脉冲在集管里“挤成一团”，这正是美式 V8 标志性“突突”声浪的来源。打开声音听听看。', en: 'One 4-into-1 header per bank. The cross-plane crank fires each bank unevenly (the right bank’s 1→3→5→7 comes at 270°/180°/90°/180° intervals), so the exhaust pulses bunch up in the collector — the source of the classic American V8 burble. Turn the sound on and listen.' }],
 ];
-const PART_NAME = Object.fromEntries(PARTS.map(([k, n]) => [k, n]));
+const PART_NAME = Object.fromEntries(PARTS.map(([k, n]) => [k, n]));  // {zh, en}
 
 // ---------------- 渲染器 ----------------
 const canvas = $('#gl'), stage = $('#stage');
@@ -182,16 +186,16 @@ const audio = {
 const cp = { even: $('[data-bank="even"]'), odd: $('[data-bank="odd"]') };
 for (const c of cyls) {
   const b = document.createElement('button');
-  b.textContent = c.id; b.dataset.cyl = c.id; b.title = `聚焦第 ${c.id} 缸`;
+  b.textContent = c.id; b.dataset.cyl = c.id; b.title = T(`聚焦第 ${c.id} 缸`, `Focus cylinder ${c.id}`);
   (c.id % 2 ? cp.odd : cp.even).appendChild(b);
 }
 const labels = cyls.map((c) => {
   const el = document.createElement('button');
-  el.className = 'clabel'; el.textContent = c.id; el.dataset.cyl = c.id; el.title = `第 ${c.id} 缸`;
+  el.className = 'clabel'; el.textContent = c.id; el.dataset.cyl = c.id; el.title = T(`第 ${c.id} 缸`, `Cylinder ${c.id}`);
   $('#labels').appendChild(el); return el;
 });
 $('#fo').innerHTML = ENGINE.firingOrder.map((id) => `<span data-cyl="${id}">${id}</span>`).join('');
-$('#parts').innerHTML = PARTS.map(([k, n]) => `<button data-part="${k}">${n}</button>`).join('');
+$('#parts').innerHTML = PARTS.map(([k, n]) => `<button data-part="${k}">${L(n)}</button>`).join('');
 
 function setFocus(id) {
   S.focus = id;
@@ -333,7 +337,7 @@ function selectPart(k) {
   const card = $('#part-card');
   if (key) {
     const p = PARTS.find((x) => x[0] === key);
-    $('#pc-name').textContent = p[1]; $('#pc-text').textContent = p[2]; card.hidden = false;
+    $('#pc-name').textContent = L(p[1]); $('#pc-text').textContent = L(p[2]); card.hidden = false;
   } else card.hidden = true;
 }
 $('#parts').addEventListener('click', (e) => { const b = e.target.closest('[data-part]'); if (b) selectPart(b.dataset.part); });
@@ -371,7 +375,7 @@ canvas.addEventListener('pointermove', (e) => {
   const p = pick(e);
   const r = stage.getBoundingClientRect();
   if (p) {
-    tip.innerHTML = `${PART_NAME[p]}<small>点击查看</small>`;
+    tip.innerHTML = `${L(PART_NAME[p])}<small>${T('点击查看', 'Click for details')}</small>`;
     tip.style.left = `${e.clientX - r.left}px`; tip.style.top = `${e.clientY - r.top}px`;
     tip.classList.add('on'); canvas.style.cursor = 'pointer';
   } else { tip.classList.remove('on'); canvas.style.cursor = ''; }
@@ -383,7 +387,7 @@ const sliders = {
   rpm: { el: $('#s-rpm'), out: $('#o-rpm'), fmt: (v) => `${v} rpm` },
   throttle: { el: $('#s-thr'), out: $('#o-thr'), fmt: (v) => `${Math.round(v * 100)}%` },
   advance: { el: $('#s-adv'), out: $('#o-adv'), fmt: (v) => `${v}° BTDC` },
-  vvt: { el: $('#s-vvt'), out: $('#o-vvt'), fmt: (v) => (v > 0 ? `提前 ${v}°` : v < 0 ? `推迟 ${-v}°` : '0°') },
+  vvt: { el: $('#s-vvt'), out: $('#o-vvt'), fmt: (v) => (v > 0 ? T(`提前 ${v}°`, `adv. ${v}°`) : v < 0 ? T(`推迟 ${-v}°`, `ret. ${-v}°`) : '0°') },
 };
 let recomputeTimer = 0, mbt = null;
 function onParam() {
@@ -421,21 +425,21 @@ function updateMetrics() {
     <dt style="color:${COLORS.intake}">IVC</dt><dd>${fmt(ev.IVC, 540, 'BBDC', 'ABDC')}</dd>
     <dt style="color:${COLORS.exhaust}">EVO</dt><dd>${fmt(ev.EVO, 180, 'BBDC', 'ABDC')}</dd>
     <dt style="color:${COLORS.exhaust}">EVC</dt><dd>${fmt(ev.EVC, 360, 'BTDC', 'ATDC')}</dd>
-    <dt style="color:#ffe07a">点火</dt><dd>${S.advance}° BTDC</dd>
-    <dt>重叠</dt><dd>${Math.max(0, ov)}°</dd>`;
+    <dt style="color:#ffe07a">${T('点火', 'Spark')}</dt><dd>${S.advance}° BTDC</dd>
+    <dt>${T('重叠', 'Overlap')}</dt><dd>${Math.max(0, ov)}°</dd>`;
   updateHint();
 }
 function updateHint() {
   const h = $('#tune-hint');
   const pk = cycle.peakPsi;
   let t;
-  if (cycle.knock >= 1) t = `<b>点火过早：</b>压力峰值出现在上止点后 ${pk.toFixed(0)}°，峰值 ${(cycle.peak / 1e5).toFixed(0)} bar，末端混合气可能自燃——爆震。`;
-  else if (pk > 22) t = `<b>点火偏晚：</b>压力峰值拖到上止点后 ${pk.toFixed(0)}°，活塞已经下行，燃烧能量更多变成废气热量。`;
-  else if (pk < 8) t = `<b>接近爆震边缘：</b>峰值压力来得太早（+${pk.toFixed(0)}°），活塞仍在上止点附近“顶着”燃烧。`;
-  else t = `<b>点火时机合适：</b>压力峰值在上止点后 ${pk.toFixed(0)}°，接近最佳扭矩点（通常 12–16° ATDC）。`;
-  if (mbt != null) t += ` 本工况 MBT ≈ ${mbt}° BTDC。`;
-  if (S.vvt >= 12) t += ` 进气凸轮提前 ${S.vvt}° → 气门重叠扩大到 ${cycle.ev.EVC - cycle.ev.IVO}°。`;
-  else if (S.vvt <= -10) t += ` 进气门推迟到下止点后 ${cycle.ev.IVC - 540}° 才关闭。`;
+  if (cycle.knock >= 1) t = T(`<b>点火过早：</b>压力峰值出现在上止点后 ${pk.toFixed(0)}°，峰值 ${(cycle.peak / 1e5).toFixed(0)} bar，末端混合气可能自燃——爆震。`, `<b>Spark too early:</b> pressure peaks ${pk.toFixed(0)}° after TDC at ${(cycle.peak / 1e5).toFixed(0)} bar, and the end gas may self-ignite — that is knock.`);
+  else if (pk > 22) t = T(`<b>点火偏晚：</b>压力峰值拖到上止点后 ${pk.toFixed(0)}°，活塞已经下行，燃烧能量更多变成废气热量。`, `<b>Spark too late:</b> the pressure peak drags out to ${pk.toFixed(0)}° after TDC; the piston is already falling, so more of the combustion energy leaves as exhaust heat.`);
+  else if (pk < 8) t = T(`<b>接近爆震边缘：</b>峰值压力来得太早（+${pk.toFixed(0)}°），活塞仍在上止点附近“顶着”燃烧。`, `<b>Close to the knock limit:</b> peak pressure arrives too early (+${pk.toFixed(0)}°), while the piston is still near TDC pushing against the burn.`);
+  else t = T(`<b>点火时机合适：</b>压力峰值在上止点后 ${pk.toFixed(0)}°，接近最佳扭矩点（通常 12–16° ATDC）。`, `<b>Spark timing is about right:</b> pressure peaks ${pk.toFixed(0)}° after TDC, close to the best-torque point (typically 12–16° ATDC).`);
+  if (mbt != null) t += T(` 本工况 MBT ≈ ${mbt}° BTDC。`, ` MBT at this operating point ≈ ${mbt}° BTDC.`);
+  if (S.vvt >= 12) t += T(` 进气凸轮提前 ${S.vvt}° → 气门重叠扩大到 ${cycle.ev.EVC - cycle.ev.IVO}°。`, ` Intake cam advanced ${S.vvt}° → valve overlap grows to ${cycle.ev.EVC - cycle.ev.IVO}°.`);
+  else if (S.vvt <= -10) t += T(` 进气门推迟到下止点后 ${cycle.ev.IVC - 540}° 才关闭。`, ` The intake valves now stay open until ${cycle.ev.IVC - 540}° after BDC.`);
   h.innerHTML = t;
 }
 
@@ -531,17 +535,17 @@ function frame(now) {
   const st = strokeAt(psi);
   if (st.key !== lastStrokeKey) {
     lastStrokeKey = st.key;
-    $('#hs-name').textContent = st.name; $('#hs-en').textContent = st.en;
+    $('#hs-name').textContent = T(st.name, STROKE_EN[st.key]); $('#hs-en').textContent = T(st.en, `STROKE ${STROKE_NO[st.key]} OF 4`);
     $('#hud-stroke').style.setProperty('--c', COLORS[st.key]);
     $$('#strokes button').forEach((b) => b.classList.toggle('on', b.dataset.stroke === st.key));
-    $('#sc-text').textContent = STROKE_TEXT[st.key];
+    $('#sc-text').textContent = L(STROKE_TEXT[st.key]);
   }
   const ev = cycle.ev;
   const li = valveLift(psi, ev.IVO, ev.IVC, 11.8), le = valveLift(psi, ev.EVO, ev.EVC, 11.2);
-  setText('f-iv', li > 0.05 ? `开 ${li.toFixed(1)}mm` : '关', li > 0.05 ? 'open' : 'shut');
-  setText('f-ev', le > 0.05 ? `开 ${le.toFixed(1)}mm` : '关', le > 0.05 ? 'open' : 'shut');
+  setText('f-iv', li > 0.05 ? T(`开 ${li.toFixed(1)}mm`, `Open ${li.toFixed(1)}mm`) : T('关', 'Closed'), li > 0.05 ? 'open' : 'shut');
+  setText('f-ev', le > 0.05 ? T(`开 ${le.toFixed(1)}mm`, `Open ${le.toFixed(1)}mm`) : T('关', 'Closed'), le > 0.05 ? 'open' : 'shut');
   const pdir = Math.sin(psi * Math.PI / 180);
-  setText('f-pis', Math.abs(pdir) < 0.05 ? (wrap720(psi) % 360 < 90 || wrap720(psi) % 360 > 270 ? '上止点' : '下止点') : pdir > 0 ? '↓ 下行' : '↑ 上行', '');
+  setText('f-pis', Math.abs(pdir) < 0.05 ? (wrap720(psi) % 360 < 90 || wrap720(psi) % 360 > 270 ? T('上止点', 'TDC') : T('下止点', 'BDC')) : pdir > 0 ? T('↓ 下行', '↓ Down') : T('↑ 上行', '↑ Up'), '');
   const sp = sampleCycle(cycle, psi);
   setText('f-p', `${(sp.p / 1e5).toFixed(1)} bar`, '');
   setText('r-p', (sp.p / 1e5).toFixed(1), undefined);
@@ -607,15 +611,28 @@ function drawAnnotations() {
     <text x="${C[0]}" y="${C[1] - r - 8}" text-anchor="middle" style="font-size:13px">90°</text>
     <path class="dim" style="opacity:.6" d="${ext(BL0, BL)} ${ext(BR0, BR)} ${ext(TD0, TD)} ${ext(BD0, BD)}"/>
     <path class="dim" d="${arrow(BL, BR)}"/>
-    <text transform="translate(${bm[0]},${bm[1]}) rotate(${ba}) translate(0,-7)" text-anchor="middle">Ø94 缸径</text>
+    <text transform="translate(${bm[0]},${bm[1]}) rotate(${ba}) translate(0,-7)" text-anchor="middle">${T('Ø94 缸径', 'Ø94 bore')}</text>
     <path class="dim" d="${arrow(TD, BD)}"/>
-    <text class="zh" transform="translate(${sm[0]},${sm[1]}) rotate(${sa}) translate(0,-7)" text-anchor="middle">行程 92</text>
-    ${leader(C, -120, 150, '曲轴中心 · 横置平面曲轴')}
-    ${leader(CI, 36, -60, '进气凸轮轴（谷侧）')}
-    ${leader(CE, -40, -40, '排气凸轮轴')}
-    <text class="zh" x="${AO[0] + 8}" y="${AO[1] - 6}">右列 1·3·5·7</text>
-    <text class="zh" x="${AE[0] - 8}" y="${AE[1] - 6}" text-anchor="end">左列 2·4·6·8</text>`;
+    <text class="zh" transform="translate(${sm[0]},${sm[1]}) rotate(${sa}) translate(0,-7)" text-anchor="middle">${T('行程 92', 'Stroke 92')}</text>
+    ${leader(C, -120, 150, T('曲轴中心 · 横置平面曲轴', 'Crank centre · cross-plane crank'))}
+    ${leader(CI, 36, -60, T('进气凸轮轴（谷侧）', 'Intake cam (valley side)'))}
+    ${leader(CE, -40, -40, T('排气凸轮轴', 'Exhaust cam'))}
+    <text class="zh" x="${AO[0] + 8}" y="${AO[1] - 6}">${T('右列 1·3·5·7', 'R bank 1·3·5·7')}</text>
+    <text class="zh" x="${AE[0] - 8}" y="${AE[1] - 6}" text-anchor="end">${T('左列 2·4·6·8', 'L bank 2·4·6·8')}</text>`;
 }
+
+// ---------------- 语言切换：即时重绘所有由 JS 生成的文字 ----------------
+I18N.on(() => {
+  for (const b of $$('#cylpick button')) b.title = T(`聚焦第 ${b.dataset.cyl} 缸`, `Focus cylinder ${b.dataset.cyl}`);
+  for (const el of labels) el.title = T(`第 ${el.dataset.cyl} 缸`, `Cylinder ${el.dataset.cyl}`);
+  for (const b of $$('#parts button')) b.textContent = L(PART_NAME[b.dataset.part]);
+  if (engine.selected) { const p = PARTS.find((x) => x[0] === engine.selected); if (p) { $('#pc-name').textContent = L(p[1]); $('#pc-text').textContent = L(p[2]); } }
+  tip.classList.remove('on');
+  lastStrokeKey = null;
+  for (const k of Object.keys(factsCache)) delete factsCache[k];
+  for (const s of Object.values(sliders)) s.out.textContent = s.fmt(+s.el.value);
+  updateMetrics();
+});
 
 // ---------------- 启动 ----------------
 setFocus(S.focus);

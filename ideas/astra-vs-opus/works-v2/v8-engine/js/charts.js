@@ -28,11 +28,20 @@ const alpha = (hex, a) => {
 // ψ（0=点火上止点）→ 图上 x 坐标角（-360..360，进气在左）
 export const psiToXa = (psi) => { const p = wrap720(psi); return p >= 360 ? p - 720 : p; };
 const XBANDS = [
-  { key: 'intake', a: -360, b: -180, name: '进气' },
-  { key: 'compression', a: -180, b: 0, name: '压缩' },
-  { key: 'power', a: 0, b: 180, name: '做功' },
-  { key: 'exhaust', a: 180, b: 360, name: '排气' },
+  { key: 'intake', a: -360, b: -180, name: '进气', en: 'Intake', short: 'Int.' },
+  { key: 'compression', a: -180, b: 0, name: '压缩', en: 'Compression', short: 'Comp.' },
+  { key: 'power', a: 0, b: 180, name: '做功', en: 'Power', short: 'Power' },
+  { key: 'exhaust', a: 180, b: 360, name: '排气', en: 'Exhaust', short: 'Exh.' },
 ];
+// 中英：随 window.I18N 当前语言即时取词（图表每帧重绘）
+const isEn = () => !!(window.I18N && window.I18N.lang === 'en');
+const tr = (zh, en) => (isEn() ? en : zh);
+const STROKE_EN = { intake: 'Intake', compression: 'Compression', power: 'Power', exhaust: 'Exhaust' };
+// 英文词较长：放不下就换缩写
+const bandLabel = (ctx, b, maxW) => {
+  if (!isEn()) return b.name;
+  return ctx.measureText(b.en).width <= maxW ? b.en : b.short;
+};
 
 // ------------------------------------------------------------
 export function drawCycle(canvas, { cycle, psi, view = 'ptheta', log = false, advance }) {
@@ -59,7 +68,7 @@ export function drawCycle(canvas, { cycle, psi, view = 'ptheta', log = false, ad
     ctx.fillRect(X(b.a), T, X(b.b) - X(b.a), yL1 - T);
     ctx.fillStyle = alpha(SC[b.key], active ? 1 : 0.55);
     ctx.fillRect(X(b.a) + 1, T - 12, X(b.b) - X(b.a) - 2, 2);
-    ctx.fillText(b.name, (X(b.a) + X(b.b)) / 2, T - 5 + 0.5);
+    ctx.fillText(bandLabel(ctx, b, X(b.b) - X(b.a) - 4), (X(b.a) + X(b.b)) / 2, T - 5 + 0.5);
   }
   // 网格
   ctx.strokeStyle = COLORS.grid; ctx.lineWidth = 1;
@@ -101,7 +110,7 @@ export function drawCycle(canvas, { cycle, psi, view = 'ptheta', log = false, ad
   ctx.setLineDash([3, 3]); ctx.strokeStyle = '#ffe07a'; ctx.lineWidth = 1;
   ctx.beginPath(); ctx.moveTo(xs + 0.5, T + 4); ctx.lineTo(xs + 0.5, yL1); ctx.stroke(); ctx.setLineDash([]);
   ctx.fillStyle = '#ffe07a'; ctx.font = `600 10px ${SANS}`; ctx.textAlign = 'right'; ctx.textBaseline = 'top';
-  ctx.fillText('点火 ⚡', xs - 3, T + 3);
+  ctx.fillText(tr('点火 ⚡', 'Spark ⚡'), xs - 3, T + 3);
   // 峰值
   const xp = X(cycle.peakPsi), yp = Y(cycle.peak / 1e5);
   ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(xp, yp, 2.5, 0, 7); ctx.fill();
@@ -125,7 +134,7 @@ export function drawCycle(canvas, { cycle, psi, view = 'ptheta', log = false, ad
   drawLift(ev.IVO, ev.IVC, MAX_LIFT.intake, COLORS.intake);
   drawLift(ev.EVO, ev.EVC, MAX_LIFT.exhaust, COLORS.exhaust);
   ctx.fillStyle = COLORS.text; ctx.font = `10px ${SANS}`; ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
-  ctx.fillText('升程', L - 5, yL0 + liftH / 2);
+  ctx.fillText(tr('升程', 'Lift'), L - 5, yL0 + liftH / 2);
 
   // 游标
   const xc = X(cur);
@@ -178,7 +187,7 @@ function drawPV(ctx, w, h, cycle, psi) {
   ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(X(v), Y(s.p / 1e5), 4, 0, 7); ctx.fill();
   ctx.strokeStyle = 'rgba(255,255,255,0.35)'; ctx.beginPath(); ctx.arc(X(v), Y(s.p / 1e5), 8, 0, 7); ctx.stroke();
   ctx.fillStyle = COLORS.hi; ctx.font = `600 10px ${SANS}`; ctx.textAlign = 'right'; ctx.textBaseline = 'top';
-  ctx.fillText(`环线面积 = 指示功 ${cycle.work.toFixed(0)} J/缸`, w - R - 2, T + 2);
+  ctx.fillText(tr(`环线面积 = 指示功 ${cycle.work.toFixed(0)} J/缸`, `Loop area = indicated work ${cycle.work.toFixed(0)} J/cyl`), w - R - 2, T + 2);
 }
 
 // ------------------------------------------------------------
@@ -234,9 +243,12 @@ export function drawTimingWheel(canvas, { ev, advance, psi }) {
   ctx.fillStyle = '#0d1016'; ctx.beginPath(); ctx.arc(cx, cy, R * 0.44, 0, 7); ctx.fill();
   ctx.strokeStyle = SC[st.key]; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(cx, cy, R * 0.44, 0, 7); ctx.stroke();
   ctx.fillStyle = SC[st.key]; ctx.font = `700 13px ${SANS}`;
-  ctx.fillText(st.name, cx, cy - 6);
+  const stName = tr(st.name, STROKE_EN[st.key]);
+  const fitW = R * 0.44 * 1.8, mw = ctx.measureText(stName).width;
+  if (mw > fitW) ctx.font = `700 ${Math.max(8, Math.floor(13 * fitW / mw))}px ${SANS}`;
+  ctx.fillText(stName, cx, cy - 6);
   ctx.fillStyle = COLORS.text; ctx.font = `9px ${MONO}`;
-  ctx.fillText(`第${rev + 1}圈 ${a.toFixed(0)}°`, cx, cy + 9);
+  ctx.fillText(tr(`第${rev + 1}圈 ${a.toFixed(0)}°`, `Rev ${rev + 1} ${a.toFixed(0)}°`), cx, cy + 9);
   ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(cx + R * 0.95 * Math.cos(ang(a)), cy + R * 0.95 * Math.sin(ang(a)), 3, 0, 7); ctx.fill();
 }
 
@@ -289,7 +301,7 @@ export function drawScrubber(canvas, { psi, ev, advance }) {
     ctx.fillStyle = alpha(SC[b.key], active ? 0.95 : 0.4);
     ctx.fillRect(X(b.a) + 1, yb, X(b.b) - X(b.a) - 2, bh);
     ctx.fillStyle = active ? SC[b.key] : COLORS.text;
-    ctx.fillText(b.name, (X(b.a) + X(b.b)) / 2, yb - 11);
+    ctx.fillText(bandLabel(ctx, b, X(b.b) - X(b.a) - 4), (X(b.a) + X(b.b)) / 2, yb - 11);
   }
   ctx.fillStyle = '#ffe07a'; ctx.fillRect(X(-advance) - 0.5, yb - 3, 1.5, bh + 6);
   ctx.fillStyle = COLORS.text; ctx.font = `9px ${MONO}`;

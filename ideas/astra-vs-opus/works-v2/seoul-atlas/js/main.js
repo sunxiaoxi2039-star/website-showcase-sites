@@ -7,6 +7,8 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { geo, initGeo, proj, unproj, heightM, groundY, VT, VB, BASE_Y, pointInRing, inExtent } from './geo.js';
 import { LANDMARKS, PEAKS, BRIDGES, DISTRICT_ZH, buildLandmarkModels, nightLit, beacons, focusY } from './landmarks.js';
+import { LANDMARK_EN, CAT_EN, PEAK_EN, BRIDGE_EN, RIVER_EN, DISTRICT_EN } from './names-en.js';
+import { L as T, isEn, onLang } from './i18n.js';
 
 const Q = new URLSearchParams(location.search);
 const IS_MOBILE = matchMedia('(max-width: 760px)').matches || /Mobi|Android/i.test(navigator.userAgent);
@@ -963,7 +965,7 @@ function updateTime() {
   const hh = Math.floor(h) % 24, mm = Math.floor((h % 1) * 60);
   $('clockTime').textContent = String(hh).padStart(2, '0') + ':' + String(mm).padStart(2, '0');
   $('clockIcon').textContent = el > 0 ? '☀' : '☾';
-  $('clockPhase').textContent = el < -12 ? (h < 5 || h > 23 ? '深夜' : '夜晚') : el < -2 ? (h < 12 ? '黎明' : '暮色') : el < 8 ? (h < 12 ? '清晨' : '黄昏') : h < 10.5 ? '上午' : h < 13.5 ? '正午' : '午后';
+  $('clockPhase').textContent = el < -12 ? (h < 5 || h > 23 ? T('深夜', 'Late night') : T('夜晚', 'Night')) : el < -2 ? (h < 12 ? T('黎明', 'Dawn') : T('暮色', 'Twilight')) : el < 8 ? (h < 12 ? T('清晨', 'Early morning') : T('黄昏', 'Dusk')) : h < 10.5 ? T('上午', 'Morning') : h < 13.5 ? T('正午', 'Midday') : T('午后', 'Afternoon');
   $('timeSlider').value = h;
 }
 
@@ -972,39 +974,47 @@ function updateTime() {
 // ---------------------------------------------------------------------------
 const labels = [];
 const SHORT = { bukhansan: '北汉山', namsan: 'N 首尔塔', yeouido: '63 大厦', banpo: '盘浦大桥喷泉', lotteworld: '乐天世界', olympicpark: '和平之门', jamsil: '蚕室主体育场', coex: 'COEX', worldcup: '世界杯体育场', gimpo: '金浦机场', ddp: 'DDP', seoulforest: '首尔林', gwanghwamun: '光化门广场' };
-function addLabel(el, pos, opt) { $('labels').appendChild(el); labels.push({ el, pos, pri: 100, ...opt, vis: null }); }
+// 每个标签带一个 text() 渲染函数，切换语言时只重写文字，不重建场景
+function addLabel(el, pos, opt) { $('labels').appendChild(el); const lb = { el, pos, pri: 100, ...opt, vis: null }; labels.push(lb); if (lb.text) lb.text(lb); }
+const lmShort = (L) => (isEn() ? LANDMARK_EN[L.id].short : SHORT[L.id] || L.zh.replace(/（.*）/, ''));
+const lmName = (L) => (isEn() ? LANDMARK_EN[L.id].name : L.zh);
+const districtName = (ko) => (isEn() ? DISTRICT_EN[ko] : DISTRICT_ZH[ko]) || ko;
+function relabel() { for (const lb of labels) if (lb.text) lb.text(lb); }
 function buildLabels() {
   LANDMARKS.forEach((L, i) => {
     const [x, z] = proj(L.lon, L.lat);
     const el = document.createElement('div'); el.className = 'lb lb-lm';
-    el.innerHTML = `<div class="pill"><b>${i + 1}</b>${SHORT[L.id] || L.zh.replace(/（.*）/, '')}</div><div class="stem"></div><div class="dot"></div>`;
     el.addEventListener('click', (e) => { e.stopPropagation(); stopTour(); focusLandmark(i); });
     L.el = el;
     const top = { lotte: 1.16, namsan: 0.52, yeouido: 0.53, bukhansan: 0.02 }[L.id] ?? 0.03;
     let gy = groundY(x, z); if (L.id === 'namsan') gy = groups.namsan ? groups.namsan.position.y : gy;
-    const txt = SHORT[L.id] || L.zh.replace(/（.*）/, '');
     const pri = L.id === 'namsan' ? -1 : PRI.indexOf(L.id);
-    addLabel(el, new THREE.Vector3(x, gy + top, z), { type: 'lm', far: 60, near: 0, w: 34 + [...txt].reduce((a, ch) => a + (ch.charCodeAt(0) > 255 ? 12.5 : 7.2), 0), lmIdx: i, pri });
+    const text = (lb) => {
+      const txt = lmShort(L);
+      lb.el.innerHTML = `<div class="pill"><b>${i + 1}</b>${txt}</div><div class="stem"></div><div class="dot"></div>`;
+      lb.w = 34 + [...txt].reduce((a, ch) => a + (ch.charCodeAt(0) > 255 ? 12.5 : 7.2), 0);
+    };
+    addLabel(el, new THREE.Vector3(x, gy + top, z), { type: 'lm', far: 60, near: 0, lmIdx: i, pri, text });
   });
   for (const d of meta.districts) {
-    const el = document.createElement('div'); el.className = 'lb lb-d'; el.innerHTML = `${DISTRICT_ZH[d.ko] || d.ko}<small>${d.ko}</small>`;
+    const el = document.createElement('div'); el.className = 'lb lb-d';
     const x = d.c[0] / 1000, z = d.c[1] / 1000;
-    addLabel(el, new THREE.Vector3(x, groundY(x, z) + 0.05, z), { type: 'd', far: 55, near: 5.5 });
+    addLabel(el, new THREE.Vector3(x, groundY(x, z) + 0.05, z), { type: 'd', far: 55, near: 5.5, text: (lb) => { lb.el.innerHTML = `${districtName(d.ko)}<small>${d.ko}</small>`; } });
   }
   for (const [nm, lon, lat, h] of PEAKS) {
     const [x, z] = proj(lon, lat);
-    const el = document.createElement('div'); el.className = 'lb lb-pk'; el.innerHTML = `<i>▲</i>${nm}<em>${h}m</em>`;
-    addLabel(el, new THREE.Vector3(x, groundY(x, z) + 0.03, z), { type: 'pk', far: 26, near: 0 });
+    const el = document.createElement('div'); el.className = 'lb lb-pk';
+    addLabel(el, new THREE.Vector3(x, groundY(x, z) + 0.03, z), { type: 'pk', far: 26, near: 0, text: (lb) => { lb.el.innerHTML = `<i>▲</i>${T(nm, PEAK_EN[nm] || nm)}<em>${h}m</em>`; } });
   }
   for (const [nm, lon, lat] of BRIDGES) {
     const [x, z] = proj(lon, lat);
-    const el = document.createElement('div'); el.className = 'lb lb-br'; el.textContent = nm;
-    addLabel(el, new THREE.Vector3(x, 0.04, z), { type: 'br', far: 11, near: 0 });
+    const el = document.createElement('div'); el.className = 'lb lb-br';
+    addLabel(el, new THREE.Vector3(x, 0.04, z), { type: 'br', far: 11, near: 0, text: (lb) => { lb.el.textContent = T(nm, BRIDGE_EN[nm] || nm); } });
   }
   for (const [nm, lon, lat] of [['汉 江', 126.915, 37.534], ['汉 江', 127.075, 37.527], ['中浪川', 127.047, 37.565], ['炭川', 127.068, 37.505], ['安养川', 126.873, 37.527]]) {
     const [x, z] = proj(lon, lat);
-    const el = document.createElement('div'); el.className = 'lb lb-rv'; el.textContent = nm;
-    addLabel(el, new THREE.Vector3(x, 0.01, z), { type: 'rv', far: nm.includes('汉') ? 40 : 12, near: 0 });
+    const el = document.createElement('div'); el.className = 'lb lb-rv';
+    addLabel(el, new THREE.Vector3(x, 0.01, z), { type: 'rv', far: nm.includes('汉') ? 40 : 12, near: 0, text: (lb) => { lb.el.textContent = T(nm, RIVER_EN[nm] || nm); } });
   }
 }
 const vtmp = new THREE.Vector3();
@@ -1103,18 +1113,19 @@ function focusLandmark(i, fromTour = false) {
 function showCard(i) {
   const L = LANDMARKS[i];
   $('card').hidden = false;
-  $('cardCat').textContent = L.cat;
-  $('cardTitle').textContent = L.zh;
-  $('cardSub').textContent = `${L.ko} · ${L.en}`;
-  $('cardDesc').textContent = L.desc;
-  $('cardFacts').innerHTML = L.facts.map(([k, v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join('');
+  const E = LANDMARK_EN[L.id];
+  $('cardCat').textContent = T(L.cat, CAT_EN[L.cat] || L.cat);
+  $('cardTitle').textContent = lmName(L);
+  $('cardSub').textContent = isEn() ? L.ko : `${L.ko} · ${L.en}`;
+  $('cardDesc').textContent = T(L.desc, E.desc);
+  $('cardFacts').innerHTML = (isEn() ? E.facts : L.facts).map(([k, v]) => `<div><dt>${k}</dt><dd title="${v}">${v}</dd></div>`).join('');
   $('cardCoord').textContent = `${L.lat.toFixed(4)}°N  ${L.lon.toFixed(4)}°E`;
-  $('cardStep').textContent = S.tour ? `巡游 第 ${i + 1} / ${LANDMARKS.length} 站` : `${i + 1} / ${LANDMARKS.length}`;
+  $('cardStep').textContent = S.tour ? T(`巡游 第 ${i + 1} / ${LANDMARKS.length} 站`, `Tour · stop ${i + 1} of ${LANDMARKS.length}`) : `${i + 1} / ${LANDMARKS.length}`;
 }
 let tourTimer = 0;
 const DWELL = 7.5;
 function startTour() {
-  S.tour = true; $('btnTour').classList.add('playing'); $('tourIcon').textContent = '❚❚'; $('tourText').textContent = '暂停巡游';
+  S.tour = true; $('btnTour').classList.add('playing'); $('tourIcon').textContent = '❚❚'; $('tourText').textContent = T('暂停巡游', 'Pause tour');
   $('tourBar').classList.add('on');
   const next = S.focus == null ? 0 : (S.focus + 1) % LANDMARKS.length;
   S.tourIdx = next; tourTimer = 0;
@@ -1122,7 +1133,7 @@ function startTour() {
 }
 function stopTour() {
   if (!S.tour) return;
-  S.tour = false; $('btnTour').classList.remove('playing'); $('tourIcon').textContent = '▶'; $('tourText').textContent = '地标飞越巡游';
+  S.tour = false; $('btnTour').classList.remove('playing'); $('tourIcon').textContent = '▶'; $('tourText').textContent = T('地标飞越巡游', 'Landmark flyover');
   $('tourBar').classList.remove('on');
   if (S.focus != null) showCard(S.focus);
 }
@@ -1201,7 +1212,7 @@ function drawMinimap() {
   const [lon, lat] = unproj(controls.target.x, controls.target.z);
   $('mmCoord').textContent = `${lat.toFixed(3)}°N ${lon.toFixed(3)}°E`;
   const d = districtAt(controls.target.x, controls.target.z);
-  $('mmDistrict').textContent = d ? `${DISTRICT_ZH[d.userData.d.ko]} ${d.userData.d.ko}` : '首尔近郊';
+  $('mmDistrict').textContent = d ? `${districtName(d.userData.d.ko)} ${d.userData.d.ko}` : T('首尔近郊', 'Outside Seoul');
 }
 
 // ---------------------------------------------------------------------------
@@ -1212,12 +1223,12 @@ function bindUI() {
   const list = $('placeList');
   LANDMARKS.forEach((L, i) => {
     const li = document.createElement('li');
-    li.innerHTML = `<button><span class="n">${String(i + 1).padStart(2, '0')}</span><span class="nm">${L.zh}</span><span class="ct">${L.cat}</span></button>`;
+    li.innerHTML = `<button><span class="n">${String(i + 1).padStart(2, '0')}</span><span class="nm">${lmName(L)}</span><span class="ct">${T(L.cat, CAT_EN[L.cat] || L.cat)}</span></button>`;
     li.firstChild.addEventListener('click', () => { stopTour(); focusLandmark(i); });
     list.appendChild(li);
   });
   $('timeSlider').addEventListener('input', (e) => { S.hour = +e.target.value; S.timePlay = false; $('timePlay').classList.remove('on'); updateTime(); markPreset(); });
-  $('timePlay').addEventListener('click', () => { S.timePlay = !S.timePlay; $('timePlay').classList.toggle('on', S.timePlay); $('timePlay').textContent = S.timePlay ? '❚❚ 暂停' : '▶ 流动'; });
+  $('timePlay').addEventListener('click', () => { S.timePlay = !S.timePlay; $('timePlay').classList.toggle('on', S.timePlay); $('timePlay').textContent = S.timePlay ? T('❚❚ 暂停', '❚❚ Pause') : T('▶ 流动', '▶ Play'); });
   document.querySelectorAll('#timePresets button').forEach((b) => b.addEventListener('click', () => animateHour(+b.dataset.t)));
   const seg = (id, key, fn) => document.querySelectorAll(`#${id} button`).forEach((b) => b.addEventListener('click', () => {
     S[key] = b.dataset.v; document.querySelectorAll(`#${id} button`).forEach((x) => x.classList.toggle('on', x === b)); fn();
@@ -1263,7 +1274,7 @@ function bindUI() {
     if (p) {
       const hm = heightM(p.x, p.z);
       const r = $('stage').getBoundingClientRect();
-      tip.innerHTML = d ? `<b>${DISTRICT_ZH[d.userData.d.ko]}</b>${d.userData.d.ko} <span>· ${d.userData.d.area.toFixed(1)} km² · 海拔 ${Math.round(hm)} m</span>` : `<b>首尔近郊</b><span>海拔 ${Math.round(hm)} m</span>`;
+      tip.innerHTML = d ? `<b>${districtName(d.userData.d.ko)}</b>${d.userData.d.ko} <span>· ${d.userData.d.area.toFixed(1)} km² · ${T('海拔', 'elev.')} ${Math.round(hm)} m</span>` : `<b>${T('首尔近郊', 'Outside Seoul')}</b><span>${T('海拔', 'elev.')} ${Math.round(hm)} m</span>`;
       tip.style.left = (e.clientX - r.left + 14) + 'px'; tip.style.top = (e.clientY - r.top + 14) + 'px'; tip.hidden = false;
     } else tip.hidden = true;
   });
@@ -1298,7 +1309,7 @@ let hourAnim = null;
 function animateHour(target) {
   let d = target - S.hour; if (d < -12) d += 24; if (d > 12) d -= 24;
   hourAnim = { from: S.hour, d, t: 0 };
-  S.timePlay = false; $('timePlay').classList.remove('on'); $('timePlay').textContent = '▶ 流动';
+  S.timePlay = false; $('timePlay').classList.remove('on'); $('timePlay').textContent = T('▶ 流动', '▶ Play');
 }
 function applyLayers() {
   const L = S.layers;
@@ -1415,8 +1426,8 @@ function frame(now) {
 // ---------------------------------------------------------------------------
 async function main() {
   const gl = renderer.getContext();
-  if (!gl) throw new Error('WebGL 不可用');
-  ldMsg.textContent = '载入地形、建筑与道路数据…';
+  if (!gl) throw new Error(T('WebGL 不可用', 'WebGL is not available'));
+  ldMsg.textContent = T('载入地形、建筑与道路数据…', 'Loading terrain, building and road data…');
   const [metaBuf, terrBuf, bldBuf, treeBuf, ground, night, water, mask] = await Promise.all([
     fetchBuf('data/meta.json', 'meta'), fetchBuf('data/terrain.bin', 'terr'), fetchBuf('data/buildings.bin', 'bld'), fetchBuf('data/trees.bin', 'tree'),
     loadTex('data/ground.jpg', 'g'), loadTex('data/night.jpg', 'n', false), loadTex('data/water.png', 'w', false), loadTex('data/mask.png', 'm', false),
@@ -1425,14 +1436,14 @@ async function main() {
   initGeo(meta, new Int16Array(terrBuf));
   const aniso = Math.min(8, renderer.capabilities.getMaxAnisotropy());
   ground.anisotropy = aniso; night.anisotropy = aniso;
-  ldMsg.textContent = '搭建地形与汉江…';
+  ldMsg.textContent = T('搭建地形与汉江…', 'Shaping the terrain and the Han River…');
   await tick();
   buildTerrain({ ground, night, water, mask });
   buildPlinth();
-  ldMsg.textContent = '摆放 ' + (meta.buildings).toLocaleString('zh-CN') + ' 栋建筑…';
+  ldMsg.textContent = T('摆放 ' + (meta.buildings).toLocaleString('zh-CN') + ' 栋建筑…', 'Placing ' + (meta.buildings).toLocaleString('en-US') + ' buildings…');
   await tick();
   const { n, tall } = buildBuildings(bldBuf);
-  ldMsg.textContent = '种树、架桥、放出车流…';
+  ldMsg.textContent = T('种树、架桥、放出车流…', 'Planting trees, raising bridges, releasing traffic…');
   await tick();
   buildTrees(treeBuf);
   const paths = buildRoads();
@@ -1449,7 +1460,23 @@ async function main() {
   buildMinimap(wimg);
   bindUI();
   applyLayers();
-  $('stats').innerHTML = `25 区 · ${n.toLocaleString('zh-CN')} 栋建筑 · ${(meta.trees / 10000).toFixed(0)} 万棵树<br>${meta.roads.length.toLocaleString('zh-CN')} 段主干道 · 22 处地标 · 真实地形`;
+  const stats = () => { $('stats').innerHTML = T(`25 区 · ${n.toLocaleString('zh-CN')} 栋建筑 · ${(meta.trees / 10000).toFixed(0)} 万棵树<br>${meta.roads.length.toLocaleString('zh-CN')} 段主干道 · 22 处地标 · 真实地形`, `25 districts · ${n.toLocaleString('en-US')} buildings · ${(meta.trees / 1000).toFixed(0)}k trees<br>${meta.roads.length.toLocaleString('en-US')} arterial road segments · 22 landmarks · real terrain`); };
+  stats();
+  // 切换语言：只改文字（标签、列表、卡片、时钟、状态），不动场景与相机
+  onLang(() => {
+    stats();
+    relabel();
+    document.querySelectorAll('#placeList li').forEach((li, i) => {
+      const L = LANDMARKS[i];
+      li.querySelector('.nm').textContent = lmName(L);
+      li.querySelector('.ct').textContent = T(L.cat, CAT_EN[L.cat] || L.cat);
+    });
+    if (S.focus != null && !$('card').hidden) showCard(S.focus);
+    $('tourText').textContent = S.tour ? T('暂停巡游', 'Pause tour') : T('地标飞越巡游', 'Landmark flyover');
+    $('timePlay').textContent = S.timePlay ? T('❚❚ 暂停', '❚❚ Pause') : T('▶ 流动', '▶ Play');
+    updateTime();
+    $('tip').hidden = true;
+  });
   resize();
   window.addEventListener('resize', resize);
   updateTime();
@@ -1470,4 +1497,4 @@ async function main() {
   window.__atlas = { viewFor, showCard, sun, hemi, scene, bloom, S, camera, controls, applyCam, groundY, updateTime, focusLandmark, startTour, LANDMARKS, renderer, U };
 }
 const tick = () => new Promise((r) => setTimeout(r, 0));
-main().catch((e) => { console.error(e); ldMsg.textContent = '载入失败：' + e.message; });
+main().catch((e) => { console.error(e); ldMsg.textContent = T('载入失败：', 'Failed to load: ') + e.message; });

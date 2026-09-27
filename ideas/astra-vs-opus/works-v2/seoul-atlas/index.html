@@ -1,10 +1,14 @@
 <!doctype html>
-<html lang="zh-CN">
+<html lang="zh-CN"
+  data-title-zh="首尔 3D 地图集" data-title-en="Seoul 3D Atlas"
+  data-desc-zh="一座用真实开放地理数据搭起来的首尔微缩沙盘：40 万栋建筑、真实地形与汉江，地标飞越巡游与连续的昼夜光照。"
+  data-desc-en="A miniature sand-table Seoul built from real open geodata: 400,000 buildings, true terrain and the Han River, with landmark flyover tours and a continuous day-night cycle.">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>首尔 3D 地图集</title>
 <meta name="description" content="一座用真实开放地理数据搭起来的首尔微缩沙盘：40 万栋建筑、真实地形与汉江，地标飞越巡游与连续的昼夜光照。">
+<script src="js/lang-boot.js"></script>
 <link rel="stylesheet" href="css/style.css">
 <script type="importmap">
 { "imports": {
@@ -15,96 +19,99 @@
 </head>
 <body>
 <header id="topbar">
-  <a class="tb-left" href="../../compare/index.html">← 三方对照</a>
-  <div class="tb-mid"><span class="tb-title">首尔 3D 地图集</span><span class="tb-tag">Opus 5.5 · 独立逆向</span></div>
-  <a class="tb-right" href="https://x.com/synabreu/status/2096557555086725159" target="_blank" rel="noopener">原作 @synabreu ↗</a>
+  <a class="tb-left" href="../../compare/index.html" data-internal>← <span data-zh>三方对照</span><span data-en><span class="tb-long">Three-way comparison</span><span class="tb-short">Compare</span></span></a>
+  <div class="tb-mid"><span class="tb-title"><span data-zh>首尔 3D 地图集</span><span data-en>Seoul 3D Atlas</span></span><span class="tb-tag"><span data-zh>Opus 5.5 · 独立逆向</span><span data-en>Opus 5.5 · Independent rebuild</span></span></div>
+  <div class="tb-end">
+    <a class="tb-right" href="https://x.com/synabreu/status/2096557555086725159" target="_blank" rel="noopener"><span data-zh>原作</span><span data-en>Original</span><span class="tb-handle"> @synabreu</span> ↗</a>
+    <button id="avoLang" class="avo-lang" type="button" aria-label="Switch to English">EN</button>
+  </div>
 </header>
 
 <main id="stage">
-  <canvas id="c" aria-label="首尔三维微缩地图"></canvas>
+  <canvas id="c" aria-label="首尔三维微缩地图" data-en-aria-label="Miniature 3D map of Seoul"></canvas>
   <div id="labels" aria-hidden="true"></div>
 
   <!-- 品牌与统计 -->
   <section id="brand" class="glass">
     <div class="br-kicker">SEOUL · 서울 · 3D ATLAS</div>
-    <h1>首尔微缩地图集</h1>
-    <div class="br-stats" id="stats">— 载入中 —</div>
-    <div class="br-attr">数据 © OpenStreetMap 贡献者 · Overture Maps · AWS Terrain</div>
+    <h1><span data-zh>首尔微缩地图集</span><span data-en>Seoul Miniature Atlas</span></h1>
+    <div class="br-stats" id="stats"><span data-zh>— 载入中 —</span><span data-en>— loading —</span></div>
+    <div class="br-attr"><span data-zh>数据 © OpenStreetMap 贡献者</span><span data-en>Data © OpenStreetMap contributors</span> · Overture Maps · AWS Terrain</div>
   </section>
 
   <!-- 地标列表 -->
-  <nav id="places" class="glass sheet" aria-label="地标">
-    <div class="sheet-head"><span>地标 · 22 处</span><button class="sheet-x" data-close="places" aria-label="关闭">×</button></div>
+  <nav id="places" class="glass sheet" aria-label="地标" data-en-aria-label="Landmarks">
+    <div class="sheet-head"><span><span data-zh>地标 · 22 处</span><span data-en>Landmarks · 22</span></span><button class="sheet-x" data-close="places" aria-label="关闭" data-en-aria-label="Close">×</button></div>
     <ol id="placeList"></ol>
   </nav>
 
   <!-- 右上：时间 / 季节 / 天气 / 图层 -->
-  <section id="controls" class="glass sheet" aria-label="环境控制">
-    <div class="sheet-head"><span>环境</span><button class="sheet-x" data-close="controls" aria-label="关闭">×</button></div>
+  <section id="controls" class="glass sheet" aria-label="环境控制" data-en-aria-label="Environment controls">
+    <div class="sheet-head"><span><span data-zh>环境</span><span data-en>Environment</span></span><button class="sheet-x" data-close="controls" aria-label="关闭" data-en-aria-label="Close">×</button></div>
     <div class="clock">
       <div class="clock-face"><span id="clockIcon">☀</span><span id="clockTime">17:40</span></div>
-      <div class="clock-phase" id="clockPhase">黄昏</div>
-      <button id="timePlay" class="chip small" title="让时间流动">▶ 流动</button>
+      <div class="clock-phase" id="clockPhase"><span data-zh>黄昏</span><span data-en>Dusk</span></div>
+      <button id="timePlay" class="chip small" title="让时间流动" data-en-title="Let time run"><span data-zh>▶ 流动</span><span data-en>▶ Play</span></button>
     </div>
-    <input id="timeSlider" type="range" min="0" max="24" step="0.02" value="17.25" aria-label="一天中的时间">
+    <input id="timeSlider" type="range" min="0" max="24" step="0.02" value="17.25" aria-label="一天中的时间" data-en-aria-label="Time of day">
     <div class="ticks"><span>0</span><span>6</span><span>12</span><span>18</span><span>24</span></div>
     <div class="seg" id="timePresets">
-      <button data-t="6.3">清晨</button><button data-t="12.2">正午</button><button data-t="18.35">黄昏</button><button data-t="21.3">夜晚</button>
+      <button data-t="6.3"><span data-zh>清晨</span><span data-en>Morning</span></button><button data-t="12.2"><span data-zh>正午</span><span data-en>Noon</span></button><button data-t="18.35"><span data-zh>黄昏</span><span data-en>Dusk</span></button><button data-t="21.3"><span data-zh>夜晚</span><span data-en>Night</span></button>
     </div>
-    <div class="row-label">季节</div>
-    <div class="seg" id="seasonSeg"><button data-v="spring">春</button><button data-v="summer">夏</button><button data-v="autumn" class="on">秋</button><button data-v="winter">冬</button></div>
-    <div class="row-label">天气</div>
-    <div class="seg" id="weatherSeg"><button data-v="clear" class="on">晴</button><button data-v="rain">雨</button><button data-v="snow">雪</button></div>
-    <div class="row-label">图层</div>
+    <div class="row-label"><span data-zh>季节</span><span data-en>Season</span></div>
+    <div class="seg" id="seasonSeg"><button data-v="spring"><span data-zh>春</span><span data-en>Spring</span></button><button data-v="summer"><span data-zh>夏</span><span data-en>Summer</span></button><button data-v="autumn" class="on"><span data-zh>秋</span><span data-en>Autumn</span></button><button data-v="winter"><span data-zh>冬</span><span data-en>Winter</span></button></div>
+    <div class="row-label"><span data-zh>天气</span><span data-en>Weather</span></div>
+    <div class="seg" id="weatherSeg"><button data-v="clear" class="on"><span data-zh>晴</span><span data-en>Clear</span></button><button data-v="rain"><span data-zh>雨</span><span data-en>Rain</span></button><button data-v="snow"><span data-zh>雪</span><span data-en>Snow</span></button></div>
+    <div class="row-label"><span data-zh>图层</span><span data-en>Layers</span></div>
     <div class="toggles" id="layerToggles">
-      <label><input type="checkbox" data-layer="districts" checked><span>区界</span></label>
-      <label><input type="checkbox" data-layer="labels" checked><span>地名</span></label>
-      <label><input type="checkbox" data-layer="traffic" checked><span>车流</span></label>
-      <label><input type="checkbox" data-layer="trees" checked><span>树木</span></label>
-      <label><input type="checkbox" data-layer="buildings" checked><span>建筑</span></label>
-      <label><input type="checkbox" data-layer="tilt" checked><span>移轴</span></label>
+      <label><input type="checkbox" data-layer="districts" checked><span><span data-zh>区界</span><span data-en>Districts</span></span></label>
+      <label><input type="checkbox" data-layer="labels" checked><span><span data-zh>地名</span><span data-en>Labels</span></span></label>
+      <label><input type="checkbox" data-layer="traffic" checked><span><span data-zh>车流</span><span data-en>Traffic</span></span></label>
+      <label><input type="checkbox" data-layer="trees" checked><span><span data-zh>树木</span><span data-en>Trees</span></span></label>
+      <label><input type="checkbox" data-layer="buildings" checked><span><span data-zh>建筑</span><span data-en>Buildings</span></span></label>
+      <label><input type="checkbox" data-layer="tilt" checked><span><span data-zh>移轴</span><span data-en>Tilt-shift</span></span></label>
     </div>
   </section>
 
   <!-- 小地图 -->
-  <section id="minimap" class="glass" aria-label="小地图">
+  <section id="minimap" class="glass" aria-label="小地图" data-en-aria-label="Minimap">
     <canvas id="mm" width="220" height="190"></canvas>
-    <div class="mm-cap"><span id="mmDistrict">首尔特别市</span><span id="mmCoord">37.57°N 126.98°E</span></div>
+    <div class="mm-cap"><span id="mmDistrict"><span data-zh>首尔特别市</span><span data-en>Seoul</span></span><span id="mmCoord">37.57°N 126.98°E</span></div>
   </section>
 
   <!-- 底部：巡游与导航 -->
   <section id="dock">
-    <button id="btnPlaces" class="dock-btn mobile-only" aria-label="地标">◎<small>地标</small></button>
-    <button id="btnHome" class="dock-btn" title="全景 (H)" aria-label="全景">⌂<small>全景</small></button>
-    <button id="btnTour" class="dock-main" title="自动巡游 (T)"><span id="tourIcon">▶</span><span id="tourText">地标飞越巡游</span></button>
-    <button id="btnCompass" class="dock-btn" title="正北朝上" aria-label="指北"><span id="needle">➤</span><small>指北</small></button>
-    <button id="btnControls" class="dock-btn mobile-only" aria-label="环境">☼<small>环境</small></button>
+    <button id="btnPlaces" class="dock-btn mobile-only" aria-label="地标" data-en-aria-label="Landmarks">◎<small><span data-zh>地标</span><span data-en>Places</span></small></button>
+    <button id="btnHome" class="dock-btn" title="全景 (H)" data-en-title="Overview (H)" aria-label="全景" data-en-aria-label="Overview">⌂<small><span data-zh>全景</span><span data-en>Home</span></small></button>
+    <button id="btnTour" class="dock-main" title="自动巡游 (T)" data-en-title="Auto tour (T)"><span id="tourIcon">▶</span><span id="tourText"><span data-zh>地标飞越巡游</span><span data-en>Landmark flyover</span></span></button>
+    <button id="btnCompass" class="dock-btn" title="正北朝上" data-en-title="North up" aria-label="指北" data-en-aria-label="North up"><span id="needle">➤</span><small><span data-zh>指北</span><span data-en>North</span></small></button>
+    <button id="btnControls" class="dock-btn mobile-only" aria-label="环境" data-en-aria-label="Environment">☼<small><span data-zh>环境</span><span data-en>Scene</span></small></button>
   </section>
   <div id="tourBar"><div id="tourProg"></div></div>
 
   <!-- 地标卡片 -->
   <article id="card" class="glass" hidden>
-    <button class="card-x" id="cardX" aria-label="关闭">×</button>
-    <div class="card-top"><span class="chip cat" id="cardCat">地标</span><span class="card-step" id="cardStep"></span></div>
+    <button class="card-x" id="cardX" aria-label="关闭" data-en-aria-label="Close">×</button>
+    <div class="card-top"><span class="chip cat" id="cardCat"><span data-zh>地标</span><span data-en>Landmark</span></span><span class="card-step" id="cardStep"></span></div>
     <h2 id="cardTitle">—</h2>
     <div class="card-sub" id="cardSub">—</div>
     <p id="cardDesc"></p>
     <dl id="cardFacts"></dl>
-    <div class="card-foot"><span id="cardCoord"></span><span class="card-nav"><button id="cardPrev" aria-label="上一站">‹</button><button id="cardNext" aria-label="下一站">›</button></span></div>
+    <div class="card-foot"><span id="cardCoord"></span><span class="card-nav"><button id="cardPrev" aria-label="上一站" data-en-aria-label="Previous stop">‹</button><button id="cardNext" aria-label="下一站" data-en-aria-label="Next stop">›</button></span></div>
   </article>
 
   <div id="tip" hidden></div>
-  <div id="hint">拖动旋转 · 右键/双指平移 · 滚轮/捏合缩放 · 点击地名飞过去</div>
+  <div id="hint"><span data-zh>拖动旋转 · 右键/双指平移 · 滚轮/捏合缩放 · 点击地名飞过去</span><span data-en>Drag to rotate · right-drag / two fingers to pan · scroll / pinch to zoom · click a place name to fly there</span></div>
 
   <div id="loader">
     <div class="ld-inner">
       <div class="ld-kicker">SEOUL 3D ATLAS</div>
-      <div class="ld-title">首尔微缩地图集</div>
+      <div class="ld-title"><span data-zh>首尔微缩地图集</span><span data-en>Seoul Miniature Atlas</span></div>
       <div class="ld-bar"><i id="ldBar"></i></div>
-      <div class="ld-msg" id="ldMsg">准备沙盘…</div>
+      <div class="ld-msg" id="ldMsg"><span data-zh>准备沙盘…</span><span data-en>Preparing the sand table…</span></div>
     </div>
   </div>
-  <noscript><div class="nojs">需要启用 JavaScript 与 WebGL 才能浏览这座微缩首尔。</div></noscript>
+  <noscript><div class="nojs">需要启用 JavaScript 与 WebGL 才能浏览这座微缩首尔。<br>This miniature Seoul needs JavaScript and WebGL.</div></noscript>
 </main>
 <script type="module" src="js/main.js"></script>
 </body>

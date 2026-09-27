@@ -12,6 +12,7 @@ import { Explorer } from './explore.js';
 import { OceanSound } from './sound.js';
 import { UI } from './ui.js';
 import { parseSeed, clamp, smoothstep } from './noise.js';
+import { L } from './i18n.js';
 
 const qs = new URLSearchParams(location.search);
 if (qs.get('shot') === '1') document.body.classList.add('shot');
@@ -29,7 +30,7 @@ try {
   renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: 'high-performance', alpha: false });
   if (!renderer.capabilities.isWebGL2) throw new Error('webgl2');
 } catch (e) {
-  fail('这个作品需要 WebGL2。请换一台支持硬件加速的电脑或浏览器再试。');
+  fail(L('这个作品需要 WebGL2。请换一台支持硬件加速的电脑或浏览器再试。', 'This piece needs WebGL2. Please try again on a computer or browser with hardware acceleration.'));
   throw e;
 }
 renderer.setClearColor(0x000000, 1);
@@ -178,13 +179,13 @@ function startView() {
 // ——— 动作（供界面调用） ———
 app.travelSite = (id) => {
   const t = explorer.siteTarget(id);
-  explorer.travelTo(t, SITES[id].title);
+  explorer.travelTo(t, { zh: SITES[id].title, en: SITES[id].titleEn });
   app.opening = false;
 };
 app.travelPlace = (id) => {
   const p = PLACES.find((q) => q.id === id);
   if (!p) return;
-  explorer.travelTo(explorer.placeTarget(p), p.name);
+  explorer.travelTo(explorer.placeTarget(p), { zh: p.name, en: p.nameEn });
   app.opening = false;
   app.lastPlace = id;
 };
@@ -272,7 +273,7 @@ function boot() {
     buildWorld();
   } catch (e) {
     console.error(e);
-    fail('生成海洋时出错：' + e.message);
+    fail(L('生成海洋时出错：', 'Something went wrong while generating the ocean: ') + e.message);
     return;
   }
   app.renderScale = app.quality === 'low' ? 0.7 : app.quality === 'high' ? 1 : 0.85;
