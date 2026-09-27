@@ -191,3 +191,19 @@ body.cover-mode { --bar: 0px; }
 .intro .lede, .intro h1, .readout { transition: opacity .6s ease; }
 body.is-exploded .intro .lede { opacity: .25; }
 body.is-exploded .intro h1 { opacity: .55; }
+
+/* ---------- 中英切换 ---------- */
+.cb-r { justify-self: end; display: flex; align-items: center; gap: 10px; min-width: 0; }
+@media (max-width: 740px) {
+  .cb-handle { display: none; }
+  .cb-r { gap: 6px; }
+}
+html[lang=en] .intro h1 { letter-spacing: -.01em; }
+html[lang=en] .control { letter-spacing: .04em; }
+.sound em { white-space: nowrap; }
+.footer { gap: 12px; }
+@media (max-width: 740px) {
+  .cb-title { flex-direction: column; justify-content: center; gap: 1px; line-height: 1.15; }
+  .cb-tag { padding: 0 6px; }
+  .cb-name { max-width: 100%; }
+}

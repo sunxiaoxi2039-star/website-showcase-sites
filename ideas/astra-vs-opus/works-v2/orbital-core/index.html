@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="zh-CN">
+<html lang="zh-CN" data-title-en="Orbital Energy Core · Orbital Core" data-desc-en="A dual-ring energy core you can rotate, zoom and take apart: procedural hard-surface modelling, PBR materials and bloom post-processing, rendered live in three.js.">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
@@ -20,14 +20,14 @@
 </head>
 <body>
   <!-- 三方对照顶栏 -->
-  <nav class="compare-bar" aria-label="对照导航">
-    <a class="cb-back" href="../../compare/index.html">← 三方对照</a>
-    <div class="cb-title"><span class="cb-name">轨道能量核心</span><span class="cb-tag">Opus 5.5 · 独立逆向</span></div>
-    <a class="cb-orig" href="https://x.com/oneruofeng/status/2096551010089263181" target="_blank" rel="noopener">原作 @oneruofeng ↗</a>
+  <nav class="compare-bar" aria-label="对照导航" data-en-aria-label="Comparison navigation">
+    <a class="cb-back" href="../../compare/index.html" data-en="← Compare">← 三方对照</a>
+    <div class="cb-title"><span class="cb-name" data-en="Orbital Energy Core">轨道能量核心</span><span class="cb-tag" data-en="Opus 5.5 · Reverse-engineered">Opus 5.5 · 独立逆向</span></div>
+    <div class="cb-r" data-lang-slot><a class="cb-orig" href="https://x.com/oneruofeng/status/2096551010089263181" target="_blank" rel="noopener" data-en="Original<span class=&quot;cb-handle&quot;> @oneruofeng</span> ↗">原作<span class="cb-handle"> @oneruofeng</span> ↗</a></div>
   </nav>
 
-  <main class="experience" aria-label="轨道能量核心 三维展示">
-    <canvas id="scene" aria-label="可交互的三维双环能量核心模型：拖拽旋转，滚轮或双指缩放"></canvas>
+  <main class="experience" aria-label="轨道能量核心 三维展示" data-en-aria-label="Orbital Energy Core — 3D showcase">
+    <canvas id="scene" aria-label="可交互的三维双环能量核心模型：拖拽旋转，滚轮或双指缩放" data-en-aria-label="Interactive 3D dual-ring energy core: drag to rotate, scroll or pinch to zoom"></canvas>
     <div class="fx-grid" aria-hidden="true"></div>
     <div class="fx-grain" aria-hidden="true"></div>
 
@@ -36,53 +36,54 @@
         <span class="brand-mark" aria-hidden="true"><i></i></span>
         <span class="brand-text">ORBITAL<br />OBJECTS</span>
       </div>
-      <div class="specimen">样本 <strong>01</strong><br /><span>DUAL-RING CONTAINMENT</span></div>
+      <div class="specimen"><span data-en="Specimen">样本</span> <strong>01</strong><br /><span>DUAL-RING CONTAINMENT</span></div>
     </header>
 
     <section class="intro">
-      <p class="eyebrow"><span></span>能量核心 / SPECIMEN 01</p>
-      <h1>两道轨道<br /><em>一颗恒星。</em></h1>
-      <p class="lede">等离子球体悬浮在测地约束笼中，两道分段机加工的轨道环以陀螺架方式交错转动。拖拽它、放大它，或者把它拆开看。</p>
+      <p class="eyebrow" data-en="&lt;span&gt;&lt;/span&gt;ENERGY CORE / SPECIMEN 01"><span></span>能量核心 / SPECIMEN 01</p>
+      <h1 data-en="Two orbits,<br /><em>one star.</em>">两道轨道<br /><em>一颗恒星。</em></h1>
+      <p class="lede" data-en="A plasma sphere hangs inside a geodesic containment cage while two segmented, machined orbital rings turn through each other like a gyroscope gimbal. Drag it, zoom in, or take it apart.">等离子球体悬浮在测地约束笼中，两道分段机加工的轨道环以陀螺架方式交错转动。拖拽它、放大它，或者把它拆开看。</p>
     </section>
 
-    <aside class="readout" aria-label="实时参数">
-      <div class="ro-row"><span>状态</span><b><i class="ro-dot"></i><em id="roState">运行中</em></b></div>
-      <div class="ro-row"><span>核心频率</span><b id="roFreq">48.6 THz</b></div>
-      <div class="ro-row"><span>外环方位 α</span><b id="roAlpha">000.0°</b></div>
-      <div class="ro-row"><span>内环俯仰 β</span><b id="roBeta">000.0°</b></div>
-      <div class="ro-row"><span>场强输出</span><b id="roOut">100%</b></div>
+    <aside class="readout" aria-label="实时参数" data-en-aria-label="Live telemetry">
+      <div class="ro-row"><span data-en="Status">状态</span><b><i class="ro-dot"></i><em id="roState">运行中</em></b></div>
+      <div class="ro-row"><span data-en="Core frequency">核心频率</span><b id="roFreq">48.6 THz</b></div>
+      <div class="ro-row"><span data-en="Outer azimuth α">外环方位 α</span><b id="roAlpha">000.0°</b></div>
+      <div class="ro-row"><span data-en="Inner pitch β">内环俯仰 β</span><b id="roBeta">000.0°</b></div>
+      <div class="ro-row"><span data-en="Field output">场强输出</span><b id="roOut">100%</b></div>
       <canvas class="scope" id="scope" width="340" height="72" aria-hidden="true"></canvas>
     </aside>
 
     <div class="labels" id="labels" aria-hidden="true">
-      <div class="tag" data-part="core" data-side="R"><div class="tag-line"></div><div class="tag-box"><b>01</b><strong>等离子核心</strong><small>Ø 1.00 · 自发光湍流壳</small></div></div>
-      <div class="tag" data-part="cage" data-side="L"><div class="tag-line"></div><div class="tag-box"><b>02</b><strong>测地约束笼</strong><small>120 支杆 · 42 节点</small></div></div>
-      <div class="tag" data-part="outer" data-side="R"><div class="tag-line"></div><div class="tag-box"><b>03</b><strong>外环 · 方位环</strong><small>Ø 2.84 · 12 段机加工</small></div></div>
-      <div class="tag" data-part="inner" data-side="L"><div class="tag-line"></div><div class="tag-box"><b>04</b><strong>内环 · 俯仰环</strong><small>Ø 2.32 · 10 段 · 钛合金枢轴</small></div></div>
-      <div class="tag" data-part="pedestal" data-side="R"><div class="tag-line"></div><div class="tag-box"><b>05</b><strong>悬浮基座</strong><small>Ø 3.64 · 72 散热鳍 · 刻度盘</small></div></div>
+      <div class="tag" data-part="core" data-side="R"><div class="tag-line"></div><div class="tag-box"><b>01</b><strong data-en="Plasma core">等离子核心</strong><small data-en="Ø 1.00 · emissive turbulent shell">Ø 1.00 · 自发光湍流壳</small></div></div>
+      <div class="tag" data-part="cage" data-side="L"><div class="tag-line"></div><div class="tag-box"><b>02</b><strong data-en="Geodesic containment cage">测地约束笼</strong><small data-en="120 struts · 42 nodes">120 支杆 · 42 节点</small></div></div>
+      <div class="tag" data-part="outer" data-side="R"><div class="tag-line"></div><div class="tag-box"><b>03</b><strong data-en="Outer ring · azimuth">外环 · 方位环</strong><small data-en="Ø 2.84 · 12 machined segments">Ø 2.84 · 12 段机加工</small></div></div>
+      <div class="tag" data-part="inner" data-side="L"><div class="tag-line"></div><div class="tag-box"><b>04</b><strong data-en="Inner ring · pitch">内环 · 俯仰环</strong><small data-en="Ø 2.32 · 10 segments · titanium pivots">Ø 2.32 · 10 段 · 钛合金枢轴</small></div></div>
+      <div class="tag" data-part="pedestal" data-side="R"><div class="tag-line"></div><div class="tag-box"><b>05</b><strong data-en="Levitation pedestal">悬浮基座</strong><small data-en="Ø 3.64 · 72 cooling fins · dial ring">Ø 3.64 · 72 散热鳍 · 刻度盘</small></div></div>
     </div>
 
-    <nav class="controls" aria-label="展示模式">
-      <button class="control is-active" type="button" data-mode="orbit" aria-pressed="true"><span class="glyph g-orbit"></span>轨道<kbd>1</kbd></button>
-      <button class="control" type="button" data-mode="pulse" aria-pressed="false"><span class="glyph g-pulse"></span>脉冲<kbd>2</kbd></button>
-      <button class="control" type="button" data-mode="still" aria-pressed="false"><span class="glyph g-still"></span>静止<kbd>3</kbd></button>
-      <button class="control" type="button" data-mode="explode" aria-pressed="false"><span class="glyph g-explode"></span>拆解<kbd>4</kbd></button>
+    <nav class="controls" aria-label="展示模式" data-en-aria-label="Display mode">
+      <button class="control is-active" type="button" data-mode="orbit" aria-pressed="true"><span class="glyph g-orbit"></span><span data-en="Orbit">轨道</span><kbd>1</kbd></button>
+      <button class="control" type="button" data-mode="pulse" aria-pressed="false"><span class="glyph g-pulse"></span><span data-en="Pulse">脉冲</span><kbd>2</kbd></button>
+      <button class="control" type="button" data-mode="still" aria-pressed="false"><span class="glyph g-still"></span><span data-en="Still">静止</span><kbd>3</kbd></button>
+      <button class="control" type="button" data-mode="explode" aria-pressed="false"><span class="glyph g-explode"></span><span data-en="Explode">拆解</span><kbd>4</kbd></button>
     </nav>
 
     <footer class="footer">
-      <span class="hint">拖拽旋转 · 滚轮 / 双指缩放 · 双击复位</span>
+      <span class="hint" data-en="Drag to rotate · scroll / pinch to zoom · double-click to reset">拖拽旋转 · 滚轮 / 双指缩放 · 双击复位</span>
       <button class="sound" id="sound" type="button" aria-pressed="false"><span class="sound-bars"><i></i><i></i><i></i><i></i></span><em>声音 · 关</em></button>
     </footer>
 
     <div class="loader" id="loader" role="status">
       <div class="loader-ring"></div>
-      <p>正在点亮核心<span id="loaderPct"></span></p>
+      <p><span data-en="Igniting the core">正在点亮核心</span><span id="loaderPct"></span></p>
     </div>
     <div class="fail" id="fail" hidden>
-      <p>这个浏览器没能创建 WebGL 上下文，三维核心无法显示。<br />请换用支持 WebGL 2 的浏览器再试。</p>
+      <p data-en="This browser couldn’t create a WebGL context, so the 3D core can’t be shown.<br />Please try again in a browser that supports WebGL 2.">这个浏览器没能创建 WebGL 上下文，三维核心无法显示。<br />请换用支持 WebGL 2 的浏览器再试。</p>
     </div>
   </main>
 
+  <script src="js/i18n.js"></script>
   <script type="module" src="js/main.js"></script>
 </body>
 </html>
