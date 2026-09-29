@@ -43,7 +43,11 @@
    "自适应画质、预分配数组、页面隐藏时自动暂停",
    "prefers-reduced-motion 静帧只动光模式",
    "宽屏、竖屏、方屏三种展厅布局，键盘操作"
-  ]
+  ],
+  "vposters": {
+   "oneshot": "results/01-glass-gold-mosaic/evidence/vposter-oneshot.jpg",
+   "final": "results/01-glass-gold-mosaic/evidence/vposter-final.jpg"
+  }
  },
  {
   "nn": "02",
@@ -90,7 +94,12 @@
    "prefers-reduced-motion 静帧模式",
    "可拖动进度条（pointer capture）、章节刻度与跳转、点画面暂停/继续、闲置隐藏界面、键盘操作",
    "WebAudio 程序合成声音，点按钮才出声；系统明朝体回退，结尾一句竖排"
-  ]
+  ],
+  "vposters": {
+   "oneshot": "results/02-yohaku-stained-glass/evidence/vposter-oneshot.jpg",
+   "fixed": "results/02-yohaku-stained-glass/evidence/vposter-fixed.jpg",
+   "final": "results/02-yohaku-stained-glass/evidence/vposter-final.jpg"
+  }
  },
  {
   "nn": "03",
@@ -137,7 +146,12 @@
    "自适应画质、像素比上下限、手机降步进和粒子数",
    "prefers-reduced-motion 实时响应，随拍抖动统一衰减",
    "入口页构图：投影矩阵偏移把黑洞抬到标题上方，开场后滑回中心；Jost 加 JetBrains Mono 字体"
-  ]
+  ],
+  "vposters": {
+   "oneshot": "results/03-singularity-audio-visualizer/evidence/vposter-oneshot.jpg",
+   "fixed": "results/03-singularity-audio-visualizer/evidence/vposter-fixed.jpg",
+   "final": "results/03-singularity-audio-visualizer/evidence/vposter-final.jpg"
+  }
  },
  {
   "nn": "04",
@@ -179,7 +193,11 @@
    "双时钟与自适应子步、自适应分辨率",
    "WebAudio 程序合成声音（手动开启）",
    "键盘操作与 prefers-reduced-motion 适配"
-  ]
+  ],
+  "vposters": {
+   "oneshot": "results/04-ferrofluid/evidence/vposter-oneshot.jpg",
+   "final": "results/04-ferrofluid/evidence/vposter-final.jpg"
+  }
  },
  {
   "nn": "05",
@@ -230,7 +248,12 @@
    "DPR 上限 2；resize 时重投影速度场与染料场，不拉伸、不清空；WebGL 上下文丢失与恢复",
    "prefers-reduced-motion：0.4 倍速、开场离屏预演、静态颗粒、染料慢衰减",
    "玻璃拟态 HUD：自动隐藏，保留圆点入口，快捷键 H / T / C / 空格"
-  ]
+  ],
+  "vposters": {
+   "oneshot": "results/05-neon-fluid/evidence/vposter-oneshot.jpg",
+   "fixed": "results/05-neon-fluid/evidence/vposter-fixed.jpg",
+   "final": "results/05-neon-fluid/evidence/vposter-final.jpg"
+  }
  },
  {
   "nn": "06",
@@ -274,7 +297,12 @@
    "WebGL1 全屏三角形、按帧时间自适应分辨率、KHR_parallel_shader_compile 异步编译",
    "定格后按条带渐进补渲到全分辨率（copyTexImage2D 占位预览）",
    "WebAudio 粉噪声风声随镜头处阵风强度变化"
-  ]
+  ],
+  "vposters": {
+   "oneshot": "results/06-solarpunk-city-shader/evidence/vposter-oneshot.jpg",
+   "fixed": "results/06-solarpunk-city-shader/evidence/vposter-fixed.jpg",
+   "final": "results/06-solarpunk-city-shader/evidence/vposter-final.jpg"
+  }
  },
  {
   "nn": "07",
@@ -322,7 +350,12 @@
    "Web Audio 现场合成：游水底噪、雨、漩涡、落水水花、五声音阶水滴，卷积混响加压缩器；静音时平滑淡出，切走标签页就暂停",
    "prefers-reduced-motion 时自动进入 Calm：水面细波减到四分之一，视觉时钟减半，高光变弱",
    "字体：@fontsource 的 Cormorant Garamond 和 Manrope（jsdelivr 锁版本）"
-  ]
+  ],
+  "vposters": {
+   "oneshot": "results/07-koi-pond-caustics/evidence/vposter-oneshot.jpg",
+   "fixed": "results/07-koi-pond-caustics/evidence/vposter-fixed.jpg",
+   "final": "results/07-koi-pond-caustics/evidence/vposter-final.jpg"
+  }
  },
  {
   "nn": "08",
@@ -364,7 +397,12 @@
    "三层噪声云影、距离雾加贴地薄雾、太阳方向的前向散射",
    "软件渲染检测；真 GPU 上按 45 帧窗口的帧时中位数自适应渲染分辨率（0.6–1 倍，连续两窗偏慢才降，稳定后回升），DPR 上限 1.75（手机 1.5）",
    "WebAudio 程序化风声，CPU 端复刻阵风场驱动音量"
-  ]
+  ],
+  "vposters": {
+   "oneshot": "results/08-rice-field-wind/evidence/vposter-oneshot.jpg",
+   "fixed": "results/08-rice-field-wind/evidence/vposter-fixed.jpg",
+   "final": "results/08-rice-field-wind/evidence/vposter-final.jpg"
+  }
  },
  {
   "nn": "09",
@@ -411,7 +449,11 @@
    "可拖动时间线（pointer capture），闲置时控件自动隐藏",
    "prefers-reduced-motion：英雄帧联系表、手动播放、静态颗粒",
    "分镜总览、?t= / ?freeze / ?board / ?clean 参数与 window.__reel 测试接口"
-  ]
+  ],
+  "vposters": {
+   "oneshot": "results/09-motion-showreel/evidence/vposter-oneshot.jpg",
+   "final": "results/09-motion-showreel/evidence/vposter-final.jpg"
+  }
  },
  {
   "nn": "10",
@@ -460,6 +502,11 @@
    "WebAudio：Karplus-Strong 古筝、尺八气声、钵声、风噪与换笔扫音",
    "prefers-reduced-motion：定格场景 + 溶接切换",
    "逐帧冻结的 pose 接口，用于海报与测试"
-  ]
+  ],
+  "vposters": {
+   "oneshot": "results/10-art-style-shift/evidence/vposter-oneshot.jpg",
+   "fixed": "results/10-art-style-shift/evidence/vposter-fixed.jpg",
+   "final": "results/10-art-style-shift/evidence/vposter-final.jpg"
+  }
  }
 ]

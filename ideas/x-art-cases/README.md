@@ -6,7 +6,7 @@
 
 - 在线查看：https://sunxiaoxi2039-star.github.io/website-showcase-sites/ideas/x-art-cases/
 - 上一个作品（Tripo 3D 提示词复刻）：https://sunxiaoxi2039-star.github.io/website-showcase-sites/ideas/tripo-3d-showcase/
-- 最近更新：2026-09-27
+- 最近更新：2026-09-29
 
 ## 案例与出处
 

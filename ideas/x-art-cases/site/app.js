@@ -12,10 +12,11 @@ const SERIES_MIN = 10; // 「十则」：编号按十则原序，分母至少是
 const VERDICT_MAX = 50; // summary_cn 不超过这个长度才直接当「一句话评」，更长的收进「展品说明」
 const FIRST_MAX = 48; // 简介太长又没有 verdict_cn 时，首句不超过这个长度就拿来当「一句话评」
 
+// 三版都是 Claude Opus 5.5 写的；原作者的成品不搬过来，只给原帖链接
 const VERSIONS = [
-  { key: 'oneshot', label: '一次成型' },
-  { key: 'fixed', label: '修正版' },
-  { key: 'final', label: '精修版' },
+  { key: 'oneshot', no: '①', label: '一次成型', who: 'Claude 首版，原样没改', short: '首版' },
+  { key: 'fixed', no: '②', label: '修正版', who: 'Claude 只修跑不动、画错的地方', short: '修正' },
+  { key: 'final', no: '③', label: '精修版', who: 'Claude 在前一版上再打磨', short: '精修' },
 ];
 const CN_NUM = ['零', '一', '二', '三', '四', '五', '六', '七', '八', '九', '十'];
 const EXEC_MODEL = 'Claude Opus 5.5';
@@ -108,7 +109,8 @@ async function loadLabels() {
 }
 function normalize(c, i, labels = {}) {
   const nn = pad2(c.nn ?? i + 1);
-  const versions = VERSIONS.filter((v) => safeSrc(c[v.key])).map((v) => ({ ...v, src: safeSrc(c[v.key]) }));
+  const vp = c.vposters && typeof c.vposters === 'object' ? c.vposters : {};
+  const versions = VERSIONS.filter((v) => safeSrc(c[v.key])).map((v) => ({ ...v, src: safeSrc(c[v.key]), poster: safeSrc(vp[v.key]) || null }));
   // cases.json 有值时以它为准，空着才用编辑层补位
   const o = labels[nn] && typeof labels[nn] === 'object' ? labels[nn] : {};
   const text = (k) => (has(c[k]) && typeof c[k] === 'string' ? c[k].trim() : has(o[k]) && typeof o[k] === 'string' ? o[k].trim() : null);
@@ -235,22 +237,34 @@ function renderWork(c, total) {
   const poster = h('img', { class: 'poster', alt: `${titleCn} 海报`, loading: 'lazy', decoding: 'async', width: 1600, height: 900 });
   const screen = h('div', { class: 'screen' });
   const frame = h('div', { class: 'frame' }, h('div', { class: 'mat' }, screen));
-  if (c.poster) {
+  if (c.poster || c.versions.some((v) => v.poster)) {
     poster.addEventListener('load', () => {
       poster.classList.add('is-loaded');
       const ar = poster.naturalWidth / poster.naturalHeight;
       if (ar && Number.isFinite(ar) && Math.abs(ar - 16 / 9) > 0.02) stage.style.setProperty('--ar', Math.min(2.2, Math.max(0.8, ar)).toFixed(4));
     }, { once: true });
     poster.addEventListener('error', () => screen.append(h('span', { class: 'poster-miss', text: '海报暂缺' })), { once: true });
-    poster.src = c.poster;
+    poster.src = (c.versions.find((v) => v.key === w.ver) || {}).poster || c.poster;
     screen.append(poster);
   } else {
     screen.append(h('span', { class: 'poster-miss', text: '海报暂缺' }));
   }
   const canPlay = c.versions.length > 0;
+  const playWhich = h('small', { class: 'play-which' });
   const play = h('button', { class: 'play', type: 'button', 'aria-label': `开启现场：${titleCn}`, disabled: !canPlay },
-    h('span', { class: 'play-disc' }, h('span', {}, h('b', { text: '▶' }), canPlay ? '开启现场' : '暂无现场')));
-  screen.append(play);
+    h('span', { class: 'play-disc' }, h('span', {}, h('b', { text: '▶' }), canPlay ? '开启现场' : '暂无现场', playWhich)));
+  const tag = h('span', { class: 'ver-tag', 'aria-hidden': 'true' });
+  screen.append(play, tag);
+  // 画框左上角和播放钮都写明当前是哪一版，免得切了按钮却分不清在看谁的
+  const showVer = () => {
+    const v = c.versions.find((x) => x.key === w.ver);
+    if (!v) { tag.hidden = true; return; }
+    tag.hidden = false;
+    tag.textContent = `${v.no} ${v.label} · Claude`;
+    playWhich.textContent = v.label;
+    play.setAttribute('aria-label', `开启现场：${titleCn}（${v.label}）`);
+    if (v.poster && poster.getAttribute('src') !== v.poster) { poster.classList.remove('is-loaded'); poster.src = v.poster; }
+  };
   play.addEventListener('click', () => Live.open(w));
 
   // —— 版本切换 + 工具 ——
@@ -260,18 +274,28 @@ function renderWork(c, total) {
     // data: 地址不能在新窗口直接打开，占位数据时隐藏该链接
     if (v && !/^data:/i.test(v.src)) { openNew.href = v.src; openNew.hidden = false; } else { openNew.removeAttribute('href'); openNew.hidden = true; }
   };
-  const verBox = h('div', { class: 'ver', role: 'group', 'aria-label': '版本切换' });
-  for (const v of c.versions) {
-    const b = h('button', { type: 'button', 'aria-pressed': String(v.key === w.ver), 'data-ver': v.key, text: v.label });
-    b.addEventListener('click', () => {
+  const verBox = h('div', { class: 'ver', role: 'group', 'aria-label': '版本切换（三版都由 Claude 写成）' });
+  const postHref = safeHttp(c.post_url);
+  if (postHref) {
+    verBox.append(h('a', { class: 'ver-orig', href: postHref, target: '_blank', rel: 'noopener noreferrer' },
+      h('span', { class: 'v-name', text: '原作 ↗' }), h('span', { class: 'v-who', text: `${handleOf(c.author) || '原作者'} 发在 X，去原帖看` })));
+  }
+  for (const d of VERSIONS) {
+    const v = c.versions.find((x) => x.key === d.key);
+    const b = h('button', { type: 'button', 'data-ver': d.key, disabled: !v, 'aria-pressed': String(!!v && v.key === w.ver) },
+      h('span', { class: 'v-name', text: `${d.no} ${d.label}` }),
+      h('span', { class: 'v-who', text: v ? d.who : d.key === 'fixed' ? '这件没有单独修正版' : '暂无' }));
+    if (v) b.addEventListener('click', () => {
       w.ver = v.key;
       verBox.querySelectorAll('button').forEach((x) => x.setAttribute('aria-pressed', String(x.dataset.ver === v.key)));
       setOpenNew();
+      showVer();
       Live.swap(w);
     });
     verBox.append(b);
   }
   setOpenNew();
+  showVer();
   // 不支持元素全屏的浏览器（如 iPhone Safari）不显示「全屏」
   let fsBtn = null;
   if (canFullscreen && canPlay) {
