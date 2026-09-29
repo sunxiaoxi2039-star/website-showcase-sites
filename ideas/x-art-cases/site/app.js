@@ -242,8 +242,10 @@ function renderWork(c, total) {
       poster.classList.add('is-loaded');
       const ar = poster.naturalWidth / poster.naturalHeight;
       if (ar && Number.isFinite(ar) && Math.abs(ar - 16 / 9) > 0.02) stage.style.setProperty('--ar', Math.min(2.2, Math.max(0.8, ar)).toFixed(4));
-    }, { once: true });
-    poster.addEventListener('error', () => screen.append(h('span', { class: 'poster-miss', text: '海报暂缺' })), { once: true });
+      screen.querySelector('.poster-miss')?.remove();
+    });
+    // 切版本会换 src，load / error 不能只听一次
+    poster.addEventListener('error', () => { if (!screen.querySelector('.poster-miss')) screen.append(h('span', { class: 'poster-miss', text: '海报暂缺' })); });
     poster.src = (c.versions.find((v) => v.key === w.ver) || {}).poster || c.poster;
     screen.append(poster);
   } else {
