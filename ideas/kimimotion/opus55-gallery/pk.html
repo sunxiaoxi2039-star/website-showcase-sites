@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kimi PK案例 · 生成式花园</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#0a0f0a;overflow:hidden;font-family:"PingFang SC","Microsoft YaHei",sans-serif}
+  canvas{display:block}
+  .ui{position:fixed;top:0;left:0;width:100%;pointer-events:none;z-index:10;padding:24px 28px}
+  .ui h1{font-size:18px;color:#c8e6c9;letter-spacing:2px;font-weight:400}
+  .ui p{font-size:12px;color:#81c784;margin-top:6px;opacity:.8}
+  .ui .hint{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);font-size:12px;color:#a5d6a7;opacity:.6;animation:pulse 3s ease-in-out infinite}
+  @keyframes pulse{0%,100%{opacity:.4}50%{opacity:.8}}
+  .btn{position:fixed;bottom:28px;right:28px;pointer-events:auto;background:rgba(129,199,132,.12);border:1px solid rgba(129,199,132,.35);color:#a5d6a7;padding:8px 18px;border-radius:20px;font-size:12px;cursor:pointer;transition:all .3s}
+  .btn:hover{background:rgba(129,199,132,.25)}
+  .badge{position:fixed;top:24px;right:28px;background:rgba(232,176,75,.1);border:1px solid rgba(232,176,75,.3);color:#e8b04b;padding:4px 12px;border-radius:12px;font-size:11px;pointer-events:auto}
+
+/* ---------- 常驻目录条 ---------- */
+.dock{position:fixed;left:50%;bottom:calc(12px + env(safe-area-inset-bottom));transform:translateX(-50%);
+  z-index:99999;display:flex;gap:2px;background:rgba(16,13,11,.9);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);
+  border:1px solid rgba(232,176,75,.3);border-radius:999px;padding:5px;box-shadow:0 10px 34px rgba(0,0,0,.55)}
+.dock a{display:flex;flex-direction:column;align-items:center;font-size:10.5px;color:#94867a;padding:6px 14px;
+  border-radius:999px;text-decoration:none;white-space:nowrap;line-height:1.4;transition:all .2s;font-family:inherit}
+.dock a b{font-size:16px;font-weight:400;line-height:1.2}
+.dock a:hover{color:#f3ede3}
+.dock a.on{color:#e8b04b;background:rgba(232,176,75,.15)}
+@media(max-width:520px){.dock a{padding:6px 10px;font-size:10px}}
+body{padding-bottom:86px}
+</style>
+</head>
+<body>
+<div class="ui">
+  <h1>生成式花园 · Generative Garden</h1>
+  <p> procedural generated flora — 每朵花都是实时算法生成，没有一张图片素材</p>
+  <div class="badge">Kimi 生成</div>
+  <div class="hint">点击屏幕播种 · 移动鼠标扰动风场</div>
+  <button class="btn" onclick="garden.reset()">重新生长</button>
+</div>
+<canvas id="c"></canvas>
+<script>
+const canvas=document.getElementById('c'),ctx=canvas.getContext('2d');
+let W,H,t=0,seeds=[],flowers=[],windX=0,windY=0,mx=W/2,my=H/2;
+function resize(){W=canvas.width=innerWidth;H=canvas.height=innerHeight}
+addEventListener('resize',resize);resize();
+addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;windX=(e.clientX-W/2)/W*2;windY=(e.clientY-H/2)/H*.5});
+addEventListener('click',e=>garden.plant(e.clientX,e.clientY));
+
+function rnd(a,b){return a+Math.random()*(b-a)}
+function noise(x){return Math.sin(x)*.5+Math.sin(x*2.3)*.25+Math.sin(x*5.7)*.125}
+
+class Stem{
+  constructor(x,y,h,angle,thick,depth,maxD){
+    this.x=x;this.y=y;this.h=h;this.a=angle;this.t=thick;this.d=depth;this.md=maxD;
+    this.pts=[];this.g=0;this.done=false;this.children=[];
+    for(let i=0;i<=12;i++){
+      let p=i/12,px=x+Math.cos(angle)*h*p,py=y-Math.sin(angle)*h*p;
+      this.pts.push({x:px,y:py,ox:px,oy:py})
+    }
+  }
+  grow(dt){
+    if(this.done)return;this.g+=dt*40;
+    let prog=Math.min(this.g/this.h,1),ease=1-Math.pow(1-prog,3);
+    for(let i=0;i<this.pts.length;i++){
+      let p=i/(this.pts.length-1),px=this.x+Math.cos(this.a)*this.h*p*ease,py=this.y-Math.sin(this.a)*this.h*p*ease;
+      let w=noise(t*.002+p*3+this.d)*windX*30*p;
+      this.pts[i].x=px+w;this.pts[i].y=py;
+    }
+    if(prog>=1&&this.d<this.md){
+      this.done=true;
+      let n=Math.floor(rnd(2,4));
+      for(let i=0;i<n;i++){
+        let tip=this.pts[this.pts.length-1],na=this.a+rnd(-.6,.6),nh=this.h*rnd(.4,.7),nt=this.t*.7;
+        this.children.push(new Stem(tip.x,tip.y,nh,na,nt,this.d+1,this.md));
+      }
+    }
+  }
+  draw(ctx){
+    ctx.beginPath();ctx.moveTo(this.pts[0].x,this.pts[0].y);
+    for(let i=1;i<this.pts.length;i++)ctx.lineTo(this.pts[i].x,this.pts[i].y);
+    ctx.strokeStyle=`rgba(100,160,100,${.3+this.d*.15})`;ctx.lineWidth=this.t*(1-this.d*.2);ctx.lineCap='round';ctx.stroke();
+    this.children.forEach(c=>c.draw(ctx));
+  }
+}
+
+class Flower{
+  constructor(x,y,timeOffset){
+    this.x=x;this.y=y;this.to=timeOffset;this.bloom=0;this.petals=Math.floor(rnd(5,9));
+    this.hue=rnd(80,160);this.size=rnd(15,35);this.rot=rnd(0,6.28);
+    this.stem=new Stem(x,y,rnd(60,140),rnd(1.4,1.8),rnd(2,4),0,Math.floor(rnd(1,3)));
+  }
+  update(dt){
+    let age=t-this.to;
+    if(age>0)this.bloom=Math.min(age/3,1);
+    this.bloom=1-Math.pow(1-this.bloom,3);
+    this.stem.grow(dt);
+  }
+  draw(ctx){
+    this.stem.draw(ctx);
+    if(this.bloom<=.01)return;
+    ctx.save();
+    let tip=this.stem.pts[this.stem.pts.length-1],fx=tip.x,fy=tip.y;
+    ctx.translate(fx,fy);ctx.rotate(this.rot+windX*.1+t*.0003);
+    let s=this.bloom;
+    for(let i=0;i<this.petals;i++){
+      let a=(i/this.petals)*Math.PI*2,px=Math.cos(a)*this.size*s,py=Math.sin(a)*this.size*s*.6;
+      ctx.beginPath();ctx.ellipse(px,py,this.size*.5*s,this.size*.2*s,a,0,Math.PI*2);
+      ctx.fillStyle=`hsla(${this.hue+i*10},70%,${60+i*3}%,${.7*s})`;ctx.fill();
+    }
+    ctx.beginPath();ctx.arc(0,0,this.size*.2*s,0,Math.PI*2);
+    ctx.fillStyle=`hsla(${this.hue+40},80%,75%,${.9*s})`;ctx.fill();
+    ctx.restore();
+  }
+}
+
+const garden={
+  reset(){
+    seeds=[];flowers=[];t=0;
+    this.plant(W*.3,H*.85,0);this.plant(W*.5,H*.9,.5);this.plant(W*.7,H*.8,1);
+    for(let i=0;i<5;i++)this.plant(rnd(W*.1,W*.9),H*.85+rnd(-20,20),rnd(2,5));
+  },
+  plant(x,y,delay=0){
+    flowers.push(new Flower(x,y||H*.85,t+(delay||0)));
+  },
+  update(dt){
+    t+=dt;
+    flowers.forEach(f=>f.update(dt));
+  },
+  draw(ctx){
+    ctx.fillStyle='#0a0f0a';ctx.fillRect(0,0,W,H);
+    // 远景山丘
+    ctx.fillStyle='rgba(20,35,25,.6)';
+    ctx.beginPath();ctx.moveTo(0,H*.7);
+    for(let x=0;x<=W;x+=40)ctx.lineTo(x,H*.7-noise(x*.005+t*.0005)*40);
+    ctx.lineTo(W,H);ctx.lineTo(0,H);ctx.fill();
+    // 地面
+    ctx.fillStyle='rgba(30,50,30,.8)';
+    ctx.beginPath();ctx.moveTo(0,H*.82);
+    for(let x=0;x<=W;x+=20)ctx.lineTo(x,H*.82+noise(x*.01)*15);
+    ctx.lineTo(W,H);ctx.lineTo(0,H);ctx.fill();
+    // 花
+    flowers.forEach(f=>f.draw(ctx));
+    // 萤火粒子
+    for(let i=0;i<30;i++){
+      let px=(noise(i*13+t*.001)*.5+.5)*W,py=H*.5+(noise(i*7+t*.0012)*.5+.5)*H*.4;
+      ctx.beginPath();ctx.arc(px,py,1.5,0,Math.PI*2);
+      ctx.fillStyle=`rgba(180,255,180,${.2+noise(i+t*.002)*.3})`;ctx.fill();
+    }
+  }
+};
+
+let last=performance.now();
+function loop(){
+  let now=performance.now(),dt=(now-last)/1000;last=now;
+  garden.update(Math.min(dt,.05));
+  garden.draw(ctx);
+  requestAnimationFrame(loop);
+}
+garden.reset();loop();
+</script>
+
+<!-- 常驻目录条：任何页面随时跳回 -->
+<div class="dock">
+  <a href="index.html" data-dock="wall"><b>🧱</b>案例墙</a>
+  <a href="learn.html" data-dock="learn"><b>📚</b>拆解课堂</a>
+  <a href="catalog.html" data-dock="catalog"><b>🌊</b>帧海洋</a>
+  <a href="pk-battle.html" data-dock="pk"><b>⚔</b>PK 擂台</a>
+</div>
+<script>document.querySelector('.dock a[data-dock="pk"]').classList.add('on');</script>
+</body>
+</html>

@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PK 擂台 · Opus 5.5 vs Kimi 2.8</title>
+<style>
+  :root{--bg:#0c0a09;--panel:#161311;--ink:#f3ede3;--gold:#e8b04b;--muted:#94867a;--dim:#5a4f47;--kimi:#4a9e8f;--opus:#c96f4a;--line:rgba(232,176,75,.14);--ease:cubic-bezier(.16,1,.3,1)}
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:"Inter","PingFang SC","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--ink)}
+  .wrap{max-width:1500px;margin:0 auto;padding:20px 18px 80px}
+
+  /* 头部 */
+  .head{text-align:center;padding:26px 0 22px}
+  .head .kick{font-size:11px;letter-spacing:5px;color:var(--dim);text-transform:uppercase}
+  .head h1{font-size:30px;font-weight:900;margin:12px 0 10px;font-family:"Noto Serif SC",serif}
+  .head h1 .vs{color:var(--gold);font-size:22px;margin:0 12px;font-style:italic}
+  .head h1 .opus{color:var(--opus)}.head h1 .kimi{color:var(--kimi)}
+  .head p{color:var(--muted);font-size:13.5px;line-height:1.8;max-width:680px;margin:0 auto}
+
+  /* 分屏擂台 */
+  .arena{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:22px 0 8px}
+  .side{background:var(--panel);border:1px solid var(--line);border-radius:16px;overflow:hidden;display:flex;flex-direction:column}
+  .side .tagbar{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--line)}
+  .side .who{display:flex;align-items:center;gap:10px}
+  .side .logo{width:30px;height:30px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;flex:none}
+  .side.opus .logo{background:rgba(201,111,74,.15);color:var(--opus);border:1px solid rgba(201,111,74,.4)}
+  .side.kimi .logo{background:rgba(74,158,143,.15);color:var(--kimi);border:1px solid rgba(74,158,143,.4)}
+  .side .who .name{font-size:14.5px;font-weight:700}
+  .side .who .sub{font-size:11px;color:var(--dim);margin-top:2px}
+  .side .pill{font-size:10.5px;padding:3px 11px;border-radius:11px;letter-spacing:1px}
+  .side.opus .pill{color:var(--opus);background:rgba(201,111,74,.1);border:1px solid rgba(201,111,74,.3)}
+  .side.kimi .pill{color:var(--kimi);background:rgba(74,158,143,.1);border:1px solid rgba(74,158,143,.3)}
+  .stage{position:relative;aspect-ratio:16/9.5;background:#000}
+  .stage iframe{width:100%;height:100%;border:0;display:block}
+  .stage .note{position:absolute;left:12px;bottom:10px;font-size:10.5px;color:rgba(243,237,227,.55);background:rgba(0,0,0,.5);backdrop-filter:blur(4px);padding:3px 10px;border-radius:9px;pointer-events:none}
+  .side .cap{padding:11px 16px 13px;font-size:12.5px;color:var(--muted);line-height:1.7;border-top:1px solid var(--line)}
+  .side .cap b{color:var(--ink);font-weight:600}
+
+  /* 技术栈拆解 */
+  .stack{margin-top:34px}
+  .stack h2{font-size:20px;font-weight:800;text-align:center;margin-bottom:6px;font-family:"Noto Serif SC",serif}
+  .stack .sub2{text-align:center;color:var(--dim);font-size:12.5px;margin-bottom:20px}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th,td{padding:13px 16px;text-align:left;vertical-align:top;border-bottom:1px solid rgba(90,79,71,.18);line-height:1.7}
+  th{font-size:11.5px;letter-spacing:2px;color:var(--dim);font-weight:500;border-bottom:1px solid var(--line);white-space:nowrap}
+  td:first-child{color:var(--muted);white-space:nowrap;font-size:12.5px}
+  td .t{display:inline-block;font-size:11px;font-weight:600;padding:2px 9px;border-radius:8px;margin:1px 3px 1px 0;white-space:nowrap}
+  td .t.opus{color:var(--opus);background:rgba(201,111,74,.1);border:1px solid rgba(201,111,74,.28)}
+  td .t.kimi{color:var(--kimi);background:rgba(74,158,143,.1);border:1px solid rgba(74,158,143,.28)}
+  td .t.share{color:var(--gold);background:rgba(232,176,75,.08);border:1px solid rgba(232,176,75,.25)}
+  .verdict{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:26px}
+  .vcard{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px 20px;font-size:12.5px;line-height:1.8;color:var(--muted)}
+  .vcard h4{font-size:13.5px;margin-bottom:8px}
+  .vcard.opus h4{color:var(--opus)}.vcard.kimi h4{color:var(--kimi)}
+  .vcard b{color:var(--ink)}
+
+  @media(max-width:900px){
+    .arena{grid-template-columns:1fr}
+    .verdict{grid-template-columns:1fr}
+    .head h1{font-size:23px}
+    th:nth-child(2),td:nth-child(2){display:none}
+  }
+
+/* ---------- 常驻目录条 ---------- */
+.dock{position:fixed;left:50%;bottom:calc(12px + env(safe-area-inset-bottom));transform:translateX(-50%);
+  z-index:99999;display:flex;gap:2px;background:rgba(16,13,11,.9);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);
+  border:1px solid rgba(232,176,75,.3);border-radius:999px;padding:5px;box-shadow:0 10px 34px rgba(0,0,0,.55)}
+.dock a{display:flex;flex-direction:column;align-items:center;font-size:10.5px;color:#94867a;padding:6px 14px;
+  border-radius:999px;text-decoration:none;white-space:nowrap;line-height:1.4;transition:all .2s;font-family:inherit}
+.dock a b{font-size:16px;font-weight:400;line-height:1.2}
+.dock a:hover{color:#f3ede3}
+.dock a.on{color:#e8b04b;background:rgba(232,176,75,.15)}
+@media(max-width:520px){.dock a{padding:6px 10px;font-size:10px}}
+body{padding-bottom:86px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="head">
+    <div class="kick">Live Demo · Both Running in Real Time</div>
+    <h1><span class="opus">Opus 5.5</span><span class="vs">VS</span><span class="kimi">Kimi 2.8</span></h1>
+    <p>左边是 Opus 5.5 官方仓库代表作「工程蓝图」，右边是 Kimi 2.8 现场生成的「生成式花园」。<br>两个 iframe 都在实时运行——点击、移动鼠标，都能交互。</p>
+  </div>
+
+  <div class="arena">
+    <div class="side opus">
+      <div class="tagbar">
+        <div class="who">
+          <div class="logo">O</div>
+          <div><div class="name">工程蓝图 · Blueprint</div><div class="sub">lemo-opuscar 仓库官方 Demo</div></div>
+        </div>
+        <div class="pill">OPUS 5.5</div>
+      </div>
+      <div class="stage">
+        <iframe src="opus-demos/blueprint/play.html" loading="eager"></iframe>
+        <div class="note">由人类 Prompt 驱动 · 离线渲染管线生成代码</div>
+      </div>
+      <div class="cap"><b>主题：</b>蓝晒图纸上的工程制图活了——白线按制图顺序在普鲁士蓝纸上画出云、雨、起重机。<b>提示词全文开源在 STYLE.md。</b></div>
+    </div>
+    <div class="side kimi">
+      <div class="tagbar">
+        <div class="who">
+          <div class="logo">K</div>
+          <div><div class="name">生成式花园 · Generative Garden</div><div class="sub">Kimi 2.8 本会话实时编写</div></div>
+        </div>
+        <div class="pill">KIMI 2.8</div>
+      </div>
+      <div class="stage">
+        <iframe src="pk.html" loading="eager"></iframe>
+        <div class="note">点击画面播种 · 移动鼠标扰动风场</div>
+      </div>
+      <div class="cap"><b>主题：</b>暗夜丘陵上 procedurally 长出花丛——每朵花的形态、颜色、茎干分叉全是算法现场计算，<b>零图片素材</b>。</div>
+    </div>
+  </div>
+
+  <div class="stack">
+    <h2>技术栈拆解</h2>
+    <div class="sub2">同样是在浏览器里跑的画面，两套技术路线各选了什么、为什么</div>
+    <table>
+      <tr><th>维度</th><th>Opus 5.5 · 工程蓝图</th><th>Kimi 2.8 · 生成式花园</th></tr>
+      <tr>
+        <td>渲染架构</td>
+        <td><b>确定性离线渲染</b>：全部画面写成纯函数 <code>window.render(t)</code>，不依赖真实时间——本页的实时画面由一个 30 行播放包装器循环喂时间实现，原生用途是 Puppeteer 逐帧截图合成 MP4</td>
+        <td><b>实时渲染</b>：requestAnimationFrame 直接用真实时间驱动，写完即播，不需要任何外部渲染器</td>
+      </tr>
+      <tr>
+        <td>渲染引擎</td>
+        <td><span class="t opus">Three.js</span><span class="t opus">WebGL</span><br>3D 场景 + 自定义 GLSL shader，GPU 逐像素着色</td>
+        <td><span class="t kimi">Canvas 2D</span><br>浏览器原生 2D 绘图 API，CPU 逐帧绘制</td>
+      </tr>
+      <tr>
+        <td>渲染管线</td>
+        <td>离线 Python 管线（build.sh → ffmpeg）预生成线条/事件 JSON，浏览器端只做回放调度</td>
+        <td>纯运行时生成：requestAnimationFrame 每帧现场算花、茎、风、萤火</td>
+      </tr>
+      <tr>
+        <td>几何构成</td>
+        <td>预烘焙的顶点数据 + BufferGeometry，制图顺序由 events.json 时间轴驱动</td>
+        <td>参数化递归：茎干分叉深度 1–3 层，每帧用噪声函数扰动顶点</td>
+      </tr>
+      <tr>
+        <td>视觉风格来源</td>
+        <td>人类写好 9 段式风格 Prompt（蓝晒纸、制图笔、批注动画），Opus 生成全部代码</td>
+        <td>同一套「风格定义→运动语言」方法，由 Kimi 直接落地为代码</td>
+      </tr>
+      <tr>
+        <td>音频</td>
+        <td>预渲染 WAV + 字幕轨（subs.json），mux 进片</td>
+        <td>无音频（本回合比的是画面生成）</td>
+      </tr>
+      <tr>
+        <td>文件体积</td>
+        <td>demo 本体 135KB + JSON 数据 + 音频</td>
+        <td>单文件 6KB，零素材零依赖</td>
+      </tr>
+      <tr>
+        <td>交互性</td>
+        <td>观看型：时间轴播放，观众不能改变画面</td>
+        <td>参与型：点击播种、鼠标驱动风场，每人看到的花园不同</td>
+      </tr>
+    </table>
+
+    <div class="verdict">
+      <div class="vcard opus">
+        <h4>Opus 5.5 强在哪</h4>
+        <b>执行长篇风格规格的能力</b>：把「1930s 蓝晒图纸、按制图顺序运笔、批注像活过来」这种文学化描述，一次性翻译成能跑的 Three.js + shader 工程。39 种风格全用同一套 9 段式 Prompt 模板批量产出，<b>规格遵从度和批量稳定性</b>是核心竞争力。
+      </div>
+      <div class="vcard kimi">
+        <h4>Kimi 2.8 强在哪</h4>
+        <b>运行时生成与交互闭环</b>：同样的风格方法论，6KB 单文件实现程序化生长 + 风场物理 + 鼠标交互，打开即玩、无需渲染管线。强在<b>即时性、零依赖、可参与</b>——观众变成园丁，每人种出的花园都不一样。
+      </div>
+    </div>
+  </div>
+
+  <!-- 原理揭秘 -->
+  <div class="stack" style="margin-top:50px">
+    <h2>代码怎么画出「电影感」</h2>
+    <div class="sub2">不是代码变魔术，是代码在模仿一支完整的动画制作团队</div>
+
+    <div class="verdict" style="grid-template-columns:1fr 1fr 1fr;margin-top:18px">
+      <div class="vcard">
+        <h4 style="color:var(--gold)">① 代码 = 导演 + 摄影师</h4>
+        传统动画需要分镜师画每一格，Opus 5.5 的代码直接定义「镜头怎么动」。比如蓝图风格里，相机从高空俯瞰慢慢推近到图纸细节——这不是录的视频，是代码里写的 <code>camera.position.z -= 0.02</code>，每帧自动算出新角度。
+      </div>
+      <div class="vcard">
+        <h4 style="color:var(--gold)">② 代码 = 美术 + 调色师</h4>
+        1930s 蓝晒纸的普鲁士蓝、Art Deco 的黑漆描金、水墨的焦墨飞白——这些不是图片素材，是代码里的颜色公式。<code>fillStyle = '#0d1e42'</code> 配上半透明叠加算法，就能让白纸看起来像 aged cyanotype paper。
+      </div>
+      <div class="vcard">
+        <h4 style="color:var(--gold)">③ 代码 = 动画师 + 音效师</h4>
+        云不是突然出现的，是代码控制「透明度从 0 慢慢涨到 1」。批注框不是直接弹出来的，是代码写的 ease-out 缓动——就像 CSS transition，只是更精细到像素级。声音也是代码按时间轴触发预渲染的 WAV。
+      </div>
+    </div>
+
+    <table style="margin-top:24px">
+      <tr><th>你以为的</th><th>实际上代码在做什么</th></tr>
+      <tr>
+        <td>「这是 AI 生成的视频文件」</td>
+        <td><b>不是视频文件。</b>Blueprint 的每一帧都是代码现场画的——就像你打开一个会自己画画的高级计算器，它按时间轴逐帧重绘画布，速度快到看起来像视频。如果你暂停，画面就停在那一帧，不是抽帧。</td>
+      </tr>
+      <tr>
+        <td>「一定有预设的图片/素材」</td>
+        <td><b>零图片素材。</b>云的形状是数学公式（Perlin 噪声），齿轮的齿是三角函数算出来的，蓝晒纸的颗粒感是 shader 里的随机数。所有「看起来像照片/手绘」的东西，都是代码用数学「骗」你的眼睛。</td>
+      </tr>
+      <tr>
+        <td>「39 种风格 = 39 套素材包」</td>
+        <td><b>同一套引擎，换一套颜色公式。</b>Art Deco 和 Blueprint 共用同一个 Three.js 渲染管线，区别只是「背景黑还是蓝」「线条金还是白」「相机移动快还是慢」。Prompt 像剧本，代码像演员——同一批演员能演 39 种戏。</td>
+      </tr>
+      <tr>
+        <td>「这么复杂一定很难写」</td>
+        <td><b>人类写 Prompt，AI 写代码。</b>STYLE.md 里那 9 段式 Prompt（风格定义/视觉语言/运动语言/镜头语言……）本质上是「剧本」，Opus 5.5 读了剧本后一次性写出几千行代码。人类的工作是「审片」和「改剧本」，不是逐行敲代码。</td>
+      </tr>
+    </table>
+
+    <div class="vcard" style="margin-top:22px;border-left:3px solid var(--gold)">
+      <h4 style="color:var(--gold)">一句话总结</h4>
+      <b>代码不是在「播放」视频，代码是在「表演」视频。</b>它像一个永不疲倦的动画团队，每 1/60 秒重新画一帧画面，连续画 1800 帧就是 30 秒的电影。Prompt 是给这个团队的剧本，Opus 5.5 是写剧本的执行导演。
+    </div>
+  </div>
+
+</div>
+
+<!-- 常驻目录条：任何页面随时跳回 -->
+<div class="dock">
+  <a href="index.html" data-dock="wall"><b>🧱</b>案例墙</a>
+  <a href="learn.html" data-dock="learn"><b>📚</b>拆解课堂</a>
+  <a href="catalog.html" data-dock="catalog"><b>🌊</b>帧海洋</a>
+  <a href="pk-battle.html" data-dock="pk"><b>⚔</b>PK 擂台</a>
+</div>
+<script>document.querySelector('.dock a[data-dock="pk"]').classList.add('on');</script>
+</body>
+</html>

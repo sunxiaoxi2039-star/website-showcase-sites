@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OPUS 5.5 案例墙 · 519 个案例一览无余</title>
+<meta name="description" content="Claude Opus 5.5 案例驾驶舱：519 个真实案例全平铺——5 个 3D 神作、Lemomo 39 种代码短片风格、Yihui 475 支实测视频。每张卡带原作者标签、Prompt 全文与一键复制。">
+<style>
+:root{--bg:#0c0a09;--panel:#141210;--ink:#f3ede3;--gold:#e8b04b;--muted:#94867a;--dim:#5a4f47;
+  --teal:#7fd4c0;--purple:#b79aff;--glass:rgba(24,20,17,.92);--ease:cubic-bezier(.16,1,.3,1)}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:"Inter","PingFang SC","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--ink)}
+a{color:var(--gold);text-decoration:none}
+
+/* ---------- 顶部吸顶控制舱 ---------- */
+header{position:sticky;top:0;z-index:200;background:linear-gradient(180deg,rgba(12,10,9,.97) 88%,rgba(12,10,9,.75));
+  backdrop-filter:blur(10px);border-bottom:1px solid rgba(232,176,75,.12);padding:14px 20px 12px}
+.hrow{display:flex;align-items:center;gap:14px;flex-wrap:wrap;max-width:1700px;margin:0 auto}
+.brand{font-family:"Noto Serif SC",serif;font-weight:900;font-size:19px;color:var(--gold);white-space:nowrap}
+.brand small{font-size:11px;color:var(--muted);font-weight:400;margin-left:8px;letter-spacing:.05em}
+.count{font-family:"Noto Serif SC",serif;font-size:15px;color:var(--ink);white-space:nowrap}
+.count b{color:var(--gold);font-size:22px}
+.count span{color:var(--dim);font-size:12px}
+.search{flex:1;min-width:180px;max-width:400px;background:var(--panel);border:1px solid rgba(90,79,71,.5);
+  color:var(--ink);padding:8px 15px;border-radius:18px;font-size:13px;outline:none;font-family:inherit}
+.search::placeholder{color:var(--dim)}
+.search:focus{border-color:rgba(232,176,75,.4)}
+.navlinks{display:flex;gap:8px;margin-left:auto}
+.navlinks a{font-size:12.5px;color:var(--muted);border:1px solid rgba(90,79,71,.4);padding:6px 14px;border-radius:15px;transition:all .2s}
+.navlinks a:hover{color:var(--gold);border-color:rgba(232,176,75,.4)}
+.frow{display:flex;gap:6px;flex-wrap:wrap;align-items:center;max-width:1700px;margin:10px auto 0}
+.lbl{font-size:11px;color:var(--dim);letter-spacing:2px;flex:none;margin-right:2px}
+.chip{background:none;border:1px solid rgba(90,79,71,.45);color:var(--muted);padding:4px 12px;border-radius:14px;
+  font-size:12px;cursor:pointer;transition:all .18s;font-family:inherit;white-space:nowrap}
+.chip:hover{border-color:var(--gold);color:var(--ink)}
+.chip.active{background:rgba(232,176,75,.14);border-color:rgba(232,176,75,.45);color:var(--gold)}
+.chip .n{opacity:.65;font-size:11px;margin-left:3px}
+.chip.c-d3.active{background:rgba(232,176,75,.16);border-color:var(--gold);color:var(--gold)}
+.chip.c-lemo.active{background:rgba(127,212,192,.12);border-color:rgba(127,212,192,.5);color:var(--teal)}
+.chip.c-yihui.active{background:rgba(183,154,255,.12);border-color:rgba(183,154,255,.5);color:var(--purple)}
+
+/* ---------- 合集分段 ---------- */
+.sec{max-width:1700px;margin:0 auto;padding:26px 20px 8px;display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
+.sec h2{font-family:"Noto Serif SC",serif;font-size:22px;font-weight:900}
+.sec .desc{font-size:13px;color:var(--muted)}
+.sec .desc a{font-size:12.5px}
+.sec.d3 h2{color:var(--gold)} .sec.lemo h2{color:var(--teal)} .sec.yihui h2{color:var(--purple)}
+
+/* ---------- 案例墙 ---------- */
+.wall{max-width:1700px;margin:0 auto;padding:14px 20px 80px;columns:4 300px;column-gap:16px}
+@media(max-width:1700px){.wall{columns:3 300px}}
+@media(max-width:980px){.wall{columns:2 280px}}
+@media(max-width:640px){.wall{columns:1}}
+.card{break-inside:avoid;margin-bottom:16px;background:var(--glass);border:1px solid rgba(90,79,71,.2);
+  border-radius:14px;overflow:hidden;transition:border-color .3s,transform .3s var(--ease),box-shadow .3s}
+.card:hover{border-color:rgba(232,176,75,.4);transform:translateY(-3px);box-shadow:0 14px 36px rgba(0,0,0,.45)}
+.card .thumb{display:block;position:relative;aspect-ratio:16/9;overflow:hidden;background:#111}
+.card .thumb img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .5s var(--ease)}
+.card:hover .thumb img{transform:scale(1.05)}
+.card .body{padding:13px 15px 14px}
+.cname{font-size:14.5px;font-weight:700;line-height:1.45;color:var(--ink)}
+.meta{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:8px}
+.atag{font-size:11.5px;padding:2.5px 10px;border-radius:11px;border:1px solid;white-space:nowrap}
+.atag.d3{color:var(--gold);border-color:rgba(232,176,75,.45);background:rgba(232,176,75,.08)}
+.atag.lemo{color:var(--teal);border-color:rgba(127,212,192,.4);background:rgba(127,212,192,.07)}
+.atag.yihui{color:var(--purple);border-color:rgba(183,154,255,.4);background:rgba(183,154,255,.07)}
+.atag:hover{text-decoration:underline}
+.ttag{font-size:10.5px;color:var(--muted);background:rgba(90,79,71,.22);padding:2px 8px;border-radius:9px;white-space:nowrap}
+.ttag.cat{color:var(--gold);background:rgba(232,176,75,.09)}
+
+/* Prompt 盒：永远在卡片上，滚动即读 */
+.pbox{margin-top:11px;border:1px solid rgba(90,79,71,.3);border-radius:10px;background:#100e0c;position:relative}
+.phead{display:flex;align-items:center;gap:8px;padding:7px 11px;border-bottom:1px solid rgba(90,79,71,.22)}
+.pstatus{font-size:10px;letter-spacing:.08em;padding:2px 8px;border-radius:8px;white-space:nowrap}
+.pstatus.original{color:#9fe0c8;background:rgba(127,212,192,.1);border:1px solid rgba(127,212,192,.3)}
+.pstatus.partial{color:#e8c87f;background:rgba(232,200,127,.08);border:1px solid rgba(232,200,127,.3)}
+.pstatus.reverse{color:#8fb4ff;background:rgba(143,180,255,.08);border:1px solid rgba(143,180,255,.3)}
+.pstatus.none{color:var(--dim);background:rgba(90,79,71,.15);border:1px solid rgba(90,79,71,.3)}
+.plabel{font-size:10.5px;color:var(--dim);letter-spacing:.1em}
+.copybtn{margin-left:auto;font-size:11px;color:var(--gold);background:none;border:1px solid rgba(232,176,75,.35);
+  padding:3px 11px;border-radius:10px;cursor:pointer;font-family:inherit;transition:all .2s;white-space:nowrap}
+.copybtn:hover{background:rgba(232,176,75,.12)}
+.copybtn.ok{color:#7fd4c0;border-color:rgba(127,212,192,.5)}
+.ptext{max-height:11.5em;overflow-y:auto;padding:10px 12px;font-size:11.8px;line-height:1.75;color:#cfc5b4;
+  white-space:pre-wrap;word-break:break-word;font-family:ui-monospace,"SF Mono",Consolas,monospace}
+.ptext::-webkit-scrollbar{width:5px}
+.ptext::-webkit-scrollbar-thumb{background:rgba(90,79,71,.5);border-radius:3px}
+.ptext.empty{color:var(--dim);font-family:inherit}
+.note{margin-top:10px;font-size:12px;line-height:1.7;color:var(--muted);border-left:2px solid rgba(232,176,75,.35);padding-left:10px}
+.note b{color:var(--gold);font-weight:600}
+.links{display:flex;gap:7px;flex-wrap:wrap;margin-top:11px}
+.links a{font-size:11.5px;color:var(--muted);border:1px solid rgba(90,79,71,.4);padding:4px 11px;border-radius:11px;transition:all .2s}
+.links a:hover{color:var(--gold);border-color:rgba(232,176,75,.45)}
+.links a.hot{color:var(--gold);border-color:rgba(232,176,75,.5);background:rgba(232,176,75,.08)}
+
+.empty-tip{grid-column:1/-1;text-align:center;color:var(--muted);padding:80px 0;font-size:14px}
+#sentinel{height:1px}
+footer{max-width:1700px;margin:0 auto;padding:30px 20px 56px;color:var(--dim);font-size:12px;line-height:2;border-top:1px solid rgba(90,79,71,.2)}
+footer b{color:var(--muted)}
+
+/* ---------- 常驻目录条 ---------- */
+.dock{position:fixed;left:50%;bottom:calc(12px + env(safe-area-inset-bottom));transform:translateX(-50%);
+  z-index:99999;display:flex;gap:2px;background:rgba(16,13,11,.9);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);
+  border:1px solid rgba(232,176,75,.3);border-radius:999px;padding:5px;box-shadow:0 10px 34px rgba(0,0,0,.55)}
+.dock a{display:flex;flex-direction:column;align-items:center;font-size:10.5px;color:#94867a;padding:6px 14px;
+  border-radius:999px;text-decoration:none;white-space:nowrap;line-height:1.4;transition:all .2s;font-family:inherit}
+.dock a b{font-size:16px;font-weight:400;line-height:1.2}
+.dock a:hover{color:#f3ede3}
+.dock a.on{color:#e8b04b;background:rgba(232,176,75,.15)}
+@media(max-width:520px){.dock a{padding:6px 10px;font-size:10px}}
+body{padding-bottom:86px}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="hrow">
+    <div class="brand">OPUS 5.5 案例墙<small>一览无余 · 全部平铺</small></div>
+    <div class="count"><b id="shown">0</b><span> / <span id="total">0</span> 个案例</span></div>
+    <input class="search" id="search" placeholder="搜名称 / 作者 / Prompt 内容 / 标签…">
+    <div class="navlinks">
+      <a href="收录新案例.md">＋ 收录新案例</a>
+      <a href="learn.html">📚 拆解课堂</a>
+      <a href="pk-battle.html">⚔ PK 擂台</a>
+    </div>
+  </div>
+  <div class="frow" id="collRow">
+    <span class="lbl">合集</span>
+  </div>
+  <div class="frow" id="catRow">
+    <span class="lbl">类型</span>
+  </div>
+  <div class="frow" id="techRow">
+    <span class="lbl">技术</span>
+  </div>
+</header>
+
+<main id="root" class="wall"></main>
+<div id="sentinel"></div>
+
+<footer id="foot" style="display:none">
+  <b>收录新案例：</b>在别处（任何 Agent）做出的 Opus 5.5 案例，发链接/文件给 Kimi 说「收录进案例墙」即可，格式见 <a href="收录新案例.md">收录新案例.md</a>。数据唯一入口是 <b>data/cases.json</b>，加一条记录就多一张卡。<br>
+  <b>素材与版权：</b>全部案例版权归原作者与所在仓库所有，本页仅为学习收藏导读。合集来源：
+  <a href="https://github.com/yihui-dev/awesome-opus5-5-videos" target="_blank" rel="noopener">yihui-dev/awesome-opus5-5-videos</a>（475 支，$3000 实测）、
+  <a href="https://github.com/lemomo-ai/lemo-opuscar" target="_blank" rel="noopener">lemomo-ai/lemo-opuscar</a>（39 种风格）、
+  <a href="https://github.com/riba2534/claude-opus-5-5-demo" target="_blank" rel="noopener">riba2534/claude-opus-5-5-demo</a>（3 个一句话 3D 游戏）、
+  <a href="https://github.com/SilentFleetKK/qingming-bianjing" target="_blank" rel="noopener">SilentFleetKK/qingming-bianjing</a>（清明上河图 3D）。<br>
+  <b>Prompt 标注规则：</b>「原文完整」= 作者公开发布的原 Prompt 一字未改；「部分公开」= 作者只公开了部分或只在帖子里描述了效果（文件已注明）；「未公开」= 原帖没有给出 Prompt，不做逆向编造。
+</footer>
+
+<script>
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+const COLLS=[
+  {id:'all',label:'全部',cls:''},
+  {id:'d3',label:'3D 神作',cls:'c-d3'},
+  {id:'lemo-opuscar',label:'Lemomo 39 风格',cls:'c-lemo'},
+  {id:'yihui',label:'Yihui 实测合集',cls:'c-yihui'},
+  {id:'mine',label:'我的案例',cls:''},
+];
+const COLL_LABEL={d3:'3D 神作','lemo-opuscar':'lemo-opuscar',yihui:'Yihui 合集',mine:'我的案例'};
+const CATS=[
+  {id:'all',label:'全部'},{id:'motion',label:'动态图形'},{id:'interactive',label:'可交互'},
+  {id:'explainer',label:'讲解动画'},{id:'3d',label:'3D 场景'},{id:'film-style',label:'影片风格'},{id:'game',label:'游戏'},
+];
+const CAT_LABEL={motion:'动态图形',interactive:'可交互',explainer:'讲解动画','3d':'3D','film-style':'影片风格',game:'游戏'};
+const TECHS=['canvas','svg','threejs','shader','gsap','css','audio','particles','playable','pixel','physics','webgl','react'];
+const PSTATUS={
+  original:{label:'原文完整',cls:'original'},
+  partial:{label:'部分公开',cls:'partial'},
+  reverse:{label:'逆向整理',cls:'reverse'},
+  none:{label:'未公开',cls:'none'},
+};
+
+let cases=[],view=[],curColl='all',curCat='all',curTech=new Set(),curQ='',rendered=0;
+const BATCH=48;
+
+fetch('data/cases.json').then(r=>r.json()).then(data=>{
+  cases=data;
+  $('#total').textContent=cases.length;
+  buildFilters();apply();
+});
+
+function buildFilters(){
+  const cnt=id=>cases.filter(c=>c.collection===id).length;
+  $('#collRow').insertAdjacentHTML('beforeend',COLLS.map(c=>
+    `<button class="chip ${c.cls} ${c.id===curColl?'active':''}" data-coll="${c.id}">${c.label}${c.id==='all'?'':`<span class="n">${cnt(c.id)}</span>`}</button>`).join(''));
+  $('#catRow').insertAdjacentHTML('beforeend',CATS.map(c=>
+    `<button class="chip ${c.id===curCat?'active':''}" data-cat="${c.id}">${c.label}</button>`).join(''));
+  $('#techRow').insertAdjacentHTML('beforeend',TECHS.map(t=>
+    `<button class="chip" data-tech="${t}">${t}</button>`).join(''));
+  document.querySelectorAll('[data-coll]').forEach(b=>b.onclick=()=>{
+    curColl=b.dataset.coll;
+    document.querySelectorAll('[data-coll]').forEach(x=>x.classList.toggle('active',x===b));apply();
+  });
+  document.querySelectorAll('[data-cat]').forEach(b=>b.onclick=()=>{
+    curCat=b.dataset.cat;
+    document.querySelectorAll('[data-cat]').forEach(x=>x.classList.toggle('active',x===b));apply();
+  });
+  document.querySelectorAll('[data-tech]').forEach(b=>b.onclick=()=>{
+    const t=b.dataset.tech;
+    curTech.has(t)?curTech.delete(t):curTech.add(t);
+    b.classList.toggle('active');apply();
+  });
+  let deb;
+  $('#search').addEventListener('input',e=>{clearTimeout(deb);deb=setTimeout(()=>{curQ=e.target.value.trim().toLowerCase();apply();},160)});
+}
+
+function apply(){
+  view=cases.filter(c=>{
+    if(curColl!=='all'&&c.collection!==curColl)return false;
+    if(curCat!=='all'&&c.category!==curCat)return false;
+    if(curTech.size&&![...curTech].every(t=>c.tech.includes(t)))return false;
+    if(curQ){const hay=(c.name+' '+c.author+' '+c.prompt+' '+c.tech.join(' ')).toLowerCase();if(!hay.includes(curQ))return false;}
+    return true;
+  });
+  $('#shown').textContent=view.length;
+  rendered=0;
+  $('#root').innerHTML='';
+  renderMore();
+}
+
+function cardHTML(c){
+  const ps=PSTATUS[c.prompt_status]||PSTATUS.original;
+  const tags=[`<span class="ttag cat">${CAT_LABEL[c.category]||c.category}</span>`,
+    ...c.tech.slice(0,4).map(t=>`<span class="ttag">${esc(t)}</span>`)].join('');
+  const promptBlock=c.prompt
+    ?`<div class="pbox"><div class="phead"><span class="pstatus ${ps.cls}">${ps.label}</span><span class="plabel">PROMPT</span><button class="copybtn" data-copy="${esc(c.id)}">📋 复制</button></div><div class="ptext">${esc(c.prompt)}</div></div>`
+    :`<div class="pbox"><div class="phead"><span class="pstatus ${ps.cls}">${ps.label}</span><span class="plabel">PROMPT</span></div><div class="ptext empty">原帖未公开 Prompt（见批注）</div></div>`;
+  const note=c.note?`<div class="note"><b>批注 ·</b> ${esc(c.note)}</div>`:'';
+  const links=(c.links||[]).map(l=>`<a href="${esc(l.url)}" target="_blank" rel="noopener" class="${l.label.startsWith('▶')?'hot':''}">${esc(l.label)} ↗</a>`).join('');
+  return `<div class="card" data-coll="${c.collection}">
+    <a class="thumb" href="${esc((c.links&&c.links[0]&&c.links[0].url)||'#')}" target="_blank" rel="noopener"><img src="${esc(c.poster)}" loading="lazy" alt="${esc(c.name)}"></a>
+    <div class="body">
+      <div class="cname">${esc(c.name)}</div>
+      <div class="meta"><a class="atag ${c.collection==='lemo-opuscar'?'lemo':c.collection}" href="${esc(c.author_url)}" target="_blank" rel="noopener">${esc(c.author)}</a>${tags}</div>
+      ${promptBlock}
+      ${note}
+      ${links?`<div class="links">${links}</div>`:''}
+    </div>
+  </div>`;
+}
+
+function renderMore(){
+  if(rendered>=view.length){
+    if(!view.length)$('#root').innerHTML='<div class="empty-tip">没有匹配的案例，换个筛选条件</div>';
+    $('#foot').style.display='block';
+    return;
+  }
+  const batch=view.slice(rendered,rendered+BATCH);
+  $('#root').insertAdjacentHTML('beforeend',batch.map(cardHTML).join(''));
+  rendered+=batch.length;
+}
+
+// 无限滚动
+const io=new IntersectionObserver(es=>{if(es[0].isIntersecting)renderMore()},{rootMargin:'1200px'});
+io.observe($('#sentinel'));
+
+// 一键复制（事件委托）
+document.addEventListener('click',e=>{
+  const btn=e.target.closest('.copybtn');
+  if(!btn)return;
+  const c=cases.find(x=>x.id===btn.dataset.copy);
+  if(!c||!c.prompt)return;
+  const done=()=>{btn.textContent='✓ 已复制';btn.classList.add('ok');setTimeout(()=>{btn.textContent='📋 复制';btn.classList.remove('ok')},1500)};
+  if(navigator.clipboard&&window.isSecureContext){
+    navigator.clipboard.writeText(c.prompt).then(done).catch(()=>legacy(c.prompt,done));
+  }else legacy(c.prompt,done);
+});
+function legacy(text,done){
+  const ta=document.createElement('textarea');ta.value=text;ta.style.position='fixed';ta.style.opacity='0';
+  document.body.appendChild(ta);ta.select();try{document.execCommand('copy')}catch(e){}ta.remove();done();
+}
+</script>
+
+<!-- 常驻目录条：任何页面随时跳回 -->
+<div class="dock">
+  <a href="index.html" data-dock="wall"><b>🧱</b>案例墙</a>
+  <a href="learn.html" data-dock="learn"><b>📚</b>拆解课堂</a>
+  <a href="catalog.html" data-dock="catalog"><b>🌊</b>帧海洋</a>
+  <a href="pk-battle.html" data-dock="pk"><b>⚔</b>PK 擂台</a>
+</div>
+<script>document.querySelector('.dock a[data-dock="wall"]').classList.add('on');</script>
+</body>
+</html>

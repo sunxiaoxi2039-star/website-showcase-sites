@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>拆解课堂 · 从案例到 Prompt 写作法 — OPUS 5.5 灵感展厅</title>
+<meta name="description" content="零基础看懂 Opus 5.5 案例：Prompt 逐条精读、HTML/CSS/TypeScript/three.js/Blender 名词速通、风格 Prompt 九段写作法。">
+<style>
+  :root{
+    --bg:#0c0a09; --bg2:#141110; --panel:#1a1714;
+    --ink:#f3ede3; --ink-dim:#a89f92; --ink-faint:#6b6259;
+    --gold:#e8b04b; --gold-soft:#c99b4a; --clay:#c96f4a; --teal:#4a9e8f; --blue:#7ea4ff;
+    --line:rgba(232,176,75,.16); --radius:18px;
+    --serif:"Noto Serif SC","Songti SC","STSong",serif;
+    --sans:"PingFang SC","Microsoft YaHei",-apple-system,sans-serif;
+    --mono:"SF Mono","JetBrains Mono",Consolas,monospace;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.8;overflow-x:hidden}
+  a{color:var(--gold);text-decoration:none}
+  a:hover{color:#f5cd7e}
+  ::selection{background:var(--gold);color:#1a1408}
+  code{font-family:var(--mono);font-size:.92em;background:rgba(232,176,75,.1);padding:1px 6px;border-radius:6px;color:#f0d9a8}
+  nav{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;justify-content:space-between;align-items:center;
+      padding:14px 4vw;background:rgba(12,10,9,.82);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+  nav .brand{font-family:var(--serif);font-size:15px;letter-spacing:.14em}
+  nav .brand b{color:var(--gold)}
+  nav ul{display:flex;gap:20px;list-style:none}
+  nav ul a{font-size:13px;color:var(--ink-dim)}
+  nav ul a:hover{color:var(--gold)}
+  @media(max-width:860px){nav ul{display:none}}
+
+  header{position:relative;min-height:62vh;display:flex;flex-direction:column;justify-content:center;align-items:center;
+         text-align:center;padding:130px 5vw 60px;overflow:hidden}
+  .hero-glow{position:absolute;width:60vw;height:60vw;max-width:700px;max-height:700px;border-radius:50%;
+             background:radial-gradient(circle,rgba(74,158,143,.13),rgba(232,176,75,.08) 50%,transparent 72%);filter:blur(8px)}
+  .kicker{position:relative;z-index:2;font-size:13px;letter-spacing:.42em;color:var(--teal);text-transform:uppercase;margin-bottom:20px}
+  h1{position:relative;z-index:2;font-family:var(--serif);font-weight:900;font-size:clamp(32px,5.6vw,64px);line-height:1.22;
+     background:linear-gradient(115deg,#eaf4ef 20%,#7fd4c0 55%,#eaf4ef 85%);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .subtitle{position:relative;z-index:2;margin-top:22px;max-width:700px;color:var(--ink-dim);font-size:clamp(14px,1.5vw,17px)}
+  .hero-cta{position:relative;z-index:2;margin-top:30px}
+  .btn{display:inline-block;font-size:13.5px;padding:10px 24px;border-radius:999px;border:1px solid var(--gold);color:var(--gold);transition:all .3s}
+  .btn:hover{background:var(--gold);color:#1a1408}
+  .btn.ghost{border-color:rgba(255,255,255,.18);color:var(--ink-dim);margin-left:10px}
+  .btn.ghost:hover{background:rgba(255,255,255,.08);color:var(--ink)}
+
+  section{padding:84px 5vw;max-width:1180px;margin:0 auto}
+  .sec-head{margin-bottom:46px}
+  .sec-no{font-family:var(--serif);font-size:13px;letter-spacing:.34em;color:var(--teal)}
+  .sec-title{font-family:var(--serif);font-size:clamp(24px,3.4vw,38px);font-weight:800;margin-top:10px}
+  .sec-desc{margin-top:14px;color:var(--ink-dim);max-width:700px;font-size:15px}
+  .reveal{opacity:0;transform:translateY(26px);transition:opacity .8s cubic-bezier(.2,.7,.3,1),transform .8s cubic-bezier(.2,.7,.3,1)}
+  .reveal.in{opacity:1;transform:none}
+
+  /* 名词速通表 */
+  .lex{display:grid;gap:12px}
+  .lex-item{display:grid;grid-template-columns:170px 110px 1fr;gap:16px;align-items:start;
+            border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:16px 20px;background:var(--bg2)}
+  .lex-item .term{font-family:var(--mono);font-size:14.5px;color:var(--gold);padding-top:2px}
+  .lex-item .layer{font-size:11.5px;letter-spacing:.06em;padding:4px 10px;border-radius:999px;text-align:center;border:1px solid var(--line)}
+  .l-struct{color:#9ec9ff;border-color:rgba(126,164,255,.35)}
+  .l-render{color:#7fd4c0;border-color:rgba(74,158,143,.4)}
+  .l-media{color:#f0b8a0;border-color:rgba(201,111,74,.4)}
+  .l-tool{color:#d9c98a;border-color:rgba(232,176,75,.35)}
+  .lex-item p{font-size:13.5px;color:var(--ink-dim)}
+  .lex-item p b{color:var(--ink);font-weight:600}
+  @media(max-width:720px){.lex-item{grid-template-columns:1fr;gap:8px}.lex-item .layer{width:max-content}}
+  .pipeline{margin-top:34px;border:1px dashed rgba(232,176,75,.35);border-radius:var(--radius);padding:26px 28px;background:rgba(232,176,75,.04);font-size:14px;color:var(--ink-dim);overflow-x:auto}
+  .pipeline .flow{font-family:var(--mono);font-size:13px;color:#e8d9b8;white-space:nowrap;margin-top:10px}
+  .pipeline .flow i{color:var(--teal);font-style:normal}
+
+  /* 案例精读卡 */
+  .study{border:1px solid var(--line);border-radius:var(--radius);background:var(--bg2);overflow:hidden;margin-bottom:26px}
+  .study-top{display:grid;grid-template-columns:300px 1fr;gap:0}
+  .study-top .thumb{position:relative;min-height:170px}
+  .study-top .thumb img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+  .study-top .thumb .glyph{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--serif);font-size:56px;font-weight:900}
+  .study-top .info{padding:22px 26px}
+  .study-top h3{font-family:var(--serif);font-size:20px}
+  .study-top .demo{font-size:12.5px;color:var(--ink-faint);margin-top:4px}
+  .study-top .plain{margin-top:10px;font-size:14px;color:var(--ink-dim)}
+  .study-top .plain b{color:var(--ink)}
+  .study-links{margin-top:14px;display:flex;gap:10px;flex-wrap:wrap}
+  .mini{font-size:12px;padding:6px 14px;border-radius:999px;border:1px solid rgba(255,255,255,.16);color:var(--ink-dim);transition:all .3s}
+  .mini:hover{border-color:var(--gold);color:var(--gold)}
+  .kp-tags{display:flex;flex-wrap:wrap;gap:8px;padding:16px 26px;border-top:1px solid rgba(255,255,255,.06)}
+  .kp{font-size:12px;padding:5px 13px;border-radius:999px;background:rgba(74,158,143,.1);border:1px solid rgba(74,158,143,.3);color:#a5ddd0;cursor:help}
+  .kp.hot{background:rgba(232,176,75,.1);border-color:rgba(232,176,75,.35);color:#ecd3a0}
+  .study .insight{margin:0 26px 22px;font-size:13.5px;color:var(--ink-dim);border-left:3px solid var(--teal);padding:10px 16px;background:rgba(74,158,143,.05);border-radius:0 10px 10px 0}
+  .study .insight b{color:var(--ink)}
+  @media(max-width:720px){.study-top{grid-template-columns:1fr}.study-top .thumb{min-height:150px}}
+  .v-ink{background:linear-gradient(135deg,#2c2a26,#16140f)} .v-ink .glyph{color:#cfc7b4}
+  .v-shadow{background:linear-gradient(135deg,#241318,#100a0d)} .v-shadow .glyph{color:#e8b9c0}
+  .v-blueprint{background:linear-gradient(135deg,#16305c,#0a1830)} .v-blueprint .glyph{color:#bcd6ff}
+  .v-pixel{background:linear-gradient(135deg,#231a38,#120d1e)} .v-pixel .glyph{color:#b79aff}
+  .v-swiss{background:linear-gradient(135deg,#2b2b28,#171715)} .v-swiss .glyph{color:#f2f0e9}
+  .v-iso{background:linear-gradient(135deg,#173029,#0b1a15)} .v-iso .glyph{color:#9fe0c8}
+  .v-keynote{background:linear-gradient(135deg,#0f1420,#080b12)} .v-keynote .glyph{color:#8fb4ff}
+  .v-hd2d{background:linear-gradient(135deg,#1c1430,#0e0a1c)} .v-hd2d .glyph{color:#d0b8ff}
+
+  /* 九段解剖 */
+  .anatomy{display:grid;gap:12px;counter-reset:seg}
+  .seg{counter-increment:seg;display:grid;grid-template-columns:56px 190px 1fr;gap:16px;border:1px solid rgba(255,255,255,.07);
+       border-radius:14px;padding:16px 20px;background:var(--bg2);align-items:start}
+  .seg::before{content:counter(seg,decimal-leading-zero);font-family:var(--serif);font-size:24px;color:var(--gold);opacity:.85;padding-top:2px}
+  .seg h4{font-size:15px;padding-top:6px}
+  .seg p{font-size:13px;color:var(--ink-dim)}
+  .seg p b{color:var(--ink)}
+  @media(max-width:720px){.seg{grid-template-columns:44px 1fr}.seg h4{grid-column:2}.seg p{grid-column:1/-1}}
+
+  /* 模板 */
+  .tpl{border:1px solid var(--line);border-radius:var(--radius);background:#100e0c;padding:26px 28px;font-family:var(--mono);font-size:13px;color:#ddd2bd;overflow-x:auto;line-height:2}
+  .tpl .cm{color:#7a7066}
+  .tpl .fill{color:#7fd4c0}
+  .vs{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:22px}
+  .vs .col{border-radius:var(--radius);padding:20px 22px;font-size:13.5px}
+  .vs .bad{border:1px solid rgba(201,80,80,.4);background:rgba(201,80,80,.06)}
+  .vs .good{border:1px solid rgba(74,158,143,.4);background:rgba(74,158,143,.06)}
+  .vs h5{font-size:13px;letter-spacing:.14em;margin-bottom:10px}
+  .vs .bad h5{color:#e89a9a} .vs .good h5{color:#9fe0c8}
+  .vs p{color:var(--ink-dim)}
+  @media(max-width:720px){.vs{grid-template-columns:1fr}}
+  .checklist{margin-top:20px;display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px}
+  .checklist div{font-size:13px;color:var(--ink-dim);border:1px solid rgba(255,255,255,.07);border-radius:10px;padding:11px 15px;background:var(--bg2)}
+  .checklist div::before{content:"✓ ";color:var(--teal);font-weight:700}
+
+  /* 全量索引 */
+  table.idx{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px}
+  .idx th{font-family:var(--serif);text-align:left;color:var(--gold);font-size:13px;letter-spacing:.1em;padding:10px 12px;border-bottom:1px solid var(--line)}
+  .idx td{padding:9px 12px;border-bottom:1px solid rgba(255,255,255,.05);color:var(--ink-dim)}
+  .idx td:first-child{color:var(--ink)}
+  .idx tr:hover td{background:rgba(232,176,75,.04)}
+  .idx-wrap{overflow-x:auto}
+  .idx td.idx-th{padding:6px 8px;width:96px}
+  .idx td.idx-th img{width:88px;height:56px;object-fit:cover;border-radius:7px;display:block;border:1px solid rgba(90,79,71,.3);transition:transform .25s,border-color .25s}
+  .idx td.idx-th img:hover{transform:scale(1.06);border-color:rgba(232,176,75,.5)}
+  footer{border-top:1px solid var(--line);padding:40px 5vw 56px;text-align:center;color:var(--ink-faint);font-size:12.5px}
+
+/* ---------- 一键复制 Prompt ---------- */
+.mini.copy{cursor:pointer}
+.copy-link{color:var(--gold);text-decoration:none;white-space:nowrap;cursor:pointer;font-size:inherit}
+.copy-link:hover{text-decoration:underline}
+.copied-flash{color:#7fd4c0!important;border-color:rgba(127,212,192,.5)!important}
+.tpl-wrap{position:relative}
+.tpl-copy{position:absolute;top:14px;right:14px;font-size:12.5px;padding:7px 16px;border-radius:999px;
+  border:1px solid var(--gold);color:var(--gold);background:rgba(12,10,8,.75);cursor:pointer;font-family:inherit;transition:all .25s;z-index:2}
+.tpl-copy:hover{background:var(--gold);color:#1a1408}
+.tpl-copy.copied-flash{border-color:rgba(127,212,192,.6)}
+
+/* ---------- 常驻目录条 ---------- */
+.dock{position:fixed;left:50%;bottom:calc(12px + env(safe-area-inset-bottom));transform:translateX(-50%);
+  z-index:99999;display:flex;gap:2px;background:rgba(16,13,11,.9);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);
+  border:1px solid rgba(232,176,75,.3);border-radius:999px;padding:5px;box-shadow:0 10px 34px rgba(0,0,0,.55)}
+.dock a{display:flex;flex-direction:column;align-items:center;font-size:10.5px;color:#94867a;padding:6px 14px;
+  border-radius:999px;text-decoration:none;white-space:nowrap;line-height:1.4;transition:all .2s;font-family:inherit}
+.dock a b{font-size:16px;font-weight:400;line-height:1.2}
+.dock a:hover{color:#f3ede3}
+.dock a.on{color:#e8b04b;background:rgba(232,176,75,.15)}
+@media(max-width:520px){.dock a{padding:6px 10px;font-size:10px}}
+body{padding-bottom:86px}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="brand">KIMIMOTION <b>·</b> OPUS 5.5 拆解课堂</div>
+  <ul>
+    <li><a href="#lex">名词速通</a></li>
+    <li><a href="#study">案例精读</a></li>
+    <li><a href="#anatomy">Prompt 解剖</a></li>
+    <li><a href="#write">写作法</a></li>
+    <li><a href="#fullindex">39 风格索引</a></li>
+    <li><a href="index.html">← 返回展厅</a></li>
+  </ul>
+</nav>
+
+<header>
+  <div class="hero-glow"></div>
+  <div class="kicker">From Watching To Writing · 从看热闹到学会写</div>
+  <h1>这些神作不是「AI 生成的」<br>是 AI 一行行<b style="color:#7fd4c0">代码</b>画出来的</h1>
+  <p class="subtitle">这堂课做三件事：① 用大白话讲清案例里出现的每个技术名词；② 把 39 个案例的 Prompt 整理成「视频 + Prompt + 一句话读懂」；③ 拆开水墨风格的 Prompt，教你下次自己写。</p>
+  <div class="hero-cta">
+    <a class="btn" href="#lex">从名词速通开始 →</a>
+    <a class="btn ghost" href="https://github.com/lemomo-ai/lemo-opuscar" target="_blank" rel="noopener">OPUSCAR 原仓库</a>
+  </div>
+</header>
+
+<!-- ================= 0. 读法说明 ================= -->
+<section id="howto" style="padding-top:20px">
+  <div class="sec-head reveal">
+    <div class="sec-no">00 / HOW TO READ</div>
+    <h2 class="sec-title">这套整理怎么读</h2>
+    <p class="sec-desc">每个案例条目固定四件套：<b style="color:var(--ink)">成片（视频）→ 风格 Prompt 全文 → 一句话读懂 → 涉及知识点</b>。把鼠标悬停在知识点标签上，或翻到第一节「名词速通」看详细解释。读完前三节，你就拥有了改写任何风格的基本功。</p>
+  </div>
+</section>
+
+<!-- ================= 1. 名词速通 ================= -->
+<section id="lex">
+  <div class="sec-head reveal">
+    <div class="sec-no">01 / VOCABULARY</div>
+    <h2 class="sec-title">名词速通：Prompt 里出现这些词，分别在说什么</h2>
+    <p class="sec-desc">用「拍电影」打比方。一部代码影片的背后是一条流水线：有人写剧本（Prompt），有人搭景（HTML/CSS），有人指挥演员（JavaScript），有手绘动画台（Canvas）和 3D 摄影棚（three.js），最后由摄影师逐帧拍下来（Playwright），送去剪辑台合成（ffmpeg）。</p>
+  </div>
+
+  <div class="pipeline reveal">
+    <b style="color:var(--ink)">一条代码影片的诞生流水线：</b>
+    <div class="flow">Prompt(剧本) <i>→</i> HTML/CSS/JS·TS(搭景+演员) <i>→</i> Canvas 2D(手绘台) / WebGL+three.js(3D摄影棚) <i>→</i> 浏览器(放映机) <i>→</i> Playwright(逐帧摄影师) <i>→</i> ffmpeg(剪辑合成) <i>→</i> mp4 成片</div>
+  </div>
+
+  <div class="lex reveal" style="margin-top:26px">
+    <div class="lex-item"><div class="term">HTML</div><div class="layer l-struct">结构层</div><p><b>网页的骨架。</b>告诉浏览器「这一页有哪些东西」：一个画布、一段字幕、一个按钮。Prompt 里出现它 = 产物是一个网页文件，不是视频工程文件。</p></div>
+    <div class="lex-item"><div class="term">CSS</div><div class="layer l-struct">表现层</div><p><b>网页的皮肤和服装。</b>管颜色、字体、排版、圆角。出现它 = 对画面观感有具体规范（比如字幕用什么字体、多大字号）。</p></div>
+    <div class="lex-item"><div class="term">JavaScript (JS)</div><div class="layer l-struct">行为层</div><p><b>导演 + 演员 + 场务。</b>所有「动起来」的部分都靠它：每帧画什么、什么时候出字幕、音乐在第几秒响起。这批案例 99% 的活都是 JS 干的。</p></div>
+    <div class="lex-item"><div class="term">TypeScript (TS)</div><div class="layer l-struct">工程层</div><p><b>带了「安全带和清单」的 JS。</b>代码量大了以后防止手忙脚乱写错。Prompt 里出现它 = 这是一个规范的大工程，AI 会分文件、写类型。</p></div>
+    <div class="lex-item"><div class="term">Canvas 2D</div><div class="layer l-render">2D 渲染台</div><p><b>手绘逐帧动画台。</b>一支支笔触、一层层晕染都是在这块布上画的。水墨、水彩、版画风格的主力工具。</p></div>
+    <div class="lex-item"><div class="term">WebGL</div><div class="layer l-render">3D 渲染协议</div><p><b>让显卡来画画的协议。</b>浏览器里跑 3D、光影、水波的本质。它很底层，直接写很折磨——所以人们用 three.js。</p></div>
+    <div class="lex-item"><div class="term">three.js</div><div class="layer l-render">3D 摄影棚</div><p><b>WebGL 的开箱即用摄影棚。</b>相机、灯光、模型、材质一站式配齐。鹈鹕骑单车、赛车、运输船这些 3D 案例的主力。Prompt 里出现它 = 你要的是 3D 场景。</p></div>
+    <div class="lex-item"><div class="term">Shader 着色器</div><div class="layer l-render">光影化妆师</div><p><b>跑在显卡上的小程序，专管「光怎么打」。</b>水底的晃动的光斑、纸上的晕染，都是 shader 的功劳。Prompt 里出现 GLSL/shader = 要高级光影质感。</p></div>
+    <div class="lex-item"><div class="term">Blender</div><div class="layer l-tool">离线建模</div><p><b>专业 3D 建模软件（要安装的桌面程序）。</b>注意：这批案例<b>大多不用 Blender</b>——模型是代码现场生成的。Prompt 里提到它 = 有预制 3D 素材，或需要导出模型文件。</p></div>
+    <div class="lex-item"><div class="term">Playwright / Puppeteer</div><div class="layer l-tool">逐帧摄影师</div><p><b>没有屏幕的浏览器，专职截图。</b>代码每算出一帧画面（1/24 秒），它就拍一张照片存成 PNG。Prompt 里的「headless（无头）渲染」就是指它。</p></div>
+    <div class="lex-item"><div class="term">ffmpeg</div><div class="layer l-tool">剪辑合成台</div><p><b>音视频界的瑞士军刀。</b>把几千张 PNG 连成视频、把配音配乐混成音轨、把响度调到广播标准。几乎所有案例的最后一步都是它。</p></div>
+    <div class="lex-item"><div class="term">TTS（Kokoro 等）</div><div class="layer l-media">配音演员</div><p><b>文本转语音的 AI 配音。</b>案例里的旁白就是它念的，「speed 0.93」这类参数是在调教它的语速和气质。</p></div>
+    <div class="lex-item"><div class="term">whisper</div><div class="layer l-media">台词监工</div><p><b>语音转文字的校对员。</b>配完音先让它「听写」一遍，确认 AI 配音没有把单词念错。案例里每个音节都过了这关。</p></div>
+    <div class="lex-item"><div class="term">librosa / 采样库</div><div class="layer l-media">配乐师</div><p><b>分析音乐节拍 + 提供免版权乐器素材。</b>案例里袋鼠跳跃精准踩拍，就是因为先用 librosa 分析了配乐的节拍网格。</p></div>
+    <div class="lex-item"><div class="term">LUFS / 响度</div><div class="layer l-media">音量标准</div><p><b>广播级音量度量。</b>「-14 LUFS」是 YouTube/B站 常见的响度目标，ffmpeg 的 loudnorm 负责一键达标。</p></div>
+    <div class="lex-item"><div class="term">seed / 确定性</div><div class="layer l-render">复现保险</div><p><b>随机数的种子。</b>给随机效果（比如笔触的抖动）固定一个 seed，每次渲染结果一模一样——这是「逐帧渲染」不闪烁的关键。</p></div>
+  </div>
+</section>
+
+<!-- ================= 2. 案例精读 ================= -->
+<section id="study">
+  <div class="sec-head reveal">
+    <div class="sec-no">02 / CASE STUDIES</div>
+    <h2 class="sec-title">案例精读：Prompt → 视频</h2>
+    <p class="sec-desc">每个条目都遵循同一读法：<b style="color:var(--ink)">先看成片，再读 Prompt，最后看「一句话读懂」和知识点</b>。点击「风格 Prompt 全文」会打开该风格的 STYLE.md——它本身就是一段数千字、可直接投喂给 AI 的巨型 Prompt。</p>
+  </div>
+
+  <!-- 水墨 -->
+  <div class="study reveal">
+    <div class="study-top">
+      <div class="thumb"><img src="opuscar-styles/ink-wash/poster.jpg" alt="中国水墨" loading="lazy"></div>
+      <div class="info">
+        <h3>中国水墨 · Chinese Ink Wash</h3>
+        <div class="demo">样片：The Swordsman and the River（48s，侠客踏水过江，一剑断流）</div>
+        <p class="plain"><b>一句话读懂：</b>整幅画只有宣纸、五色墨和一枚朱砂印。空白不是背景，<b>留白本身就是水、天和 silence</b>——最厉害的特效是「把墨迹擦掉」。</p>
+        <div class="study-links">
+          <a class="mini" href="https://github.com/lemomo-ai/lemo-opuscar/blob/main/styles/ink-wash/STYLE.md" target="_blank" rel="noopener">📄 风格 Prompt 全文</a>
+          <a class="mini copy" onclick="copyPrompt('ink-wash',this);return false">📋 一键复制</a>
+          <a class="mini" href="https://github.com/lemomo-ai/lemo-opuscar/blob/main/styles/ink-wash/ink-wash.mp4" target="_blank" rel="noopener">▶ 成片视频</a>
+          <a class="mini" href="https://github.com/lemomo-ai/lemo-opuscar/tree/main/styles/ink-wash/demo" target="_blank" rel="noopener">⌥ 源代码</a>
+        </div>
+      </div>
+    </div>
+    <div class="kp-tags">
+      <span class="kp hot">Canvas 2D 笔触引擎</span><span class="kp hot">WebGL 宣纸晕染合成器</span><span class="kp">双画布：湿墨层/干墨层</span>
+      <span class="kp">飞白 = 笔毛断墨</span><span class="kp">12fps 人物 × 24fps 环境</span><span class="kp">Kokoro 英音旁白</span><span class="kp">古琴配乐</span>
+    </div>
+    <p class="insight"><b>初学者最值得偷的一招：</b>「湿墨 vs 干墨双画布」——湿笔画完会晕染开，干笔只留飞白，两层分开画再合成。这就是「像真水墨而不是矢量图」的全部秘密。</p>
+  </div>
+
+  <!-- 水彩 -->
+  <div class="study reveal">
+    <div class="study-top">
+      <div class="thumb"><img src="assets/5_Lemo_Opuscar_The_Nominees.jpg" alt="水彩风格"></div>
+      <div class="info">
+        <h3>水彩笔刷 · Watercolor Brush</h3>
+        <div class="demo">样片：Follow the Rain（113.6s，一镜到底横穿澳洲，从沙漠画到雨林）</div>
+        <p class="plain"><b>一句话读懂：</b>一部「会自己画自己的田野考察日记」。把「年降雨量」这个抽象数据<b>映射成从左到右的路程</b>，颜色跟着数据走——镜头移动本身就是论证。</p>
+        <div class="study-links">
+          <a class="mini" href="https://github.com/lemomo-ai/lemo-opuscar/blob/main/styles/watercolor/STYLE.md" target="_blank" rel="noopener">📄 风格 Prompt 全文</a>
+          <a class="mini copy" onclick="copyPrompt('watercolor',this);return false">📋 一键复制</a>
+          <a class="mini" href="https://github.com/lemomo-ai/lemo-opuscar/blob/main/styles/watercolor/watercolor.mp4" target="_blank" rel="noopener">▶ 成片视频</a>
+          <a class="mini" href="https://github.com/lemomo-ai/lemo-opuscar/tree/main/styles/watercolor/demo" target="_blank" rel="noopener">⌥ 源代码</a>
+        </div>
+      </div>
+    </div>
+    <div class="kp-tags">
+      <span class="kp hot">Canvas 2D 笔刷引擎</span><span class="kp">四视差图层</span><span class="kp">植物程序化生成器</span>
+      <span class="kp">缓存精灵图（性能关键）</span><span class="kp">librosa 节拍对齐</span><span class="kp">faster-whisper 校对</span><span class="kp">-14 LUFS</span>
+    </div>
+    <p class="insight"><b>初学者最值得偷的一招：</b>「数据 → 路程」的映射思路。想讲任何抽象概念（海拔、时间、GDP），都可以把它变成一条可以走的路线，让画面带着观众走完。</p>
+  </div>
+
+  <!-- 皮影 -->
+  <div class="study reveal">
+    <div class="study-top">
+      <div class="thumb"><img src="opuscar-styles/shadow-puppet/poster.jpg" alt="皮影戏" loading="lazy"></div>
+      <div class="info">
+        <h3>皮影戏 · Shadow Puppetry</h3>
+        <div class="demo">样片：Hou Yi Shoots the Suns（后羿射日）</div>
+        <p class="plain"><b>一句话读懂：</b>牛皮镂刻的关节小人，幕后一盏灯，把影子投在幕布上。动画的精髓是<b>「关节人偶」</b>：躯干、四肢分段，像提线木偶一样摆动。</p>
+        <div class="study-links">
+          <a class="mini" href="https://github.com/lemomo-ai/lemo-opuscar/blob/main/styles/shadow-puppet/STYLE.md" target="_blank" rel="noopener">📄 风格 Prompt 全文</a>
+          <a class="mini copy" onclick="copyPrompt('shadow-puppet',this);return false">📋 一键复制</a>
+          <a class="mini" href="https://github.com/lemomo-ai/lemo-opuscar/tree/main/styles/shadow-puppet" target="_blank" rel="noopener">▶ 成片与源代码</a>
+        </div>
+      </div>
+    </div>
+    <div class="kp-tags">
+      <span class="kp hot">关节骨骼动画</span><span class="kp">镂空剪影造型</span><span class="kp">光源投影氛围</span><span class="kp">锣鼓点配乐</span>
+    </div>
+  </div>
+
+  <!-- 蓝图 -->
+  <div class="study reveal">
+    <div class="study-top">
+      <div class="thumb"><img src="opuscar-styles/blueprint/poster.jpg" alt="蓝图工程制图" loading="lazy"></div>
+      <div class="info">
+        <h3>蓝图 / 工程制图 · Blueprint</h3>
+        <div class="demo">样片：Patent Pending: The Cloud Catcher（一台捕云机的专利图纸活了）</div>
+        <p class="plain"><b>一句话读懂：</b>靛蓝底、白线条、标注尺寸、零件清单——全套工程制图语言<b>本身就是动画语法</b>：机器先被「画出来」，再被「拆解」，再被「装配」。</p>
+        <div class="study-links">
+          <a class="mini" href="https://github.com/lemomo-ai/lemo-opuscar/blob/main/styles/blueprint/STYLE.md" target="_blank" rel="noopener">📄 风格 Prompt 全文</a>
+          <a class="mini copy" onclick="copyPrompt('blueprint',this);return false">📋 一键复制</a>
+          <a class="mini" href="https://github.com/lemomo-ai/lemo-opuscar/tree/main/styles/blueprint" target="_blank" rel="noopener">▶ 成片与源代码</a>
+        </div>
+      </div>
+    </div>
+    <div class="kp-tags">
+      <span class="kp">线条生长动画</span><span class="kp">爆炸分解图</span><span class="kp">技术标注排版</span><span class="kp">等宽字体</span>
+    </div>
+    <p class="insight"><b>迁移思路：</b>讲解任何产品/机器/流程（你的 SaaS、咖啡机、供应链），都可以套「专利图纸」语法：先画全貌 → 爆炸拆解 → 逐件装配 → 盖上「PATENT PENDING」。</p>
+  </div>
+
+  <!-- 像素RPG -->
+  <div class="study reveal">
+    <div class="study-top">
+      <div class="thumb"><img src="opuscar-styles/pixel-rpg/poster.jpg" alt="16-bit 像素 RPG" loading="lazy"></div>
+      <div class="info">
+        <h3>16-bit 像素 RPG · Pixel RPG</h3>
+        <div class="demo">样片：The Last Save Point（游戏存档点的故事）</div>
+        <p class="plain"><b>一句话读懂：</b>把短片伪装成一部不存在的超任游戏：行走图、战斗界面、血条、指令菜单——<b>UI 即叙事</b>，观众看到血条就自然读懂了处境。</p>
+        <div class="study-links">
+          <a class="mini" href="https://github.com/lemomo-ai/lemo-opuscar/blob/main/styles/pixel-rpg/STYLE.md" target="_blank" rel="noopener">📄 风格 Prompt 全文</a>
+          <a class="mini copy" onclick="copyPrompt('pixel-rpg',this);return false">📋 一键复制</a>
+          <a class="mini" href="https://github.com/lemomo-ai/lemo-opuscar/tree/main/styles/pixel-rpg" target="_blank" rel="noopener">▶ 成片与源代码</a>
+        </div>
+      </div>
+    </div>
+    <div class="kp-tags">
+      <span class="kp hot">像素画（低分辨率 canvas）</span><span class="kp">游戏 HUD 设计</span><span class="kp">chiptune 芯片音乐</span><span class="kp">有限色板</span>
+    </div>
+  </div>
+
+  <!-- HD-2D -->
+  <div class="study reveal">
+    <div class="study-top">
+      <div class="thumb"><img src="opuscar-styles/hd-2d/poster.jpg" alt="HD-2D 像素光影" loading="lazy"></div>
+      <div class="info">
+        <h3>HD-2D · 像素×光影（八方旅人式）</h3>
+        <div class="demo">样片：The Lampbearer（提灯者）</div>
+        <p class="plain"><b>一句话读懂：</b>复古像素角色 + 现代 3D 光影的混搭美学。要点是<b>「像素是皮，光照是魂」</b>：2D 素材放进 3D 场景打光，体积光扫过像素块。</p>
+        <div class="study-links">
+          <a class="mini" href="https://github.com/lemomo-ai/lemo-opuscar/blob/main/styles/hd-2d/STYLE.md" target="_blank" rel="noopener">📄 风格 Prompt 全文</a>
+          <a class="mini copy" onclick="copyPrompt('hd-2d',this);return false">📋 一键复制</a>
+          <a class="mini" href="https://github.com/lemomo-ai/lemo-opuscar/tree/main/styles/hd-2d" target="_blank" rel="noopener">▶ 成片与源代码</a>
+        </div>
+      </div>
+    </div>
+    <div class="kp-tags">
+      <span class="kp hot">three.js / WebGL 打光</span><span class="kp">像素风贴图</span><span class="kp">体积光/景深</span><span class="kp">实时 3D 场景</span>
+    </div>
+    <p class="insight"><b>注意：</b>这是 39 个风格里最接近「3D 案例」的一类——涉及 three.js 和 shader。零基础上手建议从 Canvas 2D 类（水墨/水彩/像素）开始，再碰它。</p>
+  </div>
+
+  <!-- 等距信息图 -->
+  <div class="study reveal">
+    <div class="study-top">
+      <div class="thumb"><img src="opuscar-styles/iso-infographic/poster.jpg" alt="等距信息图" loading="lazy"></div>
+      <div class="info">
+        <h3>等距信息图 · Isometric Infographic</h3>
+        <div class="demo">样片：From Bean to Cup（一颗咖啡豆到一杯咖啡的旅程）</div>
+        <p class="plain"><b>一句话读懂：</b>没有透视变形的 45° 上帝视角，配上引导线和数据标签——PPT 动画的终极进化形态，<b>流程讲解类内容的黄金风格</b>。</p>
+        <div class="study-links">
+          <a class="mini" href="https://github.com/lemomo-ai/lemo-opuscar/blob/main/styles/iso-infographic/STYLE.md" target="_blank" rel="noopener">📄 风格 Prompt 全文</a>
+          <a class="mini copy" onclick="copyPrompt('iso-infographic',this);return false">📋 一键复制</a>
+          <a class="mini" href="https://github.com/lemomo-ai/lemo-opuscar/tree/main/styles/iso-infographic" target="_blank" rel="noopener">▶ 成片与源代码</a>
+        </div>
+      </div>
+    </div>
+    <div class="kp-tags">
+      <span class="kp">等距投影（isometric）</span><span class="kp">矢量插画</span><span class="kp">标注与引导线系统</span><span class="kp">分步镜头</span>
+    </div>
+    <p class="insight"><b>职场迁移：</b>做产品流程讲解、年报数据可视化、运营活动页，直接套这个风格 Prompt，替换成自己的流程节点即可。</p>
+  </div>
+
+  <!-- 瑞士排版 -->
+  <div class="study reveal">
+    <div class="study-top">
+      <div class="thumb"><img src="opuscar-styles/swiss-motion/poster.jpg" alt="瑞士动态排版" loading="lazy"></div>
+      <div class="info">
+        <h3>瑞士动态排版 · Swiss Motion Graphics</h3>
+        <div class="demo">样片：Five Rules for a Poster（一张海报按五条设计法则自己排版）</div>
+        <p class="plain"><b>一句话读懂：</b>网格、无衬线字体、黑白灰+一坨红——<b>「排版规则本身演给你看」</b>。适合讲设计方法论、品牌规范、任何「规则驱动」的主题。</p>
+        <div class="study-links">
+          <a class="mini" href="https://github.com/lemomo-ai/lemo-opuscar/blob/main/styles/swiss-motion/STYLE.md" target="_blank" rel="noopener">📄 风格 Prompt 全文</a>
+          <a class="mini copy" onclick="copyPrompt('swiss-motion',this);return false">📋 一键复制</a>
+          <a class="mini" href="https://github.com/lemomo-ai/lemo-opuscar/tree/main/styles/swiss-motion" target="_blank" rel="noopener">▶ 成片与源代码</a>
+        </div>
+      </div>
+    </div>
+    <div class="kp-tags">
+      <span class="kp">网格系统</span><span class="kp">字体层级</span><span class="kp">负空间</span><span class="kp">转场即排版</span>
+    </div>
+  </div>
+
+  <!-- 3D 案例组 -->
+  <div class="study reveal" style="border-color:rgba(126,164,255,.3)">
+    <div class="study-top">
+      <div class="thumb"><img src="assets/1_Pelican_Bike_a_browser_3D_cycling.jpg" alt="鹈鹕骑单车"></div>
+      <div class="info">
+        <h3>另一条路线：3D 交互案例（轩辕文章里的五个）</h3>
+        <div class="demo">鹈鹕骑单车 3D · QQ飞车竞速 · CF 运输船 · 清明上河图 3D · 单文件水体模拟</div>
+        <p class="plain"><b>一句话读懂：</b>这五个不是「影片」，是<b>能玩的 3D 程序</b>。Prompt 的关键词会从 Canvas 换成 <code>three.js</code>、<code>WebGL</code>、<code>shader</code>、<code>物理引擎</code>。水体能一只手数完文件，运输船则要管理地图、AI 敌人、HUD 一整套。</p>
+        <div class="study-links">
+          <a class="mini" href="https://t.co/7J3SSmGoXz" target="_blank" rel="noopener">▶ 鹈鹕骑单车</a>
+          <a class="mini" href="https://t.co/qD6h0OaNfR" target="_blank" rel="noopener">▶ 赛车游戏</a>
+          <a class="mini" href="https://t.co/oNsXKwnWA2" target="_blank" rel="noopener">▶ CF 运输船</a>
+          <a class="mini" href="https://t.co/GUyuehztQx" target="_blank" rel="noopener">▶ 清明上河图</a>
+          <a class="mini" href="https://t.co/lmeepXXwSe" target="_blank" rel="noopener">▶ 水体模拟</a>
+        </div>
+      </div>
+    </div>
+    <div class="kp-tags">
+      <span class="kp hot">three.js（3D 摄影棚）</span><span class="kp hot">WebGL/GLSL shader（光影）</span><span class="kp">单文件架构 = HTML+JS+CSS 全塞一个文件</span>
+      <span class="kp">程序化生成（建筑/地形用算法造）</span><span class="kp">帧循环 requestAnimationFrame</span><span class="kp">游戏逻辑 = 状态+碰撞+计分</span>
+    </div>
+    <p class="insight"><b>和影片类 Prompt 的核心差异：</b>影片类求「每一帧可控、可复现」，3D 类求「物理可信、交互跟手」。写 3D Prompt 要描述物理规则（重力、摩擦、浮力、碰撞），写影片 Prompt 要描述镜头和节奏。两者都能先让 AI 出单文件 HTML，打开浏览器就能跑。</p>
+  </div>
+</section>
+
+<!-- ================= 3. Prompt 解剖 ================= -->
+<section id="anatomy">
+  <div class="sec-head reveal">
+    <div class="sec-no">03 / PROMPT ANATOMY</div>
+    <h2 class="sec-title">解剖一段顶级 Prompt：水墨风格的九段结构</h2>
+    <p class="sec-desc">把水墨的 STYLE.md（全文约 5000 字）拆完，会发现它是一个<b style="color:var(--ink)">可复用的九段式骨架</b>。任何一个风格 Prompt——甚至任何「让 AI 做复杂作品」的 Prompt——都可以按这九段来写。点 <a href="https://github.com/lemomo-ai/lemo-opuscar/blob/main/styles/ink-wash/STYLE.md" target="_blank" rel="noopener">这里</a> 对照原文阅读。</p>
+  </div>
+  <div class="anatomy reveal">
+    <div class="seg"><h4>① 风格定义</h4><p>用参照系锚定审美：「像上美影《山水情》的留白语法 + 《卧虎藏龙》竹林的轻盈动作，但不抄具体画面」。<b>给 AI 一个可查询的审美坐标，而不是空泛的「要高级」。</b></p></div>
+    <div class="seg"><h4>② 故事适配</h4><p>列出这个媒介的「天生神力」清单（一笔成山/留白即水/飞白是高潮），规定「至少用三种，最强的放在情感峰值」。<b>等于教 AI：这个风格适合讲什么故事。</b></p></div>
+    <div class="seg"><h4>③ 视觉语言</h4><p>精确到色值：纸 <code>#F2ECDE</code>、朱砂 <code>#B02E22</code>、墨分五色各配不透明度；笔触模型=中心线×压力×笔毛断墨。<b>把「好看」翻译成算法能执行的参数。</b></p></div>
+    <div class="seg"><h4>④ 运动语言</h4><p>人物 12fps（一拍二）、环境 24fps；每个缓动函数写名字；「先静后动，决定性一笔 4 帧内划完」。<b>动画的灵魂在节奏，节奏必须写成数字。</b></p></div>
+    <div class="seg"><h4>⑤ 镜头语言</h4><p>一张 beat→运镜对照表：开场固定机位 → 横移长卷 → 低角度威胁 → 极近特写 → 结尾拉远全卷。<b>直接当分镜表用。</b></p></div>
+    <div class="seg"><h4>⑥ 声音设计</h4><p>指定乐器（古琴 F 宫五声调式）、规定「静音窗口里只允许一滴水和一声剑鸣」、foley 材质对应（墨滴=坠落+湿闷响）。<b>声音不是事后配的，是和画面一起写的。</b></p></div>
+    <div class="seg"><h4>⑦ 字幕规范</h4><p>字幕=题跋：什么字体、放画面哪个空白处、湿着出现 0.35s 后干透。<b>连字幕的位置美学都有规矩。</b></p></div>
+    <div class="seg"><h4>⑧ 踩坑清单</h4><p>「干笔别用虚线模拟」「字幕要重置坐标系否则会滑出画面」——每坑一句对策。<b>这是迭代多轮后攒下的血泪，也是最值钱的部分。</b></p></div>
+    <div class="seg"><h4>⑨ 生产配方</h4><p>文件结构（引擎/角色/场景/时间线各一个 js）+ 从渲染到混流的完整命令链。<b>让 AI 知道「工程长什么样」，它才不会把所有代码糊在一个文件里。</b></p></div>
+  </div>
+</section>
+
+<!-- ================= 4. 写作法 ================= -->
+<section id="write">
+  <div class="sec-head reveal">
+    <div class="sec-no">04 / WRITE YOUR OWN</div>
+    <h2 class="sec-title">下次自己写：九段式填空模板</h2>
+    <p class="sec-desc">把上面九段压缩成一个可填空模板。<span style="color:#7fd4c0">绿色</span>部分替换成你的内容，其余照抄结构。即使不写给 AI 执行，填一遍也能帮你把模糊的想法想清楚。</p>
+  </div>
+  <div class="tpl-wrap"><button class="tpl-copy" onclick="copyTpl(this)">📋 一键复制模板</button><div class="tpl reveal">
+<span class="cm"># 风格 Prompt 填空模板（复制后替换 &lt;...&gt; 内容）</span><br><br>
+<span class="fill">&lt;作品类型&gt;</span>：一支 30–60 秒的 &lt;风格名&gt; 风格短片，主题是 &lt;用户给的主题&gt;。<br>
+<span class="fill">&lt;风格定义&gt;</span>：视觉锚 = &lt;像什么媒介/哪部作品的气质&gt;；只借语法，不抄具体画面。<br>
+<span class="fill">&lt;天生神力&gt;</span>：这个媒介独有的 3–5 个表现手法（如：留白、一笔成形、转场即翻页），本条至少用 &lt;N&gt; 个，最强的放在情感峰值。<br>
+<span class="fill">&lt;视觉规范&gt;</span>：主色 &lt;#色值&gt;、强调色 &lt;#色值&gt;；字体 &lt;字体名&gt;；材质规则 &lt;笔触/质感规则&gt;；分辨率 &lt;1920×1080&gt;、帧率 &lt;24/60&gt;fps。<br>
+<span class="fill">&lt;运动规则&gt;</span>：&lt;哪些元素&gt; 用 &lt;12/24/60&gt;fps；缓动用 &lt;ease 名称&gt;；&lt;哪个动作&gt; 必须卡音乐节拍。<br>
+<span class="fill">&lt;分镜表&gt;</span>：开场 &lt;固定/横移&gt; → 发展 &lt;运镜&gt; → 高潮 &lt;运镜&gt; → 结尾 &lt;拉远/定格&gt;。<br>
+<span class="fill">&lt;声音设计&gt;</span>：配乐 &lt;乐器/曲风&gt;；&lt;哪一秒&gt; 必须静音；音效材质对应 &lt;动作→声音&gt;；旁白 &lt;音色/语速&gt;，念完用 whisper 校对。<br>
+<span class="fill">&lt;字幕规范&gt;</span>：位置 &lt;画面中哪块空白&gt;、字体字号、出现/消失方式、停留时长 ≥ &lt;1.8&gt;s。<br>
+<span class="fill">&lt;已知坑&gt;</span>：&lt;你预期会出什么问题 → 对策&gt;（做完一轮就回来补一条）。<br>
+<span class="fill">&lt;工程要求&gt;</span>：分文件结构 &lt;引擎/场景/时间线&gt;；所有随机效果带 seed；渲染 → 混音 → 合成一条命令链跑通。
+  </div></div>
+
+  <div class="vs reveal">
+    <div class="col bad">
+      <h5>✗ 反面教材（AI 只能瞎猜）</h5>
+      <p>「帮我做一个水墨风格的动画，讲坚持的重要性，要高级、要有电影感。」<br><br>→ 没有参照系、没有色板、没有镜头、没有节奏。AI 只能给你「看起来像 PPT 的墨水飞来飞去」。</p>
+    </div>
+    <div class="col good">
+      <h5>✓ 照着模板写（AI 能直接开工）</h5>
+      <p>「45 秒水墨短片：宣纸 #F2ECDE 底、墨分五色，唯一红色是结尾印章。讲一个跑者： blank 纸起跑 → 一笔画出山路 → 飞白表现力竭 → 静音 2 秒后一笔登顶 → 拉远 reveal 整条卷轴盖章。人物 12fps 环境 24fps，古琴配乐，旁白英音男声语速 0.85，字幕作题跋放左上留白处。」<br><br>→ 每个词都能被执行、被检查。</p>
+    </div>
+  </div>
+
+  <div class="checklist reveal">
+    <div>给了参照系（像什么），而不只是形容词（要高级）</div>
+    <div>颜色给了色值，字体给了名字</div>
+    <div>说清了「这个风格天生擅长什么」</div>
+    <div>运动有 fps 和缓动，高潮卡在节拍上</div>
+    <div>分镜表覆盖开场→发展→高潮→结尾</div>
+    <div>声音写进 Prompt，不是事后补配</div>
+    <div>规定了字幕位置和停留时长</div>
+    <div>留了「踩坑清单」的位置，迭代后回填</div>
+  </div>
+</section>
+
+<!-- ================= 5. 全量索引 ================= -->
+<section id="fullindex">
+  <div class="sec-head reveal">
+    <div class="sec-no">05 / FULL INDEX</div>
+    <h2 class="sec-title">39 种风格全量索引</h2>
+    <p class="sec-desc">风格索引页：每行的 STYLE.md 就是该风格可直接投喂的完整 Prompt；demo 文件夹内含成片 mp4 与全部源代码。文件夹名可直接用于命令（如「用 ink-wash 风格做……」）。</p>
+  </div>
+  <div class="idx-wrap reveal">
+  <table class="idx">
+    <tr><th></th><th>风格</th><th>文件夹</th><th>样片</th><th>Prompt / 资源</th></tr>
+    <tr><td class="idx-th"><a href="https://github.com/lemomo-ai/lemo-opuscar/tree/main/styles/crayon-book" target="_blank" rel="noopener"><img loading="lazy" src="opuscar-styles/crayon-book/poster.jpg" alt="Crayon Picture Book 蜡笔儿童绘本"></a></td><td>Crayon Picture Book 蜡笔儿童绘本</td><td><code>crayon-book</code></td><td>The Moon Can't Sleep</td><td><a href="https://github.com/lemomo-ai/lemo-opuscar/blob/main/styles/crayon-book/STYLE.md" target="_blank" rel="noopener">STYLE.md</a> · <a href="https://github.com/lemomo-ai/lemo-opuscar/tree/main/styles/crayon-book" target="_blank" rel="noopener">demo</a> · <a class="copy-link" onclick="copyPrompt('crayon-book',this);return false">📋 复制</a></td></tr>
+    <tr><td class="idx-th"><a href="https://github.com/lemomo-ai/lemo-opuscar/tree/main/styles/watercolor" target="_blank" rel="noopener"><img loading="lazy" src="opuscar-styles/watercolor/poster.jpg" alt="Watercolor Brush 水彩笔刷"></a></td><td>Watercolor Brush 水彩笔刷</td><td><code>watercolor</code></td><td>Follow the Rain</td><td><a href="https://github.com/lemomo-ai/lemo-opuscar/blob/main/styles/watercolor/STYLE.md" target="_blank" rel="noopener">STYLE.md</a> · <a href="https://github.com/lemomo-ai/lemo-opuscar/tree/main/styles/watercolor" target="_blank" rel="noopener">demo</a> · <a class="copy-link" onclick="copyPrompt('watercolor',this);return false">📋 复制</a></td></tr>
+    <tr><td class="idx-th"><a href="https://github.com/lemomo-ai/lemo-opuscar/tree/main/styles/ink-wash" target="_blank" rel="noopener"><img loading="lazy" src="opuscar-styles/ink-wash/poster.jpg" alt="Chinese Ink Wash 中国水墨"></a></td><td>Chinese Ink Wash 中国水墨</td><td><code>ink-wash</code></td><td>The Swordsman and the River</td><td><a href="https://github.com/lemomo-ai/lemo-opuscar/blob/main/styles/ink-wash/STYLE.md" target="_blank" rel="noopener">STYLE.md</a> · <a href="https://github.com/lemomo-ai/lemo-opuscar/tree/main/styles/ink-wash" target="_blank" rel="noopener">demo</a> · <a class="copy-link" onclick="copyPrompt('ink-wash',this);return false">📋 复制</a></td></tr>
+    <tr><td class="idx-th"><a href="https://github.com/lemomo-ai/lemo-opuscar/tree/main/styles/impasto" target="_blank" rel="noopener"><img loading="lazy" src="opuscar-styles/impasto/poster.jpg" alt="Impasto Oil Painting 油画厚涂"></a></td><td>Impasto Oil Painting 油画厚涂</td><td><code>impasto</code></td><td>The Colour of Rain</td><td><a href="https://github.com/lemomo-ai/lemo-opuscar/blob/main/styles/impasto/STYLE.md" target="_blank" rel="noopener">STYLE.md</a> · <a href="https://github.com/lemomo-ai/lemo-opuscar/tree/main/styles/impasto" target="_blank" rel="noopener">demo</a> · <a class="copy-link" onclick="copyPrompt('impasto',this);return false">📋 复制</a></td></tr>
+    <tr><td class="idx-th"><a href="https://github.com/lemomo-ai/lemo-opuscar/tree/main/styles/one-line" target="_blank" rel="noopener"><img loading="lazy" src="opuscar-styles/one-line/poster.jpg" alt="One-line Drawing 一笔画"></a></td><td>One-line Drawing 一笔画</td><td><code>one-line</code></td><td>The Line That Never Lifted</td><td><a href="https://github.com/lemomo-ai/lemo-opuscar/blob/main/styles/one-line/STYLE.md" target="_blank" rel="noopener">STYLE.md</a> · <a href="https://github.com/lemomo-ai/lemo-opuscar/tree/main/styles/one-line" target="_blank" rel="noopener">demo</a> · <a class="copy-link" onclick="copyPrompt('one-line',this);return false">📋 复制</a></td></tr>
+    <tr><td class="idx-th"><a href="https://github.com/lemomo-ai/lemo-opuscar/tree/main/styles/whiteboard" target="_blank" rel="noopener"><img loading="lazy" src="opuscar-styles/whiteboard/poster.jpg" alt="Whiteboard Explainer 白板讲解"></a></td><td>Whiteboard Explainer 白板讲解</td><td><code>whiteboard</code></td><td>Einstein in Your Pocket</td><td><a href="https://github.com/lemomo-ai/lemo-opuscar/blob/main/styles/whiteboard/STYLE.md" target="_blank" rel="noopener">STYLE.md</a> · <a href="https://github.com/lemomo-ai/lemo-opuscar/tree/main/styles/whiteboard" target="_blank" rel="noopener">demo</a> · <a class="copy-link" onclick="copyPrompt('whiteboard',this);return false">📋 复制</a></td></tr>
+    <tr><td class="idx-th"><a href="https://github.com/lemomo-ai/lemo-opuscar/tree/main/styles/urban-sketch" target="_blank" rel="noopener"><img loading="lazy" src="opuscar-styles/urban-sketch/poster.jpg" alt="Urban Sketch 钢笔淡彩"></a></td><td>Urban Sketch 钢笔淡彩</td><td><code>urban-sketch</code></td><td>Where the Wind Went</td><td><a href="https://github.com/lemomo-ai/lemo-opuscar/blob/main/styles/urban-sketch/STYLE.md" target="_blank" rel="noopener">STYLE.md</a> · <a href="https://github.com/lemomo-ai/lemo-opuscar/tree/main/styles/urban-sketch" target="_blank" rel="noopener">demo</a> · <a class="copy-link" onclick="copyPrompt('urban-sketch',this);return false">📋 复制</a></td></tr>
+    <tr><td class="idx-th"><a href="https://github.com/lemomo-ai/lemo-opuscar/tree/main/styles/shadow-puppet" target="_blank" rel="noopener"><img loading="lazy" src="opuscar-styles/shadow-puppet/poster.jpg" alt="Shadow Puppetry 皮影戏"></a></td><td>Shadow Puppetry 皮影戏</td><td><code>shadow-puppet</code></td><td>Hou Yi Shoots the Suns</td><td><a href="https://github.com/lemomo-ai/lemo-opuscar/blob/main/styles/shadow-puppet/STYLE.md" target="_blank" rel="noopener">STYLE.md</a> · <a href="https://github.com/lemomo-ai/lemo-opuscar/tree/main/styles/shadow-puppet" target="_blank" rel="noopener">demo</a> · <a class="copy-link" onclick="copyPrompt('shadow-puppet',this);return false">📋 复制</a></td></tr>
+    <tr><td class="idx-th"><a href="https://github.com/lemomo-ai/lemo-opuscar/tree/main/styles/ukiyoe" target="_blank" rel="noopener"><img loading="lazy" src="opuscar-styles/ukiyoe/poster.jpg" alt="Ukiyo-e 浮世绘"></a></td><td>Ukiyo-e 浮世绘</td><td><code>ukiyoe</code></td><td>A Journey Toward the Mountain</td><td><a href="https://github.com/lemomo-ai/lemo-opuscar/blob/main/styles/ukiyoe/STYLE.md" target="_blank" rel="noopener">STYLE.md</a> · <a href="https://github.com/lemomo-ai/lemo-opuscar/tree/main/styles/ukiyoe" target="_blank" rel="noopener">demo</a> · <a class="copy-link" onclick="copyPrompt('ukiyoe',this);return false">📋 复制</a></td></tr>
+    <tr><td class="idx-th"><a href="https://github.com/lemomo-ai/lemo-opuscar/tree/main/styles/papercut-red" target="_blank" rel="noopener"><img loading="lazy" src="opuscar-styles/papercut-red/poster.jpg" alt="Red Paper-cut 红色窗花剪纸"></a></td><td>Red Paper-cut 红色窗花剪纸</td><td><code>papercut-red</code></td><td>Nian Comes to Town</td><td><a href="https://github.com/lemomo-ai/lemo-opuscar/blob/main/styles/papercut-red/STYLE.md" target="_blank" rel="noopener">STYLE.md</a> · <a href="https://github.com/lemomo-ai/lemo-opuscar/tree/main/styles/papercut-red" target="_blank" rel="noopener">demo</a> · <a class="copy-link" onclick="copyPrompt('papercut-red',this);return false">📋 复制</a></td></tr>
+    <tr><td class="idx-th"><a href="https://github.com/lemomo-ai/lemo-opuscar/tree/main/styles/paper-lantern" target="_blank" rel="noopener"><img loading="lazy" src="opuscar-styles/paper-lantern/poster.jpg" alt="Paper-cut Lightbox 纸雕灯影"></a></td><td>Paper-cut Lightbox 纸雕灯影</td><td><code>paper-lantern</code></td><td>A Mooncake's Longing</td><td><a href="https://github.com/lemomo-ai/lemo-opuscar/blob/main/styles/paper-lantern/STYLE.md" target="_blank" rel="noopener">STYLE.md</a> · <a href="https://github.com/lemomo-ai/lemo-opuscar/tree/main/styles/paper-lantern" target="_blank" rel="noopener">demo</a> · <a class="copy-link" onclick="copyPrompt('paper-lantern',this);return false">📋 复制</a></td></tr>
+    <tr><td class="idx-th"><a href="https://github.com/lemomo-ai/lemo-opuscar/tree/main/styles/risograph" target="_blank" rel="noopener"><img loading="lazy" src="opuscar-styles/risograph/poster.jpg" alt="Risograph Print 丝网印刷"></a></td><td>Risograph Print 丝网印刷</td><td><code>risograph</code></td><td>Sunday Ride</td><td><a href="https://github.com/lemomo-ai/lemo-opuscar/blob/main/styles/risograph/STYLE.md" target="_blank" rel="noopener">STYLE.md</a> · <a href="https://github.com/lemomo-ai/lemo-opuscar/tree/main/styles/risograph" target="_blank" rel="noopener">demo</a> · <a class="copy-link" onclick="copyPrompt('risograph',this);return false">📋 复制</a></td></tr>
+    <tr><td class="idx-th"><a href="https://github.com/lemomo-ai/lemo-opuscar/tree/main/styles/halftone-dossier" target="_blank" rel="noopener"><img loading="lazy" src="opuscar-styles/halftone-dossier/poster.jpg" alt="Halftone Dossier 复古半调案卷"></a></td><td>Halftone Dossier 复古半调案卷</td><td><code>halftone-dossier</code></td><td>Case File: Chubby</td><td><a href="https://github.com/lemomo-ai/lemo-opuscar/blob/main/styles/halftone-dossier/STYLE.md" target="_blank" rel="noopener">STYLE.md</a> · <a href="https://github.com/lemomo-ai/lemo-opuscar/tree/main/styles/halftone-dossier" target="_blank" rel="noopener">demo</a> · <a class="copy-link" onclick="copyPrompt('halftone-dossier',this);return false">📋 复制</a></td></tr>
+    <tr><td class="idx-th"><a href="https://github.com/lemomo-ai/lemo-opuscar/tree/main/styles/woodcut" target="_blank" rel="noopener"><img loading="lazy" src="opuscar-styles/woodcut/poster.jpg" alt="Woodcut Print 木刻版画"></a></td><td>Woodcut Print 木刻版画</td><td><code>woodcut</code></td><td>The Bell Founder</td><td><a href="https://github.com/lemomo-ai/lemo-opuscar/blob/main/styles/woodcut/STYLE.md" target="_blank" rel="noopener">STYLE.md</a> · <a href="https://github.com/lemomo-ai/lemo-opuscar/tree/main/styles/woodcut" target="_blank" rel="noopener">demo</a> · <a class="copy-link" onclick="copyPrompt('woodcut',this);return false">📋 复制</a></td></tr>
+    <tr><td class="idx-th"><a href="https://github.com/lemomo-ai/lemo-opuscar/tree/main/styles/swiss-motion" target="_blank" rel="noopener"><img loading="lazy" src="opuscar-styles/swiss-motion/poster.jpg" alt="Swiss Motion Graphics 瑞士动态排版"></a></td><td>Swiss Motion Graphics 瑞士动态排版</td><td><code>swiss-motion</code></td><td>Five Rules for a Poster</td><td><a href="https://github.com/lemomo-ai/lemo-opuscar/blob/main/styles/swiss-motion/STYLE.md" target="_blank" rel="noopener">STYLE.md</a> · <a href="https://github.com/lemomo-ai/lemo-opuscar/tree/main/styles/swiss-motion" target="_blank" rel="noopener">demo</a> · <a class="copy-link" onclick="copyPrompt('swiss-motion',this);return false">📋 复制</a></td></tr>
+    <tr><td class="idx-th"><a href="https://github.com/lemomo-ai/lemo-opuscar/tree/main/styles/spy-titles" target="_blank" rel="noopener"><img loading="lazy" src="opuscar-styles/spy-titles/poster.jpg" alt="60s Spy Title Sequence 间谍片头"></a></td><td>60s Spy Title Sequence 间谍片头</td><td><code>spy-titles</code></td><td>The Velvet Cipher</td><td><a href="https://github.com/lemomo-ai/lemo-opuscar/blob/main/styles/spy-titles/STYLE.md" target="_blank" rel="noopener">STYLE.md</a> · <a href="https://github.com/lemomo-ai/lemo-opuscar/tree/main/styles/spy-titles" target="_blank" rel="noopener">demo</a> · <a class="copy-link" onclick="copyPrompt('spy-titles',this);return false">📋 复制</a></td></tr>
+    <tr><td class="idx-th"><a href="https://github.com/lemomo-ai/lemo-opuscar/tree/main/styles/art-deco" target="_blank" rel="noopener"><img loading="lazy" src="opuscar-styles/art-deco/poster.jpg" alt="Art Deco 装饰艺术"></a></td><td>Art Deco 装饰艺术</td><td><code>art-deco</code></td><td>Midnight at the Starlight Hotel</td><td><a href="https://github.com/lemomo-ai/lemo-opuscar/blob/main/styles/art-deco/STYLE.md" target="_blank" rel="noopener">STYLE.md</a> · <a href="https://github.com/lemomo-ai/lemo-opuscar/tree/main/styles/art-deco" target="_blank" rel="noopener">demo</a> · <a class="copy-link" onclick="copyPrompt('art-deco',this);return false">📋 复制</a></td></tr>
+    <tr><td class="idx-th"><a href="https://github.com/lemomo-ai/lemo-opuscar/tree/main/styles/blueprint" target="_blank" rel="noopener"><img loading="lazy" src="opuscar-styles/blueprint/poster.jpg" alt="Blueprint 蓝图/工程制图"></a></td><td>Blueprint 蓝图/工程制图</td><td><code>blueprint</code></td><td>Patent Pending: The Cloud Catcher</td><td><a href="https://github.com/lemomo-ai/lemo-opuscar/blob/main/styles/blueprint/STYLE.md" target="_blank" rel="noopener">STYLE.md</a> · <a href="https://github.com/lemomo-ai/lemo-opuscar/tree/main/styles/blueprint" target="_blank" rel="noopener">demo</a> · <a class="copy-link" onclick="copyPrompt('blueprint',this);return false">📋 复制</a></td></tr>
+    <tr><td class="idx-th"><a href="https://github.com/lemomo-ai/lemo-opuscar/tree/main/styles/stained-glass" target="_blank" rel="noopener"><img loading="lazy" src="opuscar-styles/stained-glass/poster.jpg" alt="Stained Glass 彩色玻璃窗"></a></td><td>Stained Glass 彩色玻璃窗</td><td><code>stained-glass</code></td><td>The Dragon of the East Window</td><td><a href="https://github.com/lemomo-ai/lemo-opuscar/blob/main/styles/stained-glass/STYLE.md" target="_blank" rel="noopener">STYLE.md</a> · <a href="https://github.com/lemomo-ai/lemo-opuscar/tree/main/styles/stained-glass" target="_blank" rel="noopener">demo</a> · <a class="copy-link" onclick="copyPrompt('stained-glass',this);return false">📋 复制</a></td></tr>
+    <tr><td class="idx-th"><a href="https://github.com/lemomo-ai/lemo-opuscar/tree/main/styles/pictogram-motion" target="_blank" rel="noopener"><img loading="lazy" src="opuscar-styles/pictogram-motion/poster.jpg" alt="Pictogram Motion 象形运动图形"></a></td><td>Pictogram Motion 象形运动图形</td><td><code>pictogram-motion</code></td><td>Aichi-Nagoya 2026 全 43 大项</td><td><a href="https://github.com/lemomo-ai/lemo-opuscar/blob/main/styles/pictogram-motion/STYLE.md" target="_blank" rel="noopener">STYLE.md</a> · <a href="https://github.com/lemomo-ai/lemo-opuscar/tree/main/styles/pictogram-motion" target="_blank" rel="noopener">demo</a> · <a class="copy-link" onclick="copyPrompt('pictogram-motion',this);return false">📋 复制</a></td></tr>
+    <tr><td class="idx-th"><a href="https://github.com/lemomo-ai/lemo-opuscar/tree/main/styles/ascii-crt" target="_blank" rel="noopener"><img loading="lazy" src="opuscar-styles/ascii-crt/poster.jpg" alt="ASCII / CRT Terminal 终端"></a></td><td>ASCII / CRT Terminal 终端</td><td><code>ascii-crt</code></td><td>Tranquility.log</td><td><a href="https://github.com/lemomo-ai/lemo-opuscar/blob/main/styles/ascii-crt/STYLE.md" target="_blank" rel="noopener">STYLE.md</a> · <a href="https://github.com/lemomo-ai/lemo-opuscar/tree/main/styles/ascii-crt" target="_blank" rel="noopener">demo</a> · <a class="copy-link" onclick="copyPrompt('ascii-crt',this);return false">📋 复制</a></td></tr>
+    <tr><td class="idx-th"><a href="https://github.com/lemomo-ai/lemo-opuscar/tree/main/styles/dataviz" target="_blank" rel="noopener"><img loading="lazy" src="opuscar-styles/dataviz/poster.jpg" alt="Data Storytelling 数据叙事"></a></td><td>Data Storytelling 数据叙事</td><td><code>dataviz</code></td><td>A Hundred Summers</td><td><a href="https://github.com/lemomo-ai/lemo-opuscar/blob/main/styles/dataviz/STYLE.md" target="_blank" rel="noopener">STYLE.md</a> · <a href="https://github.com/lemomo-ai/lemo-opuscar/tree/main/styles/dataviz" target="_blank" rel="noopener">demo</a> · <a class="copy-link" onclick="copyPrompt('dataviz',this);return false">📋 复制</a></td></tr>
+    <tr><td class="idx-th"><a href="https://github.com/lemomo-ai/lemo-opuscar/tree/main/styles/iso-infographic" target="_blank" rel="noopener"><img loading="lazy" src="opuscar-styles/iso-infographic/poster.jpg" alt="Isometric Infographic 等距信息图"></a></td><td>Isometric Infographic 等距信息图</td><td><code>iso-infographic</code></td><td>From Bean to Cup</td><td><a href="https://github.com/lemomo-ai/lemo-opuscar/blob/main/styles/iso-infographic/STYLE.md" target="_blank" rel="noopener">STYLE.md</a> · <a href="https://github.com/lemomo-ai/lemo-opuscar/tree/main/styles/iso-infographic" target="_blank" rel="noopener">demo</a> · <a class="copy-link" onclick="copyPrompt('iso-infographic',this);return false">📋 复制</a></td></tr>
+    <tr><td class="idx-th"><a href="https://github.com/lemomo-ai/lemo-opuscar/tree/main/styles/dark-keynote" target="_blank" rel="noopener"><img loading="lazy" src="opuscar-styles/dark-keynote/poster.jpg" alt="Dark Tech Keynote 暗色科技发布"></a></td><td>Dark Tech Keynote 暗色科技发布</td><td><code>dark-keynote</code></td><td>Room to Think</td><td><a href="https://github.com/lemomo-ai/lemo-opuscar/blob/main/styles/dark-keynote/STYLE.md" target="_blank" rel="noopener">STYLE.md</a> · <a href="https://github.com/lemomo-ai/lemo-opuscar/tree/main/styles/dark-keynote" target="_blank" rel="noopener">demo</a> · <a class="copy-link" onclick="copyPrompt('dark-keynote',this);return false">📋 复制</a></td></tr>
+    <tr><td class="idx-th"><a href="https://github.com/lemomo-ai/lemo-opuscar/tree/main/styles/living-screencast" target="_blank" rel="noopener"><img loading="lazy" src="opuscar-styles/living-screencast/poster.jpg" alt="Living Screencast 活体实机录屏"></a></td><td>Living Screencast 活体实机录屏</td><td><code>living-screencast</code></td><td>Clawd Moves In</td><td><a href="https://github.com/lemomo-ai/lemo-opuscar/blob/main/styles/living-screencast/STYLE.md" target="_blank" rel="noopener">STYLE.md</a> · <a href="https://github.com/lemomo-ai/lemo-opuscar/tree/main/styles/living-screencast" target="_blank" rel="noopener">demo</a> · <a class="copy-link" onclick="copyPrompt('living-screencast',this);return false">📋 复制</a></td></tr>
+    <tr><td class="idx-th"><a href="https://github.com/lemomo-ai/lemo-opuscar/tree/main/styles/rubber-hose" target="_blank" rel="noopener"><img loading="lazy" src="opuscar-styles/rubber-hose/poster.jpg" alt="1930s Rubber Hose 橡皮管卡通"></a></td><td>1930s Rubber Hose 橡皮管卡通</td><td><code>rubber-hose</code></td><td>Coffee Cup Chase</td><td><a href="https://github.com/lemomo-ai/lemo-opuscar/blob/main/styles/rubber-hose/STYLE.md" target="_blank" rel="noopener">STYLE.md</a> · <a href="https://github.com/lemomo-ai/lemo-opuscar/tree/main/styles/rubber-hose" target="_blank" rel="noopener">demo</a> · <a class="copy-link" onclick="copyPrompt('rubber-hose',this);return false">📋 复制</a></td></tr>
+    <tr><td class="idx-th"><a href="https://github.com/lemomo-ai/lemo-opuscar/tree/main/styles/cel-anime-80s" target="_blank" rel="noopener"><img loading="lazy" src="opuscar-styles/cel-anime-80s/poster.jpg" alt="80s Cel Anime 80s 赛璐璐"></a></td><td>80s Cel Anime 80s 赛璐璐</td><td><code>cel-anime-80s</code></td><td>City Lights, 1987</td><td><a href="https://github.com/lemomo-ai/lemo-opuscar/blob/main/styles/cel-anime-80s/STYLE.md" target="_blank" rel="noopener">STYLE.md</a> · <a href="https://github.com/lemomo-ai/lemo-opuscar/tree/main/styles/cel-anime-80s" target="_blank" rel="noopener">demo</a> · <a class="copy-link" onclick="copyPrompt('cel-anime-80s',this);return false">📋 复制</a></td></tr>
+    <tr><td class="idx-th"><a href="https://github.com/lemomo-ai/lemo-opuscar/tree/main/styles/scifi-toon" target="_blank" rel="noopener"><img loading="lazy" src="opuscar-styles/scifi-toon/poster.jpg" alt="Sci-Fi Sitcom Toon 科幻情景喜剧"></a></td><td>Sci-Fi Sitcom Toon 科幻情景喜剧</td><td><code>scifi-toon</code></td><td>Coffee Run</td><td><a href="https://github.com/lemomo-ai/lemo-opuscar/blob/main/styles/scifi-toon/STYLE.md" target="_blank" rel="noopener">STYLE.md</a> · <a href="https://github.com/lemomo-ai/lemo-opuscar/tree/main/styles/scifi-toon" target="_blank" rel="noopener">demo</a> · <a class="copy-link" onclick="copyPrompt('scifi-toon',this);return false">📋 复制</a></td></tr>
+    <tr><td class="idx-th"><a href="https://github.com/lemomo-ai/lemo-opuscar/tree/main/styles/pixel-rpg" target="_blank" rel="noopener"><img loading="lazy" src="opuscar-styles/pixel-rpg/poster.jpg" alt="16-bit Pixel RPG 像素 RPG"></a></td><td>16-bit Pixel RPG 像素 RPG</td><td><code>pixel-rpg</code></td><td>The Last Save Point</td><td><a href="https://github.com/lemomo-ai/lemo-opuscar/blob/main/styles/pixel-rpg/STYLE.md" target="_blank" rel="noopener">STYLE.md</a> · <a href="https://github.com/lemomo-ai/lemo-opuscar/tree/main/styles/pixel-rpg" target="_blank" rel="noopener">demo</a> · <a class="copy-link" onclick="copyPrompt('pixel-rpg',this);return false">📋 复制</a></td></tr>
+    <tr><td class="idx-th"><a href="https://github.com/lemomo-ai/lemo-opuscar/tree/main/styles/hd-2d" target="_blank" rel="noopener"><img loading="lazy" src="opuscar-styles/hd-2d/poster.jpg" alt="HD-2D（八方旅人式）"></a></td><td>HD-2D（八方旅人式）</td><td><code>hd-2d</code></td><td>The Lampbearer</td><td><a href="https://github.com/lemomo-ai/lemo-opuscar/blob/main/styles/hd-2d/STYLE.md" target="_blank" rel="noopener">STYLE.md</a> · <a href="https://github.com/lemomo-ai/lemo-opuscar/tree/main/styles/hd-2d" target="_blank" rel="noopener">demo</a> · <a class="copy-link" onclick="copyPrompt('hd-2d',this);return false">📋 复制</a></td></tr>
+    <tr><td class="idx-th"><a href="https://github.com/lemomo-ai/lemo-opuscar/tree/main/styles/microgame" target="_blank" rel="noopener"><img loading="lazy" src="opuscar-styles/microgame/poster.jpg" alt="Microgame Frenzy 微游戏快闪"></a></td><td>Microgame Frenzy 微游戏快闪</td><td><code>microgame</code></td><td>Five-Second Astronaut</td><td><a href="https://github.com/lemomo-ai/lemo-opuscar/blob/main/styles/microgame/STYLE.md" target="_blank" rel="noopener">STYLE.md</a> · <a href="https://github.com/lemomo-ai/lemo-opuscar/tree/main/styles/microgame" target="_blank" rel="noopener">demo</a> · <a class="copy-link" onclick="copyPrompt('microgame',this);return false">📋 复制</a></td></tr>
+    <tr><td class="idx-th"><a href="https://github.com/lemomo-ai/lemo-opuscar/tree/main/styles/game-show" target="_blank" rel="noopener"><img loading="lazy" src="opuscar-styles/game-show/poster.jpg" alt="Game Show Flat 综艺扁平"></a></td><td>Game Show Flat 综艺扁平</td><td><code>game-show</code></td><td>Rhythm of AI, 1997→2026</td><td><a href="https://github.com/lemomo-ai/lemo-opuscar/blob/main/styles/game-show/STYLE.md" target="_blank" rel="noopener">STYLE.md</a> · <a href="https://github.com/lemomo-ai/lemo-opuscar/tree/main/styles/game-show" target="_blank" rel="noopener">demo</a> · <a class="copy-link" onclick="copyPrompt('game-show',this);return false">📋 复制</a></td></tr>
+    <tr><td class="idx-th"><a href="https://github.com/lemomo-ai/lemo-opuscar/tree/main/styles/silent-film" target="_blank" rel="noopener"><img loading="lazy" src="opuscar-styles/silent-film/poster.jpg" alt="1920s Silent Film 默片"></a></td><td>1920s Silent Film 默片</td><td><code>silent-film</code></td><td>The Runaway Loaf</td><td><a href="https://github.com/lemomo-ai/lemo-opuscar/blob/main/styles/silent-film/STYLE.md" target="_blank" rel="noopener">STYLE.md</a> · <a href="https://github.com/lemomo-ai/lemo-opuscar/tree/main/styles/silent-film" target="_blank" rel="noopener">demo</a> · <a class="copy-link" onclick="copyPrompt('silent-film',this);return false">📋 复制</a></td></tr>
+    <tr><td class="idx-th"><a href="https://github.com/lemomo-ai/lemo-opuscar/tree/main/styles/backrooms" target="_blank" rel="noopener"><img loading="lazy" src="opuscar-styles/backrooms/poster.jpg" alt="Liminal Found Footage 后室/新怪谈"></a></td><td>Liminal Found Footage 后室/新怪谈</td><td><code>backrooms</code></td><td>Night Shift Orientation</td><td><a href="https://github.com/lemomo-ai/lemo-opuscar/blob/main/styles/backrooms/STYLE.md" target="_blank" rel="noopener">STYLE.md</a> · <a href="https://github.com/lemomo-ai/lemo-opuscar/tree/main/styles/backrooms" target="_blank" rel="noopener">demo</a> · <a class="copy-link" onclick="copyPrompt('backrooms',this);return false">📋 复制</a></td></tr>
+    <tr><td class="idx-th"><a href="https://github.com/lemomo-ai/lemo-opuscar/tree/main/styles/brick-toy" target="_blank" rel="noopener"><img loading="lazy" src="opuscar-styles/brick-toy/poster.jpg" alt="Brick Toy 积木玩具"></a></td><td>Brick Toy 积木玩具</td><td><code>brick-toy</code></td><td>Rocket from Spare Parts</td><td><a href="https://github.com/lemomo-ai/lemo-opuscar/blob/main/styles/brick-toy/STYLE.md" target="_blank" rel="noopener">STYLE.md</a> · <a href="https://github.com/lemomo-ai/lemo-opuscar/tree/main/styles/brick-toy" target="_blank" rel="noopener">demo</a> · <a class="copy-link" onclick="copyPrompt('brick-toy',this);return false">📋 复制</a></td></tr>
+    <tr><td class="idx-th"><a href="https://github.com/lemomo-ai/lemo-opuscar/tree/main/styles/paper-popup" target="_blank" rel="noopener"><img loading="lazy" src="opuscar-styles/paper-popup/poster.jpg" alt="Paper Pop-up Book 纸片立体书"></a></td><td>Paper Pop-up Book 纸片立体书</td><td><code>paper-popup</code></td><td>Pip's Paper Adventure</td><td><a href="https://github.com/lemomo-ai/lemo-opuscar/blob/main/styles/paper-popup/STYLE.md" target="_blank" rel="noopener">STYLE.md</a> · <a href="https://github.com/lemomo-ai/lemo-opuscar/tree/main/styles/paper-popup" target="_blank" rel="noopener">demo</a> · <a class="copy-link" onclick="copyPrompt('paper-popup',this);return false">📋 复制</a></td></tr>
+    <tr><td class="idx-th"><a href="https://github.com/lemomo-ai/lemo-opuscar/tree/main/styles/tilt-shift" target="_blank" rel="noopener"><img loading="lazy" src="opuscar-styles/tilt-shift/poster.jpg" alt="Tilt-Shift Miniature 移轴微缩"></a></td><td>Tilt-Shift Miniature 移轴微缩</td><td><code>tilt-shift</code></td><td>Toy Town Rush Hour</td><td><a href="https://github.com/lemomo-ai/lemo-opuscar/blob/main/styles/tilt-shift/STYLE.md" target="_blank" rel="noopener">STYLE.md</a> · <a href="https://github.com/lemomo-ai/lemo-opuscar/tree/main/styles/tilt-shift" target="_blank" rel="noopener">demo</a> · <a class="copy-link" onclick="copyPrompt('tilt-shift',this);return false">📋 复制</a></td></tr>
+    <tr><td class="idx-th"><a href="https://github.com/lemomo-ai/lemo-opuscar/tree/main/styles/lowpoly-island" target="_blank" rel="noopener"><img loading="lazy" src="opuscar-styles/lowpoly-island/poster.jpg" alt="Low-poly Isometric 低多边形等距"></a></td><td>Low-poly Isometric 低多边形等距</td><td><code>lowpoly-island</code></td><td>The Island That Grew</td><td><a href="https://github.com/lemomo-ai/lemo-opuscar/blob/main/styles/lowpoly-island/STYLE.md" target="_blank" rel="noopener">STYLE.md</a> · <a href="https://github.com/lemomo-ai/lemo-opuscar/tree/main/styles/lowpoly-island" target="_blank" rel="noopener">demo</a> · <a class="copy-link" onclick="copyPrompt('lowpoly-island',this);return false">📋 复制</a></td></tr>
+    <tr><td class="idx-th"><a href="https://github.com/lemomo-ai/lemo-opuscar/tree/main/styles/glass-product" target="_blank" rel="noopener"><img loading="lazy" src="opuscar-styles/glass-product/poster.jpg" alt="Glass Product Render 玻璃质感产品"></a></td><td>Glass Product Render 玻璃质感产品</td><td><code>glass-product</code></td><td>Aura — Hear the Light</td><td><a href="https://github.com/lemomo-ai/lemo-opuscar/blob/main/styles/glass-product/STYLE.md" target="_blank" rel="noopener">STYLE.md</a> · <a href="https://github.com/lemomo-ai/lemo-opuscar/tree/main/styles/glass-product" target="_blank" rel="noopener">demo</a> · <a class="copy-link" onclick="copyPrompt('glass-product',this);return false">📋 复制</a></td></tr>
+  </table>
+  </div>
+  <p class="sec-desc reveal" style="margin-top:22px">💡 实战入口：装成 skill 后，在任何文件夹对 AI 说一句「用 <code>ink-wash</code> 风格做一支 45 秒的片子，讲……」即可开工——agent 会自动读取对应 STYLE.md 当导演。</p>
+</section>
+
+<footer>
+  <div>OPUS 5.5 拆解课堂 · 素材与案例归 Lemomo / 轩辕的编程宇宙及各位 X 博主所有</div>
+  <div style="margin-top:8px"><a href="index.html">← 返回灵感展厅</a> · <a href="https://github.com/lemomo-ai/lemo-opuscar" target="_blank" rel="noopener">lemo-opuscar 仓库</a> · <a href="https://mp.weixin.qq.com/s/OaFIBCqtWKFGFhhT-O5sbw" target="_blank" rel="noopener">原文</a></div>
+</footer>
+
+<script>
+  var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}})},{threshold:.1});
+  document.querySelectorAll('.reveal').forEach(function(el){io.observe(el)});
+</script>
+<script>
+// ---------- 一键复制 Prompt（按需取单文件，避免整包加载） ----------
+const __pcache={};
+function __flash(btn){
+  if(!btn)return;
+  const t=btn.textContent;btn.textContent='✓ 已复制';btn.classList.add('copied-flash');
+  setTimeout(()=>{btn.textContent=t;btn.classList.remove('copied-flash')},1600);
+}
+function __write(text,btn){
+  const done=()=>__flash(btn);
+  if(navigator.clipboard&&window.isSecureContext){
+    navigator.clipboard.writeText(text).then(done).catch(()=>__legacyCopy(text,done));
+  }else __legacyCopy(text,done);
+}
+function __legacyCopy(text,done){
+  const ta=document.createElement('textarea');ta.value=text;ta.style.position='fixed';ta.style.opacity='0';
+  document.body.appendChild(ta);ta.select();try{document.execCommand('copy')}catch(e){}ta.remove();done();
+}
+function copyPrompt(id,btn){
+  const cached=__pcache[id];
+  if(cached){__write(cached,btn);return}
+  fetch('prompts/'+id+'.md').then(r=>r.text()).then(t=>{__pcache[id]=t;__write(t,btn)}).catch(()=>__flash(btn));
+}
+function copyTpl(btn){
+  const el=document.querySelector('.tpl');
+  if(el)__write(el.innerText,btn);
+}
+</script>
+
+<!-- 常驻目录条：任何页面随时跳回 -->
+<div class="dock">
+  <a href="index.html" data-dock="wall"><b>🧱</b>案例墙</a>
+  <a href="learn.html" data-dock="learn"><b>📚</b>拆解课堂</a>
+  <a href="catalog.html" data-dock="catalog"><b>🌊</b>帧海洋</a>
+  <a href="pk-battle.html" data-dock="pk"><b>⚔</b>PK 擂台</a>
+</div>
+<script>document.querySelector('.dock a[data-dock="learn"]').classList.add('on');</script>
+</body>
+</html>

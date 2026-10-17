@@ -1,0 +1,627 @@
+[
+  {
+    "id": "art-deco",
+    "name": "Art Deco — Style Prompt",
+    "desc": "> Black lacquer, engraved gold line and airbrushed geometry: a 1930s grand-hotel poster that moves. Every composition has a centre axis, every transition opens or closes along it, and light arrives as bulbs switching on one by one.",
+    "prompt": "",
+    "stack": [
+      "Canvas"
+    ],
+    "poster": "opuscar-styles/art-deco/poster.jpg",
+    "stills": [
+      "opuscar-styles/art-deco/stills/frame_v1_lobby.jpg",
+      "opuscar-styles/art-deco/stills/frame_v1_roof.jpg",
+      "opuscar-styles/art-deco/stills/frame_v2_lobby.jpg",
+      "opuscar-styles/art-deco/stills/frame_v2_roof.jpg",
+      "opuscar-styles/art-deco/stills/kit_v1.jpg",
+      "opuscar-styles/art-deco/stills/kit_v2.jpg",
+      "opuscar-styles/art-deco/stills/modelsheet_v1.jpg",
+      "opuscar-styles/art-deco/stills/modelsheet_v2.jpg",
+      "opuscar-styles/art-deco/stills/styleframe.jpg"
+    ],
+    "github": "https://github.com/lemomo-ai/lemo-opuscar/tree/main/styles/art-deco"
+  },
+  {
+    "id": "ascii-crt",
+    "name": "ASCII / CRT Terminal: Style Prompt",
+    "desc": "> Everything on screen is a real character on a monospace grid, lit by the phosphor of an old monochrome CRT.",
+    "prompt": "",
+    "stack": [
+      "Three.js",
+      "Canvas"
+    ],
+    "poster": "opuscar-styles/ascii-crt/poster.jpg",
+    "stills": [
+      "opuscar-styles/ascii-crt/stills/styleframe.jpg"
+    ],
+    "github": "https://github.com/lemomo-ai/lemo-opuscar/tree/main/styles/ascii-crt"
+  },
+  {
+    "id": "backrooms",
+    "name": "Liminal Found Footage — Style Prompt",
+    "desc": "> Camcorder tapes recovered from empty, endless, fluorescent-lit spaces. Rules instead of monsters.",
+    "prompt": "",
+    "stack": [
+      "Canvas"
+    ],
+    "poster": "opuscar-styles/backrooms/poster.jpg",
+    "stills": [
+      "opuscar-styles/backrooms/stills/styleframe.jpg"
+    ],
+    "github": "https://github.com/lemomo-ai/lemo-opuscar/tree/main/styles/backrooms"
+  },
+  {
+    "id": "blueprint",
+    "name": "Blueprint — Style Prompt",
+    "desc": "> Engineering drawings that come alive on a sheet of cyanotype paper: white technical line work on Prussian blue, drawn in drafting order, with annotations that move.",
+    "prompt": "",
+    "stack": [
+      "Three.js",
+      "Canvas"
+    ],
+    "poster": "opuscar-styles/blueprint/poster.jpg",
+    "stills": [
+      "opuscar-styles/blueprint/stills/styleframe.jpg"
+    ],
+    "github": "https://github.com/lemomo-ai/lemo-opuscar/tree/main/styles/blueprint"
+  },
+  {
+    "id": "brick-toy",
+    "name": "Brick Toy — Style Prompt",
+    "desc": "> Stop-motion toy-brick films shot like macro photography on a real desk.",
+    "prompt": "",
+    "stack": [],
+    "poster": "opuscar-styles/brick-toy/poster.jpg",
+    "stills": [
+      "opuscar-styles/brick-toy/stills/styleframe.jpg"
+    ],
+    "github": "https://github.com/lemomo-ai/lemo-opuscar/tree/main/styles/brick-toy"
+  },
+  {
+    "id": "cel-anime-80s",
+    "name": "80s Cel Anime — Style Prompt",
+    "desc": "> Hand-painted cel animation from the golden age of Japanese OVAs, re-created in code: flat two-tone cels over airbrushed backgrounds, backlit neon, limited-animation timing — played back as a 1987 videotape on a CRT television.",
+    "prompt": "",
+    "stack": [
+      "Three.js",
+      "Canvas"
+    ],
+    "poster": "opuscar-styles/cel-anime-80s/poster.jpg",
+    "stills": [
+      "opuscar-styles/cel-anime-80s/stills/styleframe.jpg"
+    ],
+    "github": "https://github.com/lemomo-ai/lemo-opuscar/tree/main/styles/cel-anime-80s"
+  },
+  {
+    "id": "crayon-book",
+    "name": "Crayon Picture Book — Style Prompt",
+    "desc": "> A bedtime picture book drawn live in wax crayon on toothy paper, with one watercolour wash that reveals what the crayon was hiding.",
+    "prompt": "",
+    "stack": [
+      "Three.js",
+      "Canvas"
+    ],
+    "poster": "opuscar-styles/crayon-book/poster.jpg",
+    "stills": [
+      "opuscar-styles/crayon-book/stills/modelsheet_v1.jpg",
+      "opuscar-styles/crayon-book/stills/modelsheet_v1_moon.jpg",
+      "opuscar-styles/crayon-book/stills/modelsheet_v2_moon.jpg",
+      "opuscar-styles/crayon-book/stills/styleframe.jpg"
+    ],
+    "github": "https://github.com/lemomo-ai/lemo-opuscar/tree/main/styles/crayon-book"
+  },
+  {
+    "id": "dark-keynote",
+    "name": "Dark Tech Keynote — Style Prompt",
+    "desc": "> A software launch film where the interface itself is the star: near-black gradient, hairline grid, soft light, one brand accent, and UI that moves with snap-grid precision. The product is revealed by a sweeping light, its promise is one giant number, and the sound design literally \"tidies\" itself.",
+    "prompt": "",
+    "stack": [
+      "Canvas",
+      "HTML"
+    ],
+    "poster": "opuscar-styles/dark-keynote/poster.jpg",
+    "stills": [
+      "opuscar-styles/dark-keynote/stills/styleframe.jpg"
+    ],
+    "github": "https://github.com/lemomo-ai/lemo-opuscar/tree/main/styles/dark-keynote"
+  },
+  {
+    "id": "dataviz",
+    "name": "Data Storytelling — Style Prompt",
+    "desc": "> A chart that tells a story: real data, drawn point by point on cream paper by a red–blue pencil, with handwritten notes pinned to the numbers. Each data point is a note, and the chart itself is the camera, the rhythm and the plot.",
+    "prompt": "",
+    "stack": [
+      "Canvas"
+    ],
+    "poster": "opuscar-styles/dataviz/poster.jpg",
+    "stills": [
+      "opuscar-styles/dataviz/stills/engine_demo.jpg",
+      "opuscar-styles/dataviz/stills/frame_v1_0_animatic.jpg",
+      "opuscar-styles/dataviz/stills/frame_v1_1_first_summer.jpg",
+      "opuscar-styles/dataviz/stills/frame_v1_2_century.jpg",
+      "opuscar-styles/dataviz/stills/frame_v1_3_line_to_stripes.jpg",
+      "opuscar-styles/dataviz/stills/styleframe.jpg"
+    ],
+    "github": "https://github.com/lemomo-ai/lemo-opuscar/tree/main/styles/dataviz"
+  },
+  {
+    "id": "game-show",
+    "name": "Game Show Flat — Style Prompt",
+    "desc": "> A rhythm-game variety show in flat vector: bean-shaped mascots with 8 px ink outlines on candy-coloured stripes and sunbursts, every hit landing on a 150 BPM grid, call-and-response in every level, and a \"Perfect!\" at the end of each one.",
+    "prompt": "",
+    "stack": [
+      "Canvas",
+      "SVG",
+      "CSS",
+      "HTML"
+    ],
+    "poster": "opuscar-styles/game-show/poster.jpg",
+    "stills": [
+      "opuscar-styles/game-show/stills/styleframe.jpg",
+      "opuscar-styles/game-show/stills/t_125.png"
+    ],
+    "github": "https://github.com/lemomo-ai/lemo-opuscar/tree/main/styles/game-show"
+  },
+  {
+    "id": "glass-product",
+    "name": "Glass Product Render — Style Prompt",
+    "desc": "> Launch-film product rendering in transparent and frosted glass: dark-field studio, strip-light sweeps, dispersion, caustics, slow exploded views that snap shut on the drop.",
+    "prompt": "",
+    "stack": [
+      "Three.js",
+      "Canvas"
+    ],
+    "poster": "opuscar-styles/glass-product/poster.jpg",
+    "stills": [
+      "opuscar-styles/glass-product/stills/styleframe.jpg"
+    ],
+    "github": "https://github.com/lemomo-ai/lemo-opuscar/tree/main/styles/glass-product"
+  },
+  {
+    "id": "halftone-dossier",
+    "name": "Halftone Dossier — Style Prompt",
+    "desc": "> A retro print case file: cream archive paper, overprinted halftone dots in four flat inks, huge heavy headlines with misregistered shadows, rubber stamps that slam, and a chubby thick-outlined mascot as the \"suspect\". Every film is a mock investigation that is read out one exhibit at a time.",
+    "prompt": "",
+    "stack": [
+      "Canvas",
+      "SVG",
+      "CSS",
+      "HTML"
+    ],
+    "poster": "opuscar-styles/halftone-dossier/poster.jpg",
+    "stills": [
+      "opuscar-styles/halftone-dossier/stills/styleframe.jpg"
+    ],
+    "github": "https://github.com/lemomo-ai/lemo-opuscar/tree/main/styles/halftone-dossier"
+  },
+  {
+    "id": "hd-2d",
+    "name": "HD-2D",
+    "desc": "> Hand-made pixel sprites standing like paper cut-outs inside a lit, fogged, fully 3D diorama, shot from a high three-quarter angle through a tilt-shift lens: a toy world at night, where every lamp throws a real shadow.",
+    "prompt": "",
+    "stack": [
+      "Three.js",
+      "Canvas",
+      "HTML"
+    ],
+    "poster": "opuscar-styles/hd-2d/poster.jpg",
+    "stills": [
+      "opuscar-styles/hd-2d/stills/styleframe.jpg"
+    ],
+    "github": "https://github.com/lemomo-ai/lemo-opuscar/tree/main/styles/hd-2d"
+  },
+  {
+    "id": "impasto",
+    "name": "Impasto · Palette Knife — Style Prompt",
+    "desc": "> Thick oil paint laid with a palette knife: big, flat, sharp-edged planes of colour, raked by light so every ridge of paint shows. Clarity first: value structure before texture, hard edges at the focus, calm planes everywhere else.",
+    "prompt": "",
+    "stack": [
+      "Three.js",
+      "Canvas",
+      "React"
+    ],
+    "poster": "opuscar-styles/impasto/poster.jpg",
+    "stills": [
+      "opuscar-styles/impasto/stills/styleframe.jpg"
+    ],
+    "github": "https://github.com/lemomo-ai/lemo-opuscar/tree/main/styles/impasto"
+  },
+  {
+    "id": "ink-wash",
+    "name": "Chinese Ink Wash — Style Prompt",
+    "desc": "> Xieyi ink painting on rice paper, animated: blank paper is space, one brushstroke is a mountain, a wave, or a sword cut.",
+    "prompt": "",
+    "stack": [
+      "Three.js",
+      "Canvas"
+    ],
+    "poster": "opuscar-styles/ink-wash/poster.jpg",
+    "stills": [
+      "opuscar-styles/ink-wash/stills/modelsheet_v1.jpg",
+      "opuscar-styles/ink-wash/stills/styleframe.jpg"
+    ],
+    "github": "https://github.com/lemomo-ai/lemo-opuscar/tree/main/styles/ink-wash"
+  },
+  {
+    "id": "iso-infographic",
+    "name": "Isometric Infographic — Style Prompt",
+    "desc": "> A system's flowchart comes alive: one isometric diorama, flat three-tone blocks, thin ink labels and Isotype numbers. The camera travels the whole system in a single take, slices things open to show their insides, and at the end pulls back until the film becomes one printable infographic.",
+    "prompt": "",
+    "stack": [
+      "Canvas"
+    ],
+    "poster": "opuscar-styles/iso-infographic/poster.jpg",
+    "stills": [
+      "opuscar-styles/iso-infographic/stills/engine_shape.jpg",
+      "opuscar-styles/iso-infographic/stills/frame_v1_hillside.jpg",
+      "opuscar-styles/iso-infographic/stills/frame_v1_port.jpg",
+      "opuscar-styles/iso-infographic/stills/frame_v1_route.jpg",
+      "opuscar-styles/iso-infographic/stills/frame_v2_hands.jpg",
+      "opuscar-styles/iso-infographic/stills/styleframe.jpg"
+    ],
+    "github": "https://github.com/lemomo-ai/lemo-opuscar/tree/main/styles/iso-infographic"
+  },
+  {
+    "id": "living-screencast",
+    "name": "Living Screencast — Style Prompt",
+    "desc": "> A product walkthrough that looks like a real screen recording, where a low-resolution mascot lives inside a high-resolution interface and acts out what the software is doing.",
+    "prompt": "",
+    "stack": [
+      "SVG",
+      "CSS",
+      "HTML"
+    ],
+    "poster": "opuscar-styles/living-screencast/poster.jpg",
+    "stills": [
+      "opuscar-styles/living-screencast/stills/styleframe.jpg"
+    ],
+    "github": "https://github.com/lemomo-ai/lemo-opuscar/tree/main/styles/living-screencast"
+  },
+  {
+    "id": "lowpoly-island",
+    "name": "Low-poly Isometric Island — Style Prompt",
+    "desc": "> A tiny faceted world seen through an orthographic isometric lens: everything is a geometric block, and everything that appears arrives with a bounce and a note.",
+    "prompt": "",
+    "stack": [
+      "Canvas"
+    ],
+    "poster": "opuscar-styles/lowpoly-island/poster.jpg",
+    "stills": [
+      "opuscar-styles/lowpoly-island/stills/styleframe.jpg"
+    ],
+    "github": "https://github.com/lemomo-ai/lemo-opuscar/tree/main/styles/lowpoly-island"
+  },
+  {
+    "id": "microgame",
+    "name": "Microgame Frenzy — Style Prompt",
+    "desc": "> A rapid-fire party-game film: one command word, a few seconds, one action. Every microgame is drawn in a completely different art style, and the film keeps getting faster.",
+    "prompt": "",
+    "stack": [
+      "Three.js",
+      "Canvas"
+    ],
+    "poster": "opuscar-styles/microgame/poster.jpg",
+    "stills": [
+      "opuscar-styles/microgame/stills/modelsheet_v2.jpg",
+      "opuscar-styles/microgame/stills/modelsheet_v2_styles.jpg",
+      "opuscar-styles/microgame/stills/styleframe.jpg"
+    ],
+    "github": "https://github.com/lemomo-ai/lemo-opuscar/tree/main/styles/microgame"
+  },
+  {
+    "id": "one-line",
+    "name": "One-line Drawing — Style Prompt",
+    "desc": "> A single ink line that never leaves the paper. It draws a whole story, and when the camera pulls back, everything it drew turns out to be one picture.",
+    "prompt": "",
+    "stack": [
+      "SVG"
+    ],
+    "poster": "opuscar-styles/one-line/poster.jpg",
+    "stills": [
+      "opuscar-styles/one-line/stills/frame_v1_face.jpg",
+      "opuscar-styles/one-line/stills/frame_v1_hand.jpg",
+      "opuscar-styles/one-line/stills/frame_v1_love.jpg",
+      "opuscar-styles/one-line/stills/styleframe.jpg"
+    ],
+    "github": "https://github.com/lemomo-ai/lemo-opuscar/tree/main/styles/one-line"
+  },
+  {
+    "id": "paper-lantern",
+    "name": "Paper-cut Lightbox",
+    "desc": "> A layered paper-cut shadow box (纸雕灯) lit from behind: 6–9 sheets of cut card stacked in a shallow wooden box, a warm LED glowing through the paper, windows and moons burning through holes, soft shadows falling from each layer onto the next. The film opens on the real lightbox on a table and pushes into it.",
+    "prompt": "",
+    "stack": [
+      "Three.js",
+      "Canvas",
+      "HTML"
+    ],
+    "poster": "opuscar-styles/paper-lantern/poster.jpg",
+    "stills": [
+      "opuscar-styles/paper-lantern/stills/poster.jpg",
+      "opuscar-styles/paper-lantern/stills/styleframe.jpg"
+    ],
+    "github": "https://github.com/lemomo-ai/lemo-opuscar/tree/main/styles/paper-lantern"
+  },
+  {
+    "id": "paper-popup",
+    "name": "Paper Pop-up Book",
+    "desc": "> A storybook opens on a real wooden desk and becomes a stage: flat cut-paper characters with white borders act in front of pop-up sets that spring up from the page, and at the end the hero jumps off the page into the real room.",
+    "prompt": "",
+    "stack": [
+      "Three.js",
+      "Canvas",
+      "CSS",
+      "HTML"
+    ],
+    "poster": "opuscar-styles/paper-popup/poster.jpg",
+    "stills": [
+      "opuscar-styles/paper-popup/stills/styleframe.jpg",
+      "opuscar-styles/paper-popup/stills/t_126.jpg"
+    ],
+    "github": "https://github.com/lemomo-ai/lemo-opuscar/tree/main/styles/paper-popup"
+  },
+  {
+    "id": "papercut-red",
+    "name": "Red Paper-cut — Style Prompt",
+    "desc": "> Chinese window-flower paper-cuts brought to life: jointed red cut-outs on rice paper and indigo night paper, where the cut *is* the drawing and the holes are where the light gets in.",
+    "prompt": "",
+    "stack": [],
+    "poster": "opuscar-styles/papercut-red/poster.jpg",
+    "stills": [
+      "opuscar-styles/papercut-red/stills/styleframe.jpg"
+    ],
+    "github": "https://github.com/lemomo-ai/lemo-opuscar/tree/main/styles/papercut-red"
+  },
+  {
+    "id": "pictogram-motion",
+    "name": "5. Subtitles and posters",
+    "desc": "> A beat-locked flash-card film built from three things only: a **square-grid \"core graphic\"** of circles, half-discs and tiny patterned cells whose rows slide past each other; **geometric pictogram athletes** made of round-capped bars and a disc head; and **bold bilingual type** that slides up out of masks. Every cut lands on a drum hit.",
+    "prompt": "",
+    "stack": [
+      "Canvas",
+      "HTML"
+    ],
+    "poster": "opuscar-styles/pictogram-motion/poster.jpg",
+    "stills": [
+      "opuscar-styles/pictogram-motion/stills/cover34_ej.png",
+      "opuscar-styles/pictogram-motion/stills/cover_ej.png",
+      "opuscar-styles/pictogram-motion/stills/lab_ath.png",
+      "opuscar-styles/pictogram-motion/stills/styleframe.jpg"
+    ],
+    "github": "https://github.com/lemomo-ai/lemo-opuscar/tree/main/styles/pictogram-motion"
+  },
+  {
+    "id": "pixel-rpg",
+    "name": "16-bit Pixel RPG — Style Prompt",
+    "desc": "> A short film that looks, sounds and *behaves* like a mid-90s console role-playing game: 320×180 pixels, a limited palette, text boxes that type, menus, save points, chip music with echo.",
+    "prompt": "",
+    "stack": [],
+    "poster": "opuscar-styles/pixel-rpg/poster.jpg",
+    "stills": [
+      "opuscar-styles/pixel-rpg/stills/modelsheet_v1.jpg",
+      "opuscar-styles/pixel-rpg/stills/styleframe.jpg"
+    ],
+    "github": "https://github.com/lemomo-ai/lemo-opuscar/tree/main/styles/pixel-rpg"
+  },
+  {
+    "id": "risograph",
+    "name": "Risograph Print — Style Prompt",
+    "desc": "> Animation that looks like it was printed, frame by frame, on a stencil duplicator: two or three translucent spot inks overprinted on warm paper, halftone dots, ink grain, and plates that never quite line up.",
+    "prompt": "",
+    "stack": [
+      "Three.js",
+      "Canvas",
+      "React"
+    ],
+    "poster": "opuscar-styles/risograph/poster.jpg",
+    "stills": [
+      "opuscar-styles/risograph/stills/modelsheet_v2.jpg",
+      "opuscar-styles/risograph/stills/styleframe.jpg"
+    ],
+    "github": "https://github.com/lemomo-ai/lemo-opuscar/tree/main/styles/risograph"
+  },
+  {
+    "id": "rubber-hose",
+    "name": "1930s Rubber Hose Cartoon — Style Prompt",
+    "desc": "> Black-and-white hand-inked cartoons where every object is alive and swings to a hot jazz band.",
+    "prompt": "",
+    "stack": [
+      "Canvas",
+      "React"
+    ],
+    "poster": "opuscar-styles/rubber-hose/poster.jpg",
+    "stills": [
+      "opuscar-styles/rubber-hose/stills/styleframe.jpg"
+    ],
+    "github": "https://github.com/lemomo-ai/lemo-opuscar/tree/main/styles/rubber-hose"
+  },
+  {
+    "id": "scifi-toon",
+    "name": "Sci-Fi Sitcom Toon — Style Prompt",
+    "desc": "> Adult-animation sci-fi sitcom: thick boiling outlines, flat color, a jaded genius and a nervous sidekick, a glowing green portal, and one color palette per parallel universe.",
+    "prompt": "",
+    "stack": [
+      "React"
+    ],
+    "poster": "opuscar-styles/scifi-toon/poster.jpg",
+    "stills": [
+      "opuscar-styles/scifi-toon/stills/styleframe.jpg"
+    ],
+    "github": "https://github.com/lemomo-ai/lemo-opuscar/tree/main/styles/scifi-toon"
+  },
+  {
+    "id": "shadow-puppet",
+    "name": "Shadow Puppetry — Style Prompt",
+    "desc": "> Chinese shadow theatre: translucent dyed-hide puppets, carved like lace, pressed against a cotton screen and lit from behind by oil lamps.",
+    "prompt": "",
+    "stack": [
+      "Three.js",
+      "Canvas"
+    ],
+    "poster": "opuscar-styles/shadow-puppet/poster.jpg",
+    "stills": [
+      "opuscar-styles/shadow-puppet/stills/hands_test_v1.jpg",
+      "opuscar-styles/shadow-puppet/stills/styleframe.jpg"
+    ],
+    "github": "https://github.com/lemomo-ai/lemo-opuscar/tree/main/styles/shadow-puppet"
+  },
+  {
+    "id": "silent-film",
+    "name": "1920s Silent Film — Style Prompt",
+    "desc": "> An engraved-illustration silent comedy projected in a picture house: ink line and silver wash, a 4:3 print that flickers and weaves between velvet curtains, intertitles instead of voices, and a cinema pianist who plays every gag.",
+    "prompt": "",
+    "stack": [
+      "Three.js",
+      "Canvas",
+      "React"
+    ],
+    "poster": "opuscar-styles/silent-film/poster.jpg",
+    "stills": [
+      "opuscar-styles/silent-film/stills/frame_v1_cards.jpg",
+      "opuscar-styles/silent-film/stills/frame_v2_tender.jpg",
+      "opuscar-styles/silent-film/stills/modelsheet_v2.jpg",
+      "opuscar-styles/silent-film/stills/redraw_v1.jpg",
+      "opuscar-styles/silent-film/stills/styleframe.jpg"
+    ],
+    "github": "https://github.com/lemomo-ai/lemo-opuscar/tree/main/styles/silent-film"
+  },
+  {
+    "id": "spy-titles",
+    "name": "60s Spy Title Sequence — Style Prompt",
+    "desc": "> A cut-paper, four-ink opening title sequence for a spy film that never existed: silhouettes chase through sets built out of the credits themselves, every brass stab is a cut, and the title is the last thing to be assembled.",
+    "prompt": "",
+    "stack": [
+      "Canvas"
+    ],
+    "poster": "opuscar-styles/spy-titles/poster.jpg",
+    "stills": [
+      "opuscar-styles/spy-titles/stills/frame_v1_airport.jpg",
+      "opuscar-styles/spy-titles/stills/frame_v1_title.jpg",
+      "opuscar-styles/spy-titles/stills/frame_v1_train.jpg",
+      "opuscar-styles/spy-titles/stills/modelsheet_v1.jpg",
+      "opuscar-styles/spy-titles/stills/styleframe.jpg"
+    ],
+    "github": "https://github.com/lemomo-ai/lemo-opuscar/tree/main/styles/spy-titles"
+  },
+  {
+    "id": "stained-glass",
+    "name": "Stained Glass — Style Prompt",
+    "desc": "> A medieval stained-glass window that only comes alive where the sun touches it.",
+    "prompt": "",
+    "stack": [
+      "Three.js",
+      "Canvas"
+    ],
+    "poster": "opuscar-styles/stained-glass/poster.jpg",
+    "stills": [
+      "opuscar-styles/stained-glass/stills/styleframe.jpg"
+    ],
+    "github": "https://github.com/lemomo-ai/lemo-opuscar/tree/main/styles/stained-glass"
+  },
+  {
+    "id": "swiss-motion",
+    "name": "Swiss Motion Graphics — Style Prompt",
+    "desc": "> International Typographic Style in motion: a modular grid, one typeface, one signal red, and movement as exact as a printing press.",
+    "prompt": "",
+    "stack": [
+      "Canvas"
+    ],
+    "poster": "opuscar-styles/swiss-motion/poster.jpg",
+    "stills": [
+      "opuscar-styles/swiss-motion/stills/styleframe.jpg"
+    ],
+    "github": "https://github.com/lemomo-ai/lemo-opuscar/tree/main/styles/swiss-motion"
+  },
+  {
+    "id": "tilt-shift",
+    "name": "Tilt-Shift Miniature — Style Prompt",
+    "desc": "> A real-looking town photographed from high above with a tilted lens and a time-lapse camera, so the whole world reads as a tabletop model.",
+    "prompt": "",
+    "stack": [],
+    "poster": "opuscar-styles/tilt-shift/poster.jpg",
+    "stills": [
+      "opuscar-styles/tilt-shift/stills/styleframe.jpg"
+    ],
+    "github": "https://github.com/lemomo-ai/lemo-opuscar/tree/main/styles/tilt-shift"
+  },
+  {
+    "id": "ukiyoe",
+    "name": "Ukiyo-e — Style Prompt",
+    "desc": "> Edo-period woodblock prints brought to life: flat colour blocks, carved ink lines, Prussian blue, bokashi skies, paper you can feel — and a camera that moves over the print like an unrolling handscroll.",
+    "prompt": "",
+    "stack": [
+      "Canvas"
+    ],
+    "poster": "opuscar-styles/ukiyoe/poster.jpg",
+    "stills": [
+      "opuscar-styles/ukiyoe/stills/styleframe.jpg"
+    ],
+    "github": "https://github.com/lemomo-ai/lemo-opuscar/tree/main/styles/ukiyoe"
+  },
+  {
+    "id": "urban-sketch",
+    "name": "Urban Sketch · Pen & Wash",
+    "desc": "> **One line:** a sketchbook page from the park bench: fine sepia fineliner lines that wobble, overshoot and never quite close, with loose transparent watercolour dropped on top. The colour sits slightly off the lines, spills over them, and dissolves into cream cold-press paper at the page edge.",
+    "prompt": "",
+    "stack": [
+      "Three.js",
+      "Canvas"
+    ],
+    "poster": "opuscar-styles/urban-sketch/poster.jpg",
+    "stills": [
+      "opuscar-styles/urban-sketch/stills/styleframe.jpg"
+    ],
+    "github": "https://github.com/lemomo-ai/lemo-opuscar/tree/main/styles/urban-sketch"
+  },
+  {
+    "id": "watercolor",
+    "name": "($D/out/srt_cues.json = VO rows as {t0: s-.15, t1: s+dur+.45, text: \"en\\nzh\"}, dumped from scene.js with a 5-line node script)",
+    "desc": "> A naturalist's field-journal painting that paints itself: translucent brush strokes with dry-brush flying white on warm cotton paper, one long sideways walk through a landscape, hand-written notes and a quiet data gauge, then a pull-out to a painted map.",
+    "prompt": "",
+    "stack": [
+      "Canvas",
+      "CSS",
+      "HTML"
+    ],
+    "poster": "opuscar-styles/watercolor/poster.jpg",
+    "stills": [
+      "opuscar-styles/watercolor/stills/styleframe.jpg"
+    ],
+    "github": "https://github.com/lemomo-ai/lemo-opuscar/tree/main/styles/watercolor"
+  },
+  {
+    "id": "whiteboard",
+    "name": "Whiteboard Explainer — Style Prompt (v2, no hands)",
+    "desc": "> A science explainer drawn live on one glossy dry-erase board: single-line handwriting that is actually *written* stroke by stroke, floating markers with no hand, a magnet that can move, an eraser that can rewind time — and a camera that never leaves the board until the final pull-back shows the whole lesson hanging on the wall.",
+    "prompt": "",
+    "stack": [
+      "Canvas",
+      "SVG"
+    ],
+    "poster": "opuscar-styles/whiteboard/poster.jpg",
+    "stills": [
+      "opuscar-styles/whiteboard/stills/styleframe.jpg"
+    ],
+    "github": "https://github.com/lemomo-ai/lemo-opuscar/tree/main/styles/whiteboard"
+  },
+  {
+    "id": "woodcut",
+    "name": "Woodcut Print — Style Prompt",
+    "desc": "> A relief print that carves itself: every frame is a black wood block, and light only exists where a knife has cut it away. One colour at most, and only for the thing that burns.",
+    "prompt": "",
+    "stack": [
+      "Three.js",
+      "Canvas"
+    ],
+    "poster": "opuscar-styles/woodcut/poster.jpg",
+    "stills": [
+      "opuscar-styles/woodcut/stills/engine_example.jpg",
+      "opuscar-styles/woodcut/stills/filter_v1.jpg",
+      "opuscar-styles/woodcut/stills/frame_v1_pour.jpg",
+      "opuscar-styles/woodcut/stills/frame_v1_village.jpg",
+      "opuscar-styles/woodcut/stills/modelsheet_v1.jpg",
+      "opuscar-styles/woodcut/stills/styleframe.jpg"
+    ],
+    "github": "https://github.com/lemomo-ai/lemo-opuscar/tree/main/styles/woodcut"
+  }
+]

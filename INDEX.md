@@ -33,3 +33,9 @@
 - [128 件案例集](https://sunxiaoxi2039-star.github.io/website-showcase-sites/ideas/astra-vs-opus/cases/)
 - 本仓路径：`ideas/astra-vs-opus/`（PR#1 合并 `fa203f3` 收入；画廊侧 8 条展览随 `5968800` 上线）。
 - 内容：GPT-6 Astra 发布周 6 件作品的 Opus 临摹对照站 + 128 件作品索引，每件挂生成 prompt。
+
+## OPUS 5.5 灵感展厅（2026-10-05 并入 Kimimotion 区）
+
+- [线上入口](https://sunxiaoxi2039-star.github.io/website-showcase-sites/ideas/kimimotion/opus55-gallery/)
+- 本仓路径：`ideas/kimimotion/opus55-gallery/`。
+- 内容：Opus 5.5 案例墙——519 个真实案例单页全平铺：5 个 3D 神作 + Lemomo 39 种代码短片风格 + Yihui $3000 实测 475 支视频合集；每张卡带原作者标签、Prompt 全文（公开程度四档标注）与一键复制；知识讲解独立成 learn.html。数据驱动（data/cases.json）。

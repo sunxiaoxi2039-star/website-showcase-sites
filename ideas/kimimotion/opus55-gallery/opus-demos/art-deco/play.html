@@ -1,0 +1,35 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<style>
+html,body{margin:0;height:100%;background:#0a0908;overflow:hidden}
+#box{width:1920px;height:1080px;transform-origin:top left}
+iframe{width:1920px;height:1080px;border:0;display:block}
+</style></head><body>
+<div id="box"><iframe id="f" src="index.html"></iframe></div>
+<script>
+const box=document.getElementById('box'),f=document.getElementById('f');
+function fit(){const s=Math.min(innerWidth/1920,innerHeight/1080);box.style.transform='scale('+s+')';}
+addEventListener('resize',fit);fit();
+f.addEventListener('load',()=>{
+  const w=f.contentWindow;let started=false;
+  (function poll(){
+    if(w.READY&&!started){
+      started=true;
+      const D=(w.DUR&&w.DUR>1)?w.DUR:49;
+      const t0=performance.now();
+      (function loop(){
+        w.render(((performance.now()-t0)/1000)%D);
+        requestAnimationFrame(loop);
+      })();
+    }else if(!started){setTimeout(poll,120);}
+    fit();
+  })();
+  setTimeout(()=>{
+    if(!started){
+      document.body.innerHTML='<div style="color:#e8d9a0;font:14px/1.8 sans-serif;padding:40px;text-align:center">'
+        +'这部 Art Deco 短片需要 WebGL 才能渲染。<br>请开启浏览器硬件加速。'
+        +'<br><br><a style="color:#e8b04b" href="https://github.com/lemomo-ai/lemo-opuscar/tree/main/styles/art-deco" target="_blank">去看 GitHub 源码 ↗</a></div>';
+    }
+  },8000);
+});
+</script></body></html>
