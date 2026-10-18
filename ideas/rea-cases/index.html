@@ -1,1 +1,542 @@
-__GH_HTML__
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>REA 案例展厅 — 逆向工程任何事物</title>
+<style>
+  :root{
+    --green:#00F48E;
+    --green-bright:#00FF3C;
+    --green-dim:rgba(0,244,142,.45);
+    --green-faint:rgba(0,244,142,.10);
+    --black:#000000;
+    --mono:"SF Mono","JetBrains Mono","Cascadia Code",ui-monospace,Menlo,Consolas,"PingFang SC","Microsoft YaHei",monospace;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{background:var(--black)}
+  body{
+    background:var(--black);
+    color:var(--green);
+    font-family:var(--mono);
+    font-size:15px;
+    line-height:1.75;
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+  }
+  ::selection{background:var(--green);color:#000}
+  ::-webkit-scrollbar{width:4px}
+  ::-webkit-scrollbar-track{background:#000}
+  ::-webkit-scrollbar-thumb{background:var(--green-dim)}
+
+  /* CRT scanlines + vignette */
+  .crt{
+    position:fixed;inset:0;pointer-events:none;z-index:60;
+    background:repeating-linear-gradient(0deg,rgba(0,0,0,.22) 0 1px,transparent 1px 3px);
+    mix-blend-mode:multiply;
+  }
+  .crt::after{
+    content:"";position:absolute;inset:0;
+    background:radial-gradient(ellipse at center,transparent 55%,rgba(0,0,0,.55) 100%);
+  }
+  .glow{text-shadow:0 0 6px rgba(0,244,142,.55),0 0 24px rgba(0,244,142,.18)}
+
+  /* boot overlay */
+  #boot{
+    position:fixed;inset:0;background:#000;z-index:100;
+    display:flex;align-items:flex-start;justify-content:flex-start;
+    padding:12vh 8vw 0;font-size:14px;white-space:pre-wrap;
+    transition:opacity .5s ease;
+  }
+  #boot.done{opacity:0;pointer-events:none}
+  .cursor{display:inline-block;width:.6em;height:1.1em;background:var(--green);vertical-align:-2px;animation:blink 1s steps(1) infinite}
+  @keyframes blink{50%{opacity:0}}
+
+  .wrap{max-width:1080px;margin:0 auto;padding:0 20px}
+
+  /* top bar */
+  header{
+    position:sticky;top:0;z-index:50;background:rgba(0,0,0,.92);
+    border-bottom:1px solid rgba(0,244,142,.25);
+    backdrop-filter:blur(4px);
+  }
+  .bar{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:10px 20px;max-width:1080px;margin:0 auto;
+    font-size:12px;letter-spacing:.08em;text-transform:uppercase;
+  }
+  .bar a{color:var(--green);text-decoration:none;border-bottom:1px dashed var(--green-dim)}
+  .bar .dot{color:var(--green-dim)}
+
+  /* hero */
+  .hero{padding:9vh 0 6vh}
+  .hero .kicker{font-size:12px;letter-spacing:.35em;text-transform:uppercase;color:var(--green-dim)}
+  .hero h1{
+    font-size:clamp(72px,18vw,220px);
+    line-height:.95;font-weight:700;letter-spacing:-.02em;
+    color:var(--green-bright);
+    text-shadow:0 0 12px rgba(0,255,60,.6),0 0 60px rgba(0,255,60,.25);
+    margin:10px 0 4px;
+  }
+  .hero h2{
+    font-size:clamp(20px,4.6vw,44px);font-weight:700;letter-spacing:.12em;
+  }
+  .hero p.sub{max-width:640px;margin-top:18px;color:var(--green)}
+  .hero p.sub em{font-style:normal;background:var(--green-faint);padding:0 4px}
+  .stats{
+    display:flex;flex-wrap:wrap;gap:0;margin:34px 0 40px;
+    border:1px solid rgba(0,244,142,.3);
+    clip-path:polygon(0 0,calc(100% - 14px) 0,100% 14px,100% 100%,14px 100%,0 calc(100% - 14px));
+  }
+  .stat{flex:1 1 140px;padding:14px 16px;border-right:1px dashed rgba(0,244,142,.25)}
+  .stat:last-child{border-right:0}
+  .stat b{display:block;font-size:clamp(20px,5vw,30px);color:var(--green-bright);font-weight:700}
+  .stat span{font-size:11px;letter-spacing:.15em;text-transform:uppercase;color:var(--green-dim)}
+
+  /* notched media frame */
+  .frame{
+    border:1px solid rgba(0,244,142,.35);
+    clip-path:polygon(0 0,calc(100% - 18px) 0,100% 18px,100% 100%,18px 100%,0 calc(100% - 18px));
+    background:var(--green-faint);
+    padding:6px;
+  }
+  .frame img{display:block;width:100%;height:auto;filter:saturate(.92) contrast(1.02)}
+  .frame .cap{
+    display:flex;justify-content:space-between;gap:10px;
+    font-size:11px;letter-spacing:.12em;text-transform:uppercase;
+    color:var(--green-dim);padding:7px 4px 1px;
+  }
+
+  /* warning strip */
+  .warning{
+    margin:6vh 0;border:1px solid rgba(0,244,142,.35);
+    clip-path:polygon(0 0,calc(100% - 18px) 0,100% 18px,100% 100%,18px 100%,0 calc(100% - 18px));
+    padding:22px 22px 26px;background:var(--green-faint);
+  }
+  .warning h3{font-size:13px;letter-spacing:.25em;text-transform:uppercase;color:var(--green-bright)}
+  .warning p{margin-top:10px;font-size:14px}
+  .warning .frame{margin-top:16px}
+
+  /* section head */
+  .sec{padding:7vh 0 2vh}
+  .sec .prompt{font-size:13px;color:var(--green-dim);letter-spacing:.1em}
+  .sec h2{
+    font-size:clamp(26px,6.5vw,52px);font-weight:700;line-height:1.2;margin-top:6px;
+    text-shadow:0 0 10px rgba(0,244,142,.35);
+  }
+  .sec h2 .no{color:var(--green-dim);font-weight:400;margin-right:14px}
+
+  /* case entry */
+  .case{padding:5vh 0 6vh;border-top:1px dashed rgba(0,244,142,.22)}
+  .case .idx{
+    font-size:clamp(64px,15vw,150px);font-weight:700;line-height:.9;
+    color:transparent;-webkit-text-stroke:1px var(--green-dim);
+  }
+  .case h3{
+    font-size:clamp(19px,4.6vw,32px);font-weight:700;margin:8px 0 14px;line-height:1.35;
+  }
+  .case .body{max-width:680px;color:var(--green)}
+  .case .body p{margin-bottom:10px}
+  .meta{
+    margin:16px 0 0;font-size:12px;letter-spacing:.06em;color:var(--green-dim);
+    display:flex;flex-wrap:wrap;gap:8px 22px;
+  }
+  .meta a{color:var(--green-bright);text-decoration:none;border-bottom:1px solid var(--green-dim);word-break:break-all}
+  .meta a:hover{background:var(--green-faint)}
+  .case .frame{margin-top:22px}
+  .case .grid2{display:grid;grid-template-columns:1fr;gap:14px;margin-top:22px}
+  @media(min-width:760px){.case .grid2{grid-template-columns:1fr 1fr}}
+
+  /* typographic panel for cases without screenshots */
+  .panel{
+    margin-top:22px;padding:26px 24px;
+    border:1px solid rgba(0,244,142,.35);background:var(--green-faint);
+    clip-path:polygon(0 0,calc(100% - 18px) 0,100% 18px,100% 100%,18px 100%,0 calc(100% - 18px));
+  }
+  .panel .big{
+    font-size:clamp(22px,6vw,44px);font-weight:700;line-height:1.3;color:var(--green-bright);
+    text-shadow:0 0 10px rgba(0,255,60,.35);
+  }
+  .panel .tag{
+    display:inline-block;margin-top:14px;font-size:11px;letter-spacing:.2em;text-transform:uppercase;
+    border:1px solid var(--green-dim);padding:3px 10px;color:var(--green-dim);
+  }
+
+  /* tools list */
+  .tool{border-top:1px dashed rgba(0,244,142,.22);padding:26px 0}
+  .tool h4{font-size:clamp(17px,4vw,24px);font-weight:700}
+  .tool h4 .role{color:var(--green-dim);font-weight:400;font-size:.8em;margin-left:10px}
+  .tool p{margin-top:8px;font-size:14px;max-width:640px}
+  .tool a{color:var(--green-bright);text-decoration:none;border-bottom:1px solid var(--green-dim);word-break:break-all;font-size:13px}
+  .tool .frame{margin-top:16px;max-width:640px}
+
+  /* install */
+  .cmd{
+    margin:22px 0;background:#020704;border:1px solid rgba(0,244,142,.4);
+    clip-path:polygon(0 0,calc(100% - 18px) 0,100% 18px,100% 100%,18px 100%,0 calc(100% - 18px));
+    padding:20px 22px;position:relative;
+  }
+  .cmd code{font-size:clamp(15px,4vw,20px);color:var(--green-bright);text-shadow:0 0 8px rgba(0,255,60,.4);word-break:break-all}
+  .cmd button{
+    position:absolute;top:12px;right:12px;background:transparent;color:var(--green);
+    border:1px solid var(--green-dim);font-family:var(--mono);font-size:11px;letter-spacing:.15em;
+    padding:5px 12px;cursor:pointer;text-transform:uppercase;
+  }
+  .cmd button:hover{background:var(--green-faint)}
+  .steps{counter-reset:st;max-width:680px}
+  .steps li{
+    list-style:none;counter-increment:st;padding:10px 0 10px 44px;position:relative;font-size:14px;
+  }
+  .steps li::before{
+    content:"["counter(st,decimal-leading-zero)"]";
+    position:absolute;left:0;top:10px;color:var(--green-dim);font-size:12px;
+  }
+
+  footer{
+    margin-top:8vh;border-top:1px solid rgba(0,244,142,.25);
+    padding:34px 0 60px;font-size:12px;color:var(--green-dim);letter-spacing:.05em;
+  }
+  footer a{color:var(--green);text-decoration:none;border-bottom:1px dashed var(--green-dim)}
+</style>
+</head>
+<body>
+<div class="crt"></div>
+
+<div id="boot"><span id="boottext"></span><span class="cursor"></span></div>
+
+<header>
+  <div class="bar">
+    <span>&gt; rea_cases.exe<span class="dot"> :: </span>reverse-engineer-anything</span>
+    <a href="https://github.com/morluto/rea" target="_blank" rel="noopener">github/morluto/rea</a>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="kicker glow">GitHub Trending #1 · 两周 30 万 Star</div>
+    <h1>REA</h1>
+    <h2 class="glow">逆向工程任何事物</h2>
+    <p class="sub">
+      一种跨二进制文件、应用程序和运行时行为的反向工程集中解决方案。让 Claude Code、Codex 这些 Agent 去研究<em>没有源码的软件</em>，搞清某个功能怎么实现，再给自己的项目写一个类似的。看到喜欢的功能，了解它的工作原理——甚至到二进制级别。
+    </p>
+    <div class="stats">
+      <div class="stat"><b>300K+</b><span>GitHub Stars</span></div>
+      <div class="stat"><b>#1</b><span>Repo of the Day</span></div>
+      <div class="stat"><b>v6.5.0</b><span>npm</span></div>
+      <div class="stat"><b>MIT</b><span>License</span></div>
+    </div>
+    <div class="frame">
+      <img src="https://mmbiz.qpic.cn/sz_mmbiz_png/M2ibDBMdECU2p1tjmV4XQZxffzgWL6fib8KZJhxbKuX6sC9gDyOSoYa1lEkIibBXibu6CfPDm7pqyylmAphox7OZsLBndhSS4C6eTEib11fOXO80/640?wx_fmt=png&amp;from=appmsg" alt="REA 项目主页">
+      <div class="cap"><span>fig.00 — rea homepage</span><span>source: github</span></div>
+    </div>
+  </section>
+
+  <!-- WARNING -->
+  <section class="warning">
+    <h3 class="glow">&gt; warning :: 先泼一盆冷水</h3>
+    <p>有网友拿 Codex 接入尝试 REA 后，自己用了好几年的账号被封了——2022 年注册的老号，陪了快四年，就这么没了。具体封禁原因尚不明确，一种猜测是 Codex 底层风控对偏灰产的操作有监控机制，可能就中招了。<strong>想玩，先掂量账号成本。</strong></p>
+    <div class="frame">
+      <img src="https://mmbiz.qpic.cn/sz_mmbiz_png/M2ibDBMdECU2OvfSh9AqEp7bFXylibLjujXSdicK02lrQsQnsf0SCNwRBDmEfEssYX8m5c9CTfCtpoVZtDUGM0Elh7YFicg11e0IKj6picFAvFB0/640?wx_fmt=png&amp;from=appmsg" alt="网友称用 Codex 做逆向后 OpenAI 账号被封">
+      <div class="cap"><span>fig.01 — account terminated</span><span>@Vincent_AINotes · 489.9K views</span></div>
+    </div>
+  </section>
+
+  <!-- CASES -->
+  <section class="sec" id="cases">
+    <div class="prompt">&gt; ls ./cases --sort=hot</div>
+    <h2><span class="no">01</span>网友用它做出了什么</h2>
+  </section>
+
+  <!-- 01 -->
+  <article class="case">
+    <div class="idx">01</div>
+    <h3>把智能马桶搞进电脑状态栏</h3>
+    <div class="body">
+      <p>最有画面感的一个。网友研究了自家智能马桶的微信小程序，让 Codex 配合 REA 找出蓝牙控制方式，然后给电脑做了一个状态栏遥控器——坐在电脑前点一下按钮，就能让马桶翻盖。前后大概花了半小时，常用操作都放进了控制面板。</p>
+      <p>平时智能家居往往得打开各家的 App，或者去找遥控器；现在一个状态栏就解决了。</p>
+    </div>
+    <div class="meta">
+      <span>耗时 ≈ 30 min</span>
+      <a href="https://x.com/thinkszyg/status/2109309251533570509" target="_blank" rel="noopener">x.com/thinkszyg →</a>
+    </div>
+    <div class="panel">
+      <div class="big">$ blectl toilet --lid up</div>
+      <span class="tag">hardware hack · 微信小程序 → 蓝牙协议</span>
+    </div>
+  </article>
+
+  <!-- 02 -->
+  <article class="case">
+    <div class="idx">02</div>
+    <h3>把《大富翁4》做进 iPhone</h3>
+    <div class="body">
+      <p>网友拿 REA 研究了经典游戏《大富翁4》，然后让 Claude 用 Flutter 重写，再编译到 iPhone 上运行。熟悉的地图和界面出现在手机上，玩过这款游戏的人一下就有感觉了。</p>
+      <p>研究花了一天，重写又花了一天，作者自己觉得完成度已经挺高。把小时候玩过的游戏做成适合现在设备的版本——光是这个用途，就足够让不少人想试试了。</p>
+    </div>
+    <div class="meta">
+      <span>耗时 1d 研究 + 1d 重写</span>
+      <a href="https://x.com/iam678/status/2110618564608880843" target="_blank" rel="noopener">x.com/iam678 →</a>
+    </div>
+    <div class="panel">
+      <div class="big">Richman 4 → Flutter → iOS</div>
+      <span class="tag">game remake · 童年复活计划</span>
+    </div>
+  </article>
+
+  <!-- 03 -->
+  <article class="case">
+    <div class="idx">03</div>
+    <h3>把 Claude Code 的背景动画做成自己的网页效果</h3>
+    <div class="body">
+      <p>Claude 桌面 App 的 Code 新会话页面里，有一片缓缓流动的字符背景，鼠标移过去字符会跟着变化。Henry Fan 用 REA 研究了这个效果，让 Agent 写了一个独立版本，还把代码开源了。</p>
+      <p>字符会形成流动图案，点击后出现涟漪变化；旁边有调节面板，颜色、速度快慢都可以自己改。拿来做个人网站背景，或者给自己的应用加点动效，都挺合适。</p>
+    </div>
+    <div class="meta">
+      <span>已开源 · MIT</span>
+      <a href="https://x.com/Henry_Fan_lh/status/2110984628836376688" target="_blank" rel="noopener">x.com/Henry_Fan_lh →</a>
+      <a href="https://github.com/Henry-fan88/claude-code-background" target="_blank" rel="noopener">github 源码 →</a>
+    </div>
+    <div class="panel">
+      <div class="big">canvas · char-flow · ripple</div>
+      <span class="tag">web effect · 可调参背景动画</span>
+    </div>
+  </article>
+
+  <!-- 04 -->
+  <article class="case">
+    <div class="idx">04</div>
+    <h3>给自己的录屏流程加上自动缩放</h3>
+    <div class="body">
+      <p>做教程的人对 Screen Studio 那种录屏效果不陌生：鼠标点到一个地方，画面适当放大，镜头平滑移过去，观众更容易跟上操作。Simon 聊 AI 拿 REA 研究了它，想弄清什么时候该放大、镜头该怎么移动。</p>
+      <p>查清规则后，他让 Claude Code 写了个简化版本，接进自己的视频制作流程——那条演示视频就是用这个工具录的。它还缺少完整的可视化编辑器，部分效果要靠改文件调整，但常用的录屏效果现在可以放进自己的工具里慢慢改了。</p>
+    </div>
+    <div class="meta">
+      <span>简化版已接入工作流</span>
+      <a href="https://x.com/HanZhang415188/status/2109843188341207283" target="_blank" rel="noopener">x.com/Simon 聊 AI →</a>
+    </div>
+    <div class="panel">
+      <div class="big">auto-zoom · smooth-pan</div>
+      <span class="tag">video pipeline · Screen Studio 平替</span>
+    </div>
+  </article>
+
+  <!-- 05 -->
+  <article class="case">
+    <div class="idx">05</div>
+    <h3>给电视做一个电脑控制面板</h3>
+    <div class="body">
+      <p>网友 greco 把目光放到自家电视上。他用 REA 研究后，做了一个电脑上的控制面板：切换应用和输入源、调音量、当遥控器用，还列出了 Mac 屏幕镜像、屏幕时间和画面调节等功能。</p>
+      <p>一个窗口把这些操作放到一起。经常把电视当大屏用的话，这种控制方式很顺手，不用每次拿起遥控器在菜单里找。</p>
+    </div>
+    <div class="meta">
+      <span>Mac ↔ TV</span>
+      <a href="https://x.com/greco_dev/status/2109842197654692349" target="_blank" rel="noopener">x.com/greco_dev →</a>
+    </div>
+    <div class="panel">
+      <div class="big">$ tvctl --input hdmi1 --vol 20</div>
+      <span class="tag">living room · 一个窗口管全家</span>
+    </div>
+  </article>
+
+  <!-- 06 -->
+  <article class="case">
+    <div class="idx">06</div>
+    <h3>把幻灯片编辑器接进自己的产品</h3>
+    <div class="body">
+      <p>宝玉想把幻灯片编辑能力接进自己的 BaoCut，于是用 Codex 配合 REA 研究 Claude Slides 的编辑器，再让 Claude Code 整理和重写代码。</p>
+      <p>原包约 3.3 MB、5,769 个顶层语句、没有 source map——REA 把业务代码还原成 288 个可读性良好的 TypeScript 模块，第三方依赖直接用 npm，类型检查、构建、17 项自动测试和 16 个 PPTX 导出对照全部通过。用时约 37 分钟。幻灯片编辑、预览从此成了自己产品的一部分。</p>
+    </div>
+    <div class="meta">
+      <span>288 个 TS 模块 · 37 min</span>
+      <a href="https://x.com/dotey/status/2109151666020794711" target="_blank" rel="noopener">x.com/dotey →</a>
+    </div>
+    <div class="frame">
+      <img src="https://mmbiz.qpic.cn/mmbiz_jpg/M2ibDBMdECU15zvDvMFx7hWlgQn2nKQ5Oxia4MrTQoHKc1eqSkq0rZDbnUhnVQibIZGDIeR2gRMgc1rH01vo48RMRvewlQsSCdDckpYNZVdxfs/640?wx_fmt=jpeg&amp;from=appmsg" alt="BaoCut 接入幻灯片编辑器">
+      <div class="cap"><span>fig.06a — slides editor in BaoCut</span><span>@dotey</span></div>
+    </div>
+    <div class="grid2">
+      <div class="frame">
+        <img src="https://mmbiz.qpic.cn/sz_mmbiz_jpg/M2ibDBMdECU2xiczuKqHru2tuKjEtLNuOe1gzS9eEGpckLQh1bfDYUncCdEWM80F1W9TibI4pbQBkn2BrXmanib6Akn3ezKhYB42yQeh5E6pTbA/640?wx_fmt=jpeg&amp;from=appmsg" alt="REA 还原打包代码过程">
+        <div class="cap"><span>fig.06b — 3.3MB bundle → 288 modules</span></div>
+      </div>
+      <div class="frame">
+        <img src="https://mmbiz.qpic.cn/mmbiz_jpg/M2ibDBMdECU1rzW5pIA47N5q35cMLFrFVEa6DNrianXh2E2MRjg6lpVY5MeyAzEJ86aibPRblqD7HcOI8YyflXng7fV4SXMvsw6lY580e6qpdg/640?wx_fmt=jpeg&amp;from=appmsg" alt="顺手蒸馏出 data-dashboard skill">
+        <div class="cap"><span>fig.06c — bonus: data-dashboard.skill</span></div>
+      </div>
+    </div>
+  </article>
+
+  <!-- 07 -->
+  <article class="case">
+    <div class="idx">07</div>
+    <h3>做一个自己的 Mac 清理工具</h3>
+    <div class="body">
+      <p>Iceman Shen 用 Codex 和 REA 研究 CleanMyMac，给自己做了一款叫 ClearSpace 的 Mac 清理工具：清缓存、管理应用、找出大文件和重复文件，界面里还能看到磁盘空间到底花在了哪儿。</p>
+      <p>已经是一套挺完整的产品界面——Smart Care 扫描、Cleanup 列表、Space Lens 空间透视，一个不缺。</p>
+    </div>
+    <div class="meta">
+      <span>CleanMyMac → ClearSpace</span>
+      <a href="https://x.com/iceman_shen/status/2109665812017746132" target="_blank" rel="noopener">x.com/iceman_shen →</a>
+    </div>
+    <div class="frame">
+      <img src="https://mmbiz.qpic.cn/mmbiz_jpg/M2ibDBMdECU19uwZSibsHPZshxG75Mdn9iaXnJMuzvg399cqS2iavic1NNwvxBPp6djG8uibLYpCib1w0FcxHiaWjKHvf9hox5FXlSAPIDvnyy2D9zw/640?wx_fmt=jpeg&amp;from=appmsg" alt="ClearSpace 主界面">
+      <div class="cap"><span>fig.07a — "A little care. A lighter Mac."</span><span>@iceman_shen</span></div>
+    </div>
+    <div class="frame" style="margin-top:14px">
+      <img src="https://mmbiz.qpic.cn/sz_mmbiz_jpg/M2ibDBMdECU2JZrdI0pJHJDWMYatnl1KH2Tk6KbrEjTwxDUqiarxbmCWyI2YS39obFkYrqX84joWKSMiaEud6TmJr2WXyX0yojV1WXFr62kw0k/640?wx_fmt=jpeg&amp;from=appmsg" alt="ClearSpace 清理列表">
+      <div class="cap"><span>fig.07b — 91,583 items · 3.19 GB</span></div>
+    </div>
+  </article>
+
+  <!-- 08 -->
+  <article class="case">
+    <div class="idx">08</div>
+    <h3>参考 Typeless，做离线语音输入工具</h3>
+    <div class="body">
+      <p>Chris 想给 Typeless 找个替代品，就让 Claude 配合 REA 先看看这个 App 是怎么工作的。最后做出来的版本可以按住 Fn 键说话、松开后输出文字，还能整理口头表达。</p>
+      <p>过程中发现原版的识别和润色都在服务器上做，于是他另外接上本地模型，把整套流程做成了可以离线运行的版本。识别还没原版那么稳定，偶尔会漏字。</p>
+    </div>
+    <div class="meta">
+      <span>本地模型 · 完全离线</span>
+      <a href="https://x.com/Chris62771610/status/2109887689147421063" target="_blank" rel="noopener">x.com/Chris →</a>
+    </div>
+    <div class="panel">
+      <div class="big">hold Fn → talk → text</div>
+      <span class="tag">offline whisper · 隐私友好</span>
+    </div>
+  </article>
+
+  <!-- 09 -->
+  <article class="case">
+    <div class="idx">09</div>
+    <h3>让自己的网页唤起 Codex 评论框</h3>
+    <div class="body">
+      <p>宝玉老师还研究了 Codex 内置浏览器的网页批注功能：平时选中一块内容就能写评论、带到对话里，他想知道这中间是怎么连起来的。</p>
+      <p>于是让 Codex 用 REA 查代码，自己配合操作，再做一个测试网页验证。最后找到一个已有接口——网页可以唤起评论框，还能把内容预先填进去。</p>
+    </div>
+    <div class="meta">
+      <span>逆向自家工具 · 接口复用</span>
+      <a href="https://x.com/dotey/status/2109417222724600172" target="_blank" rel="noopener">x.com/dotey →</a>
+    </div>
+    <div class="grid2">
+      <div class="frame">
+        <img src="https://mmbiz.qpic.cn/mmbiz_jpg/M2ibDBMdECU0ys28rx6YngsLX5hZbDxsD4rtdItLBl6kJpzO6k4LyNskBNAw9CR7F494L01b9L2OZqDJUMZuEZrJ8A3CeN07JuAZHNm855eM/640?wx_fmt=jpeg&amp;from=appmsg" alt="Codex 网页批注功能研究">
+        <div class="cap"><span>fig.09a — annotation flow</span></div>
+      </div>
+      <div class="frame">
+        <img src="https://mmbiz.qpic.cn/sz_mmbiz_jpg/M2ibDBMdECU21TyuUVoZ7TXbIEcgup8tmlWcBT8pdWtsFju75G5BNIFS3NFJLWguT2sEbSic1pjiapBFH8k0yDmNicJD1n5l2UFLolPSIEzrrpI/640?wx_fmt=jpeg&amp;from=appmsg" alt="唤起评论框的测试网页">
+        <div class="cap"><span>fig.09b — invoke + prefill</span></div>
+      </div>
+    </div>
+  </article>
+
+  <!-- PRINCIPLE -->
+  <section class="sec" id="how">
+    <div class="prompt">&gt; cat ./docs/how-it-works.md</div>
+    <h2><span class="no">02</span>REA 背后原理</h2>
+    <p style="max-width:680px;margin-top:16px">REA 接入的负责分析程序运行逻辑的工具，很多早就存在了。REA 把它们接到 Agent 身上：Agent 自己调用、继续追问，最后把结果整理出来。它确实用到了不少现有开源项目——</p>
+  </section>
+
+  <div class="tool">
+    <h4>Ghidra<span class="role">分析编译后的程序</span></h4>
+    <p>NSA 开源的逆向工程框架，用来拆解原生二进制。</p>
+    <a href="https://github.com/nationalsecurityagency/ghidra" target="_blank" rel="noopener">github.com/nationalsecurityagency/ghidra</a>
+    <div class="frame"><img src="https://mmbiz.qpic.cn/mmbiz_png/M2ibDBMdECU1vz2fxvgicCCy594ff9zIjzmQuOhzwwaLZEy8QdrL2aIUHIqOsWG2eicMS1jNHALKNf3o6CXJG8SWnZk6ayOmxxpYFpnNfk5c2c/640?wx_fmt=png&amp;from=appmsg" alt="Ghidra"><div class="cap"><span>tool.01 — ghidra</span></div></div>
+  </div>
+  <div class="tool">
+    <h4>JADX<span class="role">研究安卓安装包</span></h4>
+    <p>把 APK / DEX 反编译回可读的 Java 代码。</p>
+    <a href="https://github.com/skylot/jadx" target="_blank" rel="noopener">github.com/skylot/jadx</a>
+    <div class="frame"><img src="https://mmbiz.qpic.cn/mmbiz_png/M2ibDBMdECU1X6JVhcurwibNxP1ZtXW9SELQSpbE2WTxGHe69yH4ia7kicwpiaxNwAbGUjcpIKbrE6pteLcic7CHqH0uQTibddibNx6eQ3fkDlThqHk/640?wx_fmt=png&amp;from=appmsg" alt="JADX"><div class="cap"><span>tool.02 — jadx</span></div></div>
+  </div>
+  <div class="tool">
+    <h4>Wakaru<span class="role">JavaScript 重建</span></h4>
+    <p>辅助处理部分 JavaScript 重建任务，把打包压缩后的前端代码还原出结构。</p>
+    <a href="https://github.com/pionxzh/wakaru" target="_blank" rel="noopener">github.com/pionxzh/wakaru</a>
+    <div class="frame"><img src="https://mmbiz.qpic.cn/mmbiz_png/M2ibDBMdECU3ErBzfeXIsa7FxRGyBb9S400GVWS17CKFHxKovNJckxBV7meia58x5AoEdL74wR3VPw9nHCZOInFplWwWfdSUEHw11t1gibQcR0/640?wx_fmt=png&amp;from=appmsg" alt="Wakaru"><div class="cap"><span>tool.03 — wakaru</span></div></div>
+  </div>
+  <div class="tool">
+    <h4>Hopper / IDA<span class="role">商业分析工具，也能接</span></h4>
+    <p>具体用哪一套，要看你分析的目标。REA 本身包含本地工具，既能从终端调用，也能作为 MCP 服务接给 Agent。</p>
+  </div>
+
+  <div class="tool" style="border-bottom:1px dashed rgba(0,244,142,.22)">
+    <h4>工作循环<span class="role">agent-in-the-loop</span></h4>
+    <p>有了 MCP，Agent 可以发出具体操作——搜索函数、查看代码、追踪调用关系；REA 把工具结果返回来，Agent 再决定下一步查什么。REA 还配了操作说明，告诉 Agent 遇到不同目标该怎么调查；返回的分析结果会记录依据和限制：哪些查到了、哪些还不能确定，尽量交代清楚。这对后面判断它有没有理解对、重写得对不对，很有帮助。</p>
+    <p>你提出想研究的功能 → Agent 用 REA 去查 → 整理出规则 → 写一个适合你项目的版本 → 测试和调整。做出来的新工具，是这几步一起完成的。</p>
+    <div class="frame"><img src="https://mmbiz.qpic.cn/mmbiz_png/M2ibDBMdECU35sQNS40JFmlbBMxpVRyJaGQq09SXE6Io5eia6Gx3EIULtz2dUqFqx1UFdJ84aE3vu0UfP8f8LCD8cCLTb6OdTy1GNeyTf2ASc/640?wx_fmt=png&amp;from=appmsg" alt="REA 工作流程"><div class="cap"><span>fig.02 — the loop</span></div></div>
+  </div>
+
+  <!-- INSTALL -->
+  <section class="sec" id="install">
+    <div class="prompt">&gt; sudo ./setup.sh</div>
+    <h2><span class="no">03</span>怎么安装</h2>
+    <p style="max-width:680px;margin-top:16px">最懒的方式：直接把原文章丢进 Agent，让它帮你装好并教你怎么用。或者自己先准备好 Node.js 和 npm 环境，然后执行——</p>
+    <div class="cmd">
+      <code>$ npx rea-agents@latest setup</code>
+      <button id="copybtn">copy</button>
+    </div>
+    <ol class="steps">
+      <li>按提示选中你实际使用的 Agent，比如 Codex、Claude Code 或 Cursor。</li>
+      <li>它会列出准备修改的配置，你看过以后再确认。</li>
+      <li>安装完成，重启对应的 Agent 工具，让新接入的 MCP 和配套操作说明生效。</li>
+      <li>想深入研究原生程序的函数逻辑，需另外配好 Ghidra、Hopper 或 IDA；研究部分 JavaScript 桌面应用时，可以先走静态分析路线，不必把所有引擎装齐。</li>
+      <li>第一次建议拿自己写的小程序、或者自己有权研究的项目试试。</li>
+    </ol>
+    <div class="meta" style="margin-top:26px">
+      <a href="https://github.com/morluto/rea" target="_blank" rel="noopener">开源地址 github.com/morluto/rea →</a>
+    </div>
+  </section>
+
+  <footer>
+    <p>&gt; source :: 微信公众号「逛逛GitHub」·《火了两周的 30 万 Star 逆向 GitHub 开源神器，网友都用它来干啥？》2026-10-18</p>
+    <p style="margin-top:8px">&gt; note :: 案例版权归原作者所有；逆向有风险，封号需自负。<span class="cursor"></span></p>
+  </footer>
+
+</main>
+
+<script>
+  // boot sequence
+  const lines = [
+    "> run rea_showcase.sys",
+    "> load cases.module .......... 100%",
+    "> mount screenshots .......... ok",
+    "> warning: gray-zone ops may get ur account banned",
+    "> launch interface_"
+  ];
+  const el = document.getElementById('boottext');
+  const boot = document.getElementById('boot');
+  let li = 0;
+  function typeLine(){
+    if(li >= lines.length){
+      setTimeout(()=>boot.classList.add('done'), 350);
+      return;
+    }
+    const line = lines[li];
+    let ci = 0;
+    const t = setInterval(()=>{
+      el.textContent += line[ci++];
+      if(ci >= line.length){
+        clearInterval(t);
+        el.textContent += "\n";
+        li++;
+        setTimeout(typeLine, 90);
+      }
+    }, 12);
+  }
+  typeLine();
+  boot.addEventListener('click', ()=>boot.classList.add('done'));
+  setTimeout(()=>boot.classList.add('done'), 4500);
+
+  // copy command
+  document.getElementById('copybtn').addEventListener('click', function(){
+    navigator.clipboard.writeText('npx rea-agents@latest setup').then(()=>{
+      this.textContent = 'copied';
+      setTimeout(()=>this.textContent='copy', 1500);
+    });
+  });
+</script>
+</body>
+</html>
